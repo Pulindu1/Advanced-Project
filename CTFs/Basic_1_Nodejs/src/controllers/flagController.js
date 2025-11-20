@@ -2,7 +2,13 @@
 const { getFlag } = require('../services/flagService');
 
 function getFlagController(req, res) {
-  if (!req.user || req.user.role !== 'admin') {
+  // 1) Not logged in at all → redirect to login
+  if (!req.user) {
+    return res.redirect('/');
+  }
+
+  // 2) Logged in but not admin → show "Admins only" page
+  if (req.user.role !== 'admin') {
     return res.status(403).send(`
       <h1>Admins only</h1>
       <p>You found the admin area, but you're not an admin yet.</p>
@@ -11,6 +17,7 @@ function getFlagController(req, res) {
     `);
   }
 
+  // 3) Logged in as admin → show flag
   const flag = getFlag();
 
   return res.send(`
