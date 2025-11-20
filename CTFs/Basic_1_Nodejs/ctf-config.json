@@ -1,0 +1,8 @@
+{
+  "id": "node-basic-insecure-middleware",
+  "title": "Node.js – Insecure Admin Header",
+  "category": "web",
+  "difficulty": "easy",
+  "flagFormat": "durham{.*}",
+  "points": 100
+}
