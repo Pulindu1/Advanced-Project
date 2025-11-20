@@ -2,10 +2,10 @@
 const express = require('express');
 const router = express.Router();
 
-const authInsecure = require('../middleware/authInsecure');
+const authCookie = require('../middleware/authCookie');
 const flagController = require('../controllers/flagController');
 
-// Only admins (via vulnerable auth) can reach this route
-router.get('/', authInsecure, flagController.getFlag);
+// /flag – requires admin role in the (insecure) cookie
+router.get('/', authCookie, flagController.getFlag);
 
 module.exports = router;

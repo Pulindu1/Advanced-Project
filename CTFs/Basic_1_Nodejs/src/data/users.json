@@ -10,8 +10,14 @@
     "role": "user"
   },
   {
+    "username": "student",
+    "password": "student123",
+    "role": "user"
+  },
+  {
     "username": "admin",
     "password": "password",
     "role": "admin"
   }
+
 ]

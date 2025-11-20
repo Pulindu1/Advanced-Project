@@ -2,22 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Node CTF – Insecure Admin Header</title>
+  <title>Node CTF – Login</title>
 </head>
 <body>
-  <h1>Node.js CTF – Insecure Admin Header</h1>
+  <h1>Node.js CTF – Login</h1>
   <p>
-    This is a small web security challenge built with Node.js and Express.
+    This is a small web application for your security challenge.
   </p>
   <p>
-    Your goal: obtain the secret flag from <code>/flag</code>.
+    Known test account (for students): <code>student / student123</code>
   </p>
-  <ul>
-    <li>Explore the endpoints (e.g. <code>/status</code>, <code>/debug</code>, <code>/flag</code>).</li>
-    <li>Consider how HTTP headers and middleware might be misused…</li>
-  </ul>
+  <form method="POST" action="/login">
+    <label>
+      Username:
+      <input type="text" name="username" required />
+    </label>
+    <br/><br/>
+    <label>
+      Password:
+      <input type="password" name="password" required />
+    </label>
+    <br/><br/>
+    <button type="submit">Log in</button>
+  </form>
+
   <p>
-    For the dissertation: this page explains the basic context to participants.
+    Once logged in, explore the site and see what information is stored in your browser…
   </p>
 </body>
 </html>

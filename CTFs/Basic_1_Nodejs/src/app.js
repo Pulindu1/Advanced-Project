@@ -1,6 +1,7 @@
 // src/app.js
 const express = require('express');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 
 const logger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandler');
@@ -11,6 +12,9 @@ const app = express();
 // Parse JSON / form bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Parse cookies
+app.use(cookieParser());
 
 // Simple request logger
 app.use(logger);
