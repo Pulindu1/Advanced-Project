@@ -16,51 +16,21 @@ The Node.js CTF application includes:
 -   A home page (`/home`)
 -   An admin-only `\flag` page
 -   A deliberately insecure Base64 session cookie
--   A login bypass when using the username `admin`
 
 To solve the CTF, students must escalate privileges from a normal
 "student" user to an admin and retrieve the flag.
 
 ------------------------------------------------------------------------
 
-# 2. Vulnerability 1: Login Bypass via Username `admin`
+# 2. Vulnerability: Insecure Base64 Session Cookie
 
 ## Description
 
-The login logic contains an intentionally insecure special case:
-
-``` js
-const isAdminBypass = username === 'admin';
-```
-
-If the username is `admin`, the application **skips the password check
-entirely**, allowing login with any password.
-
-## How to Exploit
-
-1.  Visit:\
-    `http://localhost:3000/`
-2.  Log in using:
-    -   **Username:** `admin`
-    -   **Password:** anything
-3.  You will be logged in as the admin user.
-4.  Visit:\
-    `http://localhost:3000/flag`
-5.  The flag will be displayed.
-
-## Learning Outcome
-
-This demonstrates *broken authentication* and highlights the danger of
-special-case logic for privileged accounts.
-
-------------------------------------------------------------------------
-
-# 3. Vulnerability 2: Insecure Base64 Session Cookie
-
-## Description
-
-When a user logs in normally (e.g. as `student`), the application stores
-their session in a cookie named `session`:
+Even though the login form now requires the correct password for every
+user (including `admin`), the application still trusts whatever is stored
+in the `session` cookie. When a user logs in normally (e.g. as
+`student`), the application stores their session in a cookie named
+`session`:
 
 -   The cookie contains JSON (`{ "username": "...", "role": "..." }`)
 -   It is simply Base64-encoded
@@ -70,9 +40,7 @@ their session in a cookie named `session`:
 Because of this, a user can decode, modify, and re-encode the cookie to
 escalate their role to `admin`.
 
-------------------------------------------------------------------------
-
-# 4. Exploitation Steps (Cookie Tampering Path)
+# 3. Exploitation Steps (Cookie Tampering Path)
 
 ## Step 1 --- Log in as a normal user
 
@@ -170,12 +138,7 @@ displayed.
 
 ------------------------------------------------------------------------
 
-# 5. What These Vulnerabilities Demonstrate
-
-## ✔ Broken Authentication
-
--   Critical logic errors in login verification\
--   Special-case handling of privileged accounts
+# 4. What These Vulnerabilities Demonstrate
 
 ## ✔ Insecure Session Management
 
@@ -187,18 +150,7 @@ displayed.
 -   A user can promote themselves from `user` to `admin` by modifying a
     cookie
 
-## ✔ Real-World Relevance
-
-These vulnerabilities resemble mistakes seen in actual production
-systems, such as:
-
--   Weak admin bypasses
--   Unsigned JWTs or tamperable cookies
--   Client-side authentication risks
-
-------------------------------------------------------------------------
-
-# 6. Recommended Fixes
+# 5. Recommended Fixes
 
 Although not required for the CTF, the proper security controls would
 include:
@@ -218,17 +170,12 @@ include:
 
 -   Always check privileges using trusted server-side state
 
-------------------------------------------------------------------------
+# 6. Summary
 
-# 7. Summary
-
-To solve the CTF, students must exploit:
-
-1.  **A login bypass** by authenticating as `admin` using any password\
-2.  **A privilege escalation flaw** by decoding and modifying the
-    insecure Base64 session cookie
-
-Both vulnerabilities together demonstrate how insecure authentication
-and session handling can lead to full compromise of a web application.
+To solve the CTF, students must exploit **a privilege escalation flaw**
+by decoding and modifying the insecure Base64 session cookie. This single
+vulnerability is enough to jump from a normal user to an admin and
+retrieve the flag, showing how fragile applications become when they
+trust client-controlled state.
 
 ------------------------------------------------------------------------
