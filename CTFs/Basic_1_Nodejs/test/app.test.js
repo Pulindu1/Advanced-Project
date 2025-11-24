@@ -23,4 +23,12 @@ describe('CTF Security Tests', () => {
     const res = await request(app).get('/random404test');
     expect(res.status).toBe(404);
   });
+
+  test('Admin login still enforces password check', async () => {
+    const res = await request(app)
+      .post('/login')
+      .send({ username: 'admin', password: 'wrongpassword' });
+
+    expect(res.status).toBe(401);
+  });
 });

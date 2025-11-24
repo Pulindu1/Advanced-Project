@@ -14,9 +14,8 @@ function showLogin(req, res) {
 /**
  * POST /login
  *
- * Vulnerable logic:
- *  - If username === 'admin', we ignore the password check.
- *  - This means ANY password (even wrong) logs in as admin.
+ * Authenticates a user and drops an intentionally insecure cookie so
+ * students can practice privilege escalation in later steps.
  */
 function handleLogin(req, res) {
   const { username, password } = req.body;
@@ -28,9 +27,7 @@ function handleLogin(req, res) {
   }
 
   const passwordMatches = password === user.password;
-  const isAdminBypass = username === 'admin'; // VULNERABILITY
-
-  if (!passwordMatches && !isAdminBypass) {
+  if (!passwordMatches) {
     return res.status(401).send('Invalid username or password.');
   }
 
