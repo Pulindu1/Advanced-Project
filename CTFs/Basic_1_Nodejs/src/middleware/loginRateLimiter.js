@@ -29,7 +29,9 @@ function loginRateLimiter(req, res, next) {
   if (record && record.lockedUntil && n < record.lockedUntil) {
     const retryInMs = record.lockedUntil - n;
     const retrySec = Math.ceil(retryInMs / 1000);
-    return res.status(429).send(`Too many login attempts. Try again in ${retrySec} seconds.`);
+    // Send a styled HTML response so the lockout page uses site styling
+    // Render the lockout page using the template
+    return res.status(429).render('lockout', { retrySec });
   }
 
   if (!record) {
