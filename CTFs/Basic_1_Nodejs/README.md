@@ -1,157 +1,109 @@
 # Basic Node.js Web CTF Challenge
 
-This repository contains a beginner-friendly web security Capture The Flag challenge built using **Node.js** and **Express**.  
-The site is designed for students learning about **authentication flaws**, **insecure session management**, and **client-side trust issues**.
+This repository contains a beginner-friendly web security Capture The Flag challenge built using Node.js and Express. The site is designed to teach common web-security mistakes such as broken authentication, insecure client-side session storage and privilege escalation.
 
-The CTF is fully browser-based — no external tools like curl, Burp Suite, or command-line exploits are required.
-
----
-
-## 🕸️ Challenge Website
-
-Once running, the application is hosted locally at:
-
-http://localhost:3000/
-
-The website includes:
-
-- A login page (`/`)
-- A user home page (`/home`)
-- An admin-only page containing the flag (`/flag`)
-- A deliberately insecure session cookie
-- A flawed authentication mechanism for demonstration purposes
-
-Students must identify and exploit the security weaknesses to retrieve the flag.
+The challenge is browser-first — participants should be able to complete it using only a web browser and its developer tools.
 
 ---
 
-## 📘 Overview
+## Quick start
 
-This CTF models a realistic scenario where a web application suffers from:
+1. Install dependencies
 
-- **Broken authentication**  
-- **Insecure client-side session storage**  
-- **Privilege escalation vulnerabilities**
-
-Participants authenticate as a normal user, inspect the application behaviour using browser tools, discover insecure mechanisms, and escalate themselves to an admin.
-
-**One-sentence summary of the solution:**  
-The challenge is solved by understanding how the site stores user roles and exploiting insecure authentication/session logic — full details are available in `SOLUTIONS.md`.
-
----
-
-## 🚀 Getting Started
-
-### 1. Install dependencies
-
-```
+```bash
+cd CTFs/Basic_1_Nodejs
 npm install
 ```
 
-### 2. Start the server
+2. Start the server (development)
 
-```
+```bash
 npm run dev
 ```
 
-You should see:
+If port 3000 is in use you can start on a different port:
 
-```
-[*] Node CTF listening on http://localhost:3000
-```
-
-### 3. Open the challenge
-
-Visit:
-
-http://localhost:3000/
-
----
-
-## 🧪 Testing & Verification
-
-This project includes both **manual** and **automated** testing approaches to ensure that only the intended vulnerabilities exist.
-
-### ✔ Manual Testing
-
-Performed to confirm:
-
-- `/home` is protected and requires login  
-- `/flag` only grants access to admin role  
-- Session cookies behave as designed  
-- No accidental endpoints are exposed  
-- No stack traces or server errors appear  
-- The challenge is solvable entirely via the browser  
-
-### ✔ Fuzz Testing
-
-The application was stress-tested using high-rate HTTP fuzzing tools.  
-Highlights:
-
-- **0 server crashes**
-- **0 unintended 500 errors**
-- **Rapid, stable response times**
-- **All invalid requests handled gracefully**
-
-This verifies that the CTF has a controlled attack surface and does not contain unintended vulnerabilities.
-
-### ✔ Automated Testing (Optional)
-
-The repository supports adding Jest + Supertest tests to validate:
-
-- Access control behaviour  
-- Route safety  
-- Cookie handling  
-- Error response consistency  
-
-(These can be added if needed for assessment.)
-
----
-
-## 📁 Repository Structure
-
-```
-src/
-  routes/
-  controllers/
-  middleware/
-  services/
-  data/
-  public/
-  app.js
-  server.js
-
-.env (local only)
-SOLUTIONS.md
-README.md
+```bash
+PORT=3001 npm run dev
 ```
 
----
-
-## 🏁 Flag Retrieval (For Markers)
-
-To retrieve the flag as an evaluator, follow the documented walkthrough in:
-
-SOLUTIONS.md
-
-This file explains the vulnerabilities, the exploitation steps, and the security principles demonstrated by the challenge.
+Open the site at http://localhost:3000 (or the port you chose).
 
 ---
 
-## 📚 Educational Purpose
+## What the app provides
 
-This CTF is intended for learning and assessment in controlled environments.  
-It demonstrates why:
+- Login page `/` (login form)
+- Home page `/home` (for any logged-in user)
+- Admin-only page `/flag` (contains the challenge flag)
+- Insecure session cookie (intentionally unsigned/unencrypted)
+- An example rate-limiter middleware to prevent brute-force by IP
 
-- Authentication logic must be robust  
-- Cookies must be signed or server-side  
-- User roles must never be stored client-side  
-- Clients cannot be trusted  
-
-It is **not** intended for deployment on production systems.
+This repository is intentionally vulnerable in limited, well-documented ways as part of a learning exercise. The `SOLUTIONS.md` file contains hints and the full walkthrough for instructors/markers.
 
 ---
 
-## 📝 License
+## Challenge-generation and per‑student flags
 
-This project is provided for academic and educational use.
+This repo includes a small challenge-generation area intended to produce per-student flags. The generator scripts live in `CTFs/challenge-generation/`.
+
+- To generate per-player artifacts (full templated CTFs) the chgen tooling expects a `template/` folder inside an example directory and is driven by scripts such as `chgen_basic1.js`.
+- For flags-only generation (the common case for marking), you can run the generator in `challenge-generation` to produce a JSON mapping of student IDs to flags. Example (from the `challenge-generation` folder):
+
+```bash
+node chgen_basic1.js basic1_config.json basic1_server_config.json
+# or a custom flags-only generator if present
+```
+
+The generated flags mapping is written to `CTFs/Basic_1_Nodejs/src/data/flags.json` (or to another central file depending on the generator). Use this mapping to verify submissions: markers compare the student-submitted flag string against the generated entry for the student's ID.
+
+---
+
+## Notes about templates & presentation
+
+- The app uses EJS templates (server-side) located in `src/views/` and shared partials under `src/views/partials/`.
+- Static assets (CSS) are served from `src/public/`.
+- The login, home, flag and lockout pages are implemented with Bootstrap (CDN) and a small `custom.css` file for branding.
+
+---
+
+## Security/behaviour notes
+
+- The session cookie is intentionally insecure for the exercise (students should discover and exploit this). Do not use this code in production.
+- Rate limiting is implemented per-IP in `src/middleware/loginRateLimiter.js`. This is an in-memory implementation suitable for single-instance teaching setups. For production or clustered deployments use a shared store such as Redis.
+- Error handling: server errors are intentionally not leaked to players; the app returns a generic JSON error for server-side exceptions.
+
+---
+
+## Developer tips
+
+- To add or update per-student flags, edit the `CTFs/challenge-generation/basic1_server_config.json` players list (add `username` and `token`) and run the generator.
+- To change branding, edit `src/public/css/custom.css` (colors are defined as `--ctf-primary` and `--ctf-secondary`).
+- To convert more pages to templates, add EJS files under `src/views/` and call `res.render()` from controllers.
+
+---
+
+## References
+
+External sources and libraries used by this project:
+
+- Bootstrap CSS / JS (CDN) — styling and components
+  - https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css
+  - https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js
+- jsDelivr CDN — CDN provider for Bootstrap
+  - https://www.jsdelivr.com/
+- EJS — embedded JavaScript templates
+  - https://ejs.co/
+- Express — web framework for Node.js
+  - https://expressjs.com/
+- Node.js — runtime environment
+  - https://nodejs.org/
+- Navigator.clipboard (MDN) — used for copy-to-clipboard feature
+  - https://developer.mozilla.org/en-US/docs/Web/API/Navigator/clipboard
+
+Local/in-repo references
+
+- Challenge-generation documentation and examples: `CTFs/challenge-generation/README.md`
+- Solution walkthrough: `SOLUTIONS.md`
+
+If you need additional attribution added (paper references, lecture slides, or other libraries), tell me which sources to include and I'll append them.
