@@ -4,12 +4,13 @@ const router = express.Router();
 
 const publicController = require('../controllers/publicController');
 const authCookie = require('../middleware/authCookie');
+const loginRateLimiter = require('../middleware/loginRateLimiter');
 
 // Show login page
 router.get('/', publicController.showLogin);
 
-// Handle login form submission
-router.post('/login', publicController.handleLogin);
+// Handle login form submission (apply rate limiter to prevent brute force)
+router.post('/login', loginRateLimiter, publicController.handleLogin);
 
 // Home page (requires a session cookie, but any role)
 router.get('/home', authCookie, publicController.home);
