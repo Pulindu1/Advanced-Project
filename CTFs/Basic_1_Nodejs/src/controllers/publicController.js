@@ -55,16 +55,55 @@ function home(req, res) {
   if (!req.user) {
     return res.redirect('/');
   }
-
   const { username, role } = req.user;
 
   res.send(`
-    <h1>Welcome, ${username}</h1>
-    <p>Your role is: <strong>${role}</strong></p>
-    <p>This page is visible to any logged-in user.</p>
-    <p>Hint for students: try inspecting cookies (Application tab in DevTools).</p>
-    <p><a href="/flag">Go to admin area</a> (you may not have access yet)</p>
-    <p><a href="/logout">Logout</a></p>
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>CTF-1 – Home</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="/css/custom.css">
+      </head>
+      <body class="bg-light">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+          <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+              <span class="logo-box me-2"></span>
+              <span class="brand-text">CTF-1</span>
+            </a>
+            <div class="collapse navbar-collapse"></div>
+            <div class="d-flex">
+              <a class="btn btn-outline-light btn-sm me-2" href="/home">Home</a>
+              <a class="btn btn-outline-light btn-sm" href="/logout">Logout</a>
+            </div>
+          </div>
+        </nav>
+
+        <main class="container py-5">
+          <div class="row justify-content-center">
+            <div class="col-md-8">
+              <div class="card shadow-sm">
+                <div class="card-body">
+                  <h3 class="card-title">Welcome, ${username}</h3>
+                  <p class="mb-1">Your role is: <strong>${role}</strong></p>
+                  <p class="text-muted">This page is visible to any logged-in user.</p>
+                  <p class="mt-3">Hint for students: try inspecting cookies (Application tab in DevTools).</p>
+                  <p class="mt-4">
+                    <a class="btn btn-primary me-2" href="/flag">Go to admin area</a>
+                    <a class="btn btn-secondary" href="/logout">Logout</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+      </body>
+    </html>
   `);
 }
 

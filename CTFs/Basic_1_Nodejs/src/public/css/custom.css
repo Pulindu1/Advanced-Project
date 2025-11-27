@@ -1,0 +1,49 @@
+/* custom.css - branding overrides and small layout tweaks */
+
+:root {
+  --ctf-primary: #025c5f;
+  --ctf-secondary: #013f3f;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+.navbar {
+  background-color: var(--ctf-secondary) !important;
+}
+
+.navbar .brand-text {
+  font-weight: 700;
+  color: #fff;
+}
+
+.logo-box {
+  width: 36px;
+  height: 28px;
+  display: inline-block;
+  background: linear-gradient(135deg, var(--ctf-primary), var(--ctf-secondary));
+  border-radius: 4px;
+}
+
+.btn-primary {
+  background-color: var(--ctf-primary);
+  border-color: var(--ctf-primary);
+}
+
+.card-title {
+  color: var(--ctf-secondary);
+}
+
+pre.flag-box {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: .25rem;
+  border: 1px solid #e9ecef;
+  overflow-x: auto;
+}
+
+/* small responsive tweak */
+@media (max-width: 576px) {
+  .logo-box { width: 28px; height: 20px; }
+}
