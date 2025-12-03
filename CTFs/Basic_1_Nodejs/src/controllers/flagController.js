@@ -1,5 +1,6 @@
 // src/controllers/flagController.js
 const { getFlagForUser } = require('../services/flagService');
+const attemptTracker = require('../services/attemptTracker');
 
 function getFlagController(req, res) {
   // 1) Not logged in at all → redirect to login
@@ -7,9 +8,11 @@ function getFlagController(req, res) {
     return res.redirect('/');
   }
 
-  // 2) Logged in but not admin → show "Admins only" page
+  // 2) Logged in but not admin → increment attempts and show "Admins only" page
   if (req.user.role !== 'admin') {
-    return res.status(403).render('forbidden');
+    const attempts = attemptTracker.incrementAttemptForRequest(req);
+    const showHint = attempts >= 4; // show hint after 4 or more attempts
+    return res.status(403).render('forbidden', { showHint });
   }
 
   // 3) Logged in as admin → show per-user flag

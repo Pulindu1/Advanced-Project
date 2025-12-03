@@ -6,9 +6,11 @@
         <div class="card-body">
           <h3 class="card-title text-danger">Admins only</h3>
           <p>You found the admin area, but you're not an admin yet.</p>
-          <div class="alert alert-info" role="alert">
-            Hint: how does the site remember who you are? Can that be modified?
-          </div>
+          <% if (typeof showHint !== 'undefined' && showHint) { %>
+            <div class="alert alert-info" role="alert">
+              Hint: Think about how the site tracks who you are.
+            </div>
+          <% } %>
           <p><a class="btn btn-primary" href="/home">Back to home</a></p>
         </div>
       </div>
