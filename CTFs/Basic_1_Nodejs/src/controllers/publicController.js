@@ -42,8 +42,12 @@ function handleLogin(req, res) {
   const encoded = Buffer.from(JSON.stringify(session)).toString('base64');
 
   // httpOnly: false so students can see/edit it in DevTools
+  // Ensure any previous session cookie is cleared before setting a new one.
+  // Use the same path option so the cookie is actually removed by the browser.
+  res.clearCookie('session', { path: '/' });
   res.cookie('session', encoded, {
-    httpOnly: false
+    httpOnly: false,
+    path: '/'
   });
 
   return res.redirect('/home');
@@ -64,7 +68,8 @@ function home(req, res) {
  * Clear cookie and go back to login.
  */
 function logout(req, res) {
-  res.clearCookie('session');
+  // Clear the session cookie at the same path it was set
+  res.clearCookie('session', { path: '/' });
   res.redirect('/');
 }
 

@@ -12,6 +12,7 @@
           <% } else { %>
             <h3 class="card-title">Congratulations, <%= username %>!</h3>
             <p class="mb-3">You have admin access.</p>
+            <!-- Raw cookie username suppressed to avoid leaking typos to players -->
             <p class="mb-1">Your flag is:</p>
             <div class="d-flex align-items-start gap-2">
               <pre class="flag-box mb-0 flex-grow-1" id="flagText"><%= flag %></pre>

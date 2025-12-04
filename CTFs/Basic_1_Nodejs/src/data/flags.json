@@ -1,6 +1,4 @@
 {
-  "test": "durham{test_example_flag}",
-  "user": "durham{user_example_flag}",
-  "student": "durham{student_example_flag}",
-  "admin": "durham{admin_example_flag}"
+  "abcd12": "durham{TOKEN_FOR_ABCD12_abcd12}",
+  "efgh34": "durham{TOKEN_FOR_EFGH34_efgh34}"
 }

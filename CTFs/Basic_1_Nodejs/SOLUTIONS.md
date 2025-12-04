@@ -44,11 +44,12 @@ escalate their role to `admin`.
 
 ## Step 1 --- Log in as a normal user
 
-1.  Go to:\
-    `http://localhost:3000/`
-2.  Log in using:
-    -   **Username:** `student`
-    -   **Password:** `student123`
+1.  Go to: `http://localhost:3000/`
+2.  Log in using one of the example student accounts (your cohort will use real IDs):
+        - **Username:** `abcd12`  
+            **Password:** `password`
+        - **Username:** `efgh34`  
+            **Password:** `password`
 3.  You will be redirected to `/home`.
 
 ------------------------------------------------------------------------
@@ -69,61 +70,53 @@ You will see:
 
 ## Step 3 --- Inspect the session cookie
 
-1.  Open **Developer Tools**
-2.  Go to **Application** (Chrome) or **Storage** (Firefox)
-3.  Open **Cookies → http://localhost:3000**
-4.  Locate the cookie:
-
-```{=html}
-<!-- -->
-```
-    Name:  session
-    Value: eyJ1c2VybmFtZSI6InN0dWRlbnQiLCJyb2xlIjoidXNlciJ9
+1.  Open Developer Tools.
+2.  Go to Application (Chrome) or Storage (Firefox) → Cookies → `http://localhost:3000`.
+3.  Locate the cookie named `session` and note its value (a Base64 string).
 
 ------------------------------------------------------------------------
 
 ## Step 4 --- Decode the cookie
 
-In the browser console, run:
+In the browser console run (replace <base64> with the cookie value):
 
-``` js
-atob('eyJ1c2VybmFtZSI6InN0dWRlbnQiLCJyb2xlIjoidXNlciJ9')
+```js
+atob('<base64>')
 ```
 
-Output:
+You should see JSON like:
 
-``` json
-{"username":"student","role":"user"}
+```json
+{"username":"abcd12","role":"user"}
 ```
 
 ------------------------------------------------------------------------
 
 ## Step 5 --- Modify the role
 
-Change the JSON to:
+Change the JSON to set `"role": "admin"` (keep the same `username`). For example:
 
-``` json
-{"username":"student","role":"admin"}
+```json
+{"username":"abcd12","role":"admin"}
 ```
 
-Then re-encode it using:
+Re-encode to Base64 in the console:
 
-``` js
-btoa('{"username":"student","role":"admin"}')
+```js
+btoa('{"username":"abcd12","role":"admin"}')
 ```
 
-This gives you a new Base64 string.
+This produces a new Base64 string to paste back into the cookie editor.
 
 ------------------------------------------------------------------------
 
 ## Step 6 --- Overwrite the cookie
 
-1.  Return to the browser's cookie editor
-2.  Replace the old `session` value with your newly encoded string
-3.  Press Enter to save it
+1. Return to the browser's cookie editor.
+2. Replace the `session` value with the Base64 string you just generated (paste the Base64, not the raw JSON).
+3. Press Enter to save it.
 
-Because the cookie is not protected (`httpOnly: false`, and no signing),
-this change is accepted by the browser.
+Because the cookie is intentionally not protected (`httpOnly: false` and unsigned), the browser accepts this change.
 
 ------------------------------------------------------------------------
 

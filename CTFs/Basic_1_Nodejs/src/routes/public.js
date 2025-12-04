@@ -15,6 +15,11 @@ router.post('/login', loginRateLimiter, publicController.handleLogin);
 // Home page (requires a session cookie, but any role)
 router.get('/home', authCookie, publicController.home);
 
+// Debug helper: show parsed session (for instructors/dev only)
+router.get('/whoami', authCookie, (req, res) => {
+	res.json({ user: req.user || null, cookies: req.cookies || null });
+});
+
 // Logout
 router.get('/logout', publicController.logout);
 

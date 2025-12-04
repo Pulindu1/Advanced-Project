@@ -39,6 +39,16 @@ Open the site at http://localhost:3000 (or the port you chose).
 - Insecure session cookie (intentionally unsigned/unencrypted)
 - An example rate-limiter middleware to prevent brute-force by IP
 
+Notes about developer/testing mode
+
+- The application supports a development compatibility mode for testing tolerant username lookups and synthesized flags. Start the server with the environment variable `CTF_DEV=1` to enable fuzzy matching and dev flag generation:
+
+```bash
+CTF_DEV=1 npm run dev
+```
+
+In normal mode (default), flag lookup requires an exact username match in `src/data/flags.json`.
+
 This repository is intentionally vulnerable in limited, well-documented ways as part of a learning exercise. The `SOLUTIONS.md` file contains hints and the full walkthrough for instructors/markers.
 
 ---
@@ -51,8 +61,12 @@ This repo includes a small challenge-generation area intended to produce per-stu
 - For flags-only generation (the common case for marking), you can run the generator in `challenge-generation` to produce a JSON mapping of student IDs to flags. Example (from the `challenge-generation` folder):
 
 ```bash
-node chgen_basic1.js basic1_config.json basic1_server_config.json
-# or a custom flags-only generator if present
+# flags-only generator (writes flags.json used by the running CTF)
+node chgen_basic1.js basic1_server_config.json
+
+# If you want to generate per-player copies from a template the full chgen flow
+# requires a `template/` folder inside an example directory and a different
+# generator script; see `CTFs/challenge-generation/` for examples.
 ```
 
 The generated flags mapping is written to `CTFs/Basic_1_Nodejs/src/data/flags.json` (or to another central file depending on the generator). Use this mapping to verify submissions: markers compare the student-submitted flag string against the generated entry for the student's ID.
@@ -78,6 +92,8 @@ The generated flags mapping is written to `CTFs/Basic_1_Nodejs/src/data/flags.js
 ## Developer tips
 
 - To add or update per-student flags, edit the `CTFs/challenge-generation/basic1_server_config.json` players list (add `username` and `token`) and run the generator.
+- After running the generator, confirm the mapping is written to `CTFs/Basic_1_Nodejs/src/data/flags.json`.
+- The session cookie format is intentionally simple for the exercise: it is a Base64 encoding of a JSON object `{ "username": "<id>", "role": "<role>" }`. Use the browser devtools to inspect and edit this cookie during the challenge (the UI exposes a `/whoami` endpoint for quick inspection during development).
 - To change branding, edit `src/public/css/custom.css` (colors are defined as `--ctf-primary` and `--ctf-secondary`).
 - To convert more pages to templates, add EJS files under `src/views/` and call `res.render()` from controllers.
 

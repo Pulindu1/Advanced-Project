@@ -3,6 +3,8 @@ const { getFlagForUser } = require('../services/flagService');
 const attemptTracker = require('../services/attemptTracker');
 
 function getFlagController(req, res) {
+  console.log('[flagController] req.cookies.session =', req.cookies && req.cookies.session);
+  console.log('[flagController] req.user =', req.user);
   // 1) Not logged in at all → redirect to login
   if (!req.user) {
     return res.redirect('/');
@@ -16,10 +18,15 @@ function getFlagController(req, res) {
   }
 
   // 3) Logged in as admin → show per-user flag
-  const username = req.user.username;
-  const flag = getFlagForUser(username);
+  const rawUsername = req.user.username;
+  const username = String(rawUsername || '').trim().toLowerCase();
+  const result = getFlagForUser(username);
+  const flag = result && result.flag;
+  const canonical = result && result.canonical ? result.canonical : username;
+  console.log('[flagController] resolved flag result =', result);
+  console.log('[flagController] display username =', canonical);
 
-  return res.render('flag', { username, flag });
+  return res.render('flag', { username: canonical, flag });
 }
 
 module.exports = {
