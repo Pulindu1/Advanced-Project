@@ -1,0 +1,8 @@
+{
+  "name": "ctf-challenge-generation",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "generate-flags": "node chgen_basic1.js"
+  }
+}
