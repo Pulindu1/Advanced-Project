@@ -13,7 +13,8 @@ files changed (optional)
 
 
 
-
+### Flag Generation - 10/12/25 - CTF 2
+- I made a generator, similar to CTF1, where with usernames, we can generate individualised flags.
 
 ### Fixed refresh issue - 10/12/25 - CTF 2
 - When logged in, if you refreshed it sent you straight back to the login page. I fixed this. I also added bootstrap/csv to make it look better.
