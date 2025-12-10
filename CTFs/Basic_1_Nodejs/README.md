@@ -91,7 +91,7 @@ The generated flags mapping is written to `CTFs/Basic_1_Nodejs/src/data/flags.js
 
 ## Developer tips
 
-- To add or update per-student flags, edit the `CTFs/challenge-generation/basic1_server_config.json` players list (add `username` and `token`) and run the generator.
+- To add or update per-student flags, edit the `CTFs/csc/data/users.json` players list (add `username` and `password`) and run the generator using `node CTFs/challenge-generation/chgen_basic1.js` from root. This will automatically generate the flag.
 - After running the generator, confirm the mapping is written to `CTFs/Basic_1_Nodejs/src/data/flags.json`.
 - The session cookie format is intentionally simple for the exercise: it is a Base64 encoding of a JSON object `{ "username": "<id>", "role": "<role>" }`. Use the browser devtools to inspect and edit this cookie during the challenge (the UI exposes a `/whoami` endpoint for quick inspection during development).
 - To change branding, edit `src/public/css/custom.css` (colors are defined as `--ctf-primary` and `--ctf-secondary`).

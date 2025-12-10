@@ -8,6 +8,9 @@ files changed (optional)
 
 # Logs:
 
+### Modified redme - 10/12/25 - CTF 1
+- Changed readme. We now include instructions on how to add more players username/password and to generate the flags automatically.
+
 ### Added CHANGELOG.md - 05/12/25 - Repo
 - Added this CHANGELOG.md file to log all changes.
 
