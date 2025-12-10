@@ -8,6 +8,9 @@ files changed (optional)
 
 # Logs:
 
+### Initial Commit CTF2 - 10/12/25 - CTF 2
+- Added general structure and got the basics of CTF working.
+
 ### Modified redme - 10/12/25 - CTF 1
 - Changed readme. We now include instructions on how to add more players username/password and to generate the flags automatically.
 

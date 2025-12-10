@@ -1,0 +1,9 @@
+.app-shell{display:flex; min-height:100vh}
+.sidebar{width:220px; background:#fff; border-right:1px solid #e5e7eb; padding:18px}
+.sidebar h3{margin:0 0 12px 0}
+.sidebar nav ul{list-style:none; padding:0; margin:0}
+.sidebar nav li{margin:8px 0}
+.sidebar a{color:#111; text-decoration:none}
+.content{flex:1; display:flex; flex-direction:column}
+.topbar{height:56px; display:flex; align-items:center; padding:0 16px; background:#fff; border-bottom:1px solid #e5e7eb}
+.pane{padding:24px}

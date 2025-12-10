@@ -1,0 +1,11 @@
+:root{
+  --bg: #f7fafc;
+  --muted: #6b7280;
+  --accent: #2563eb;
+}
+body{font-family: Inter, system-ui, Arial, sans-serif; background:var(--bg); color:#111; margin:0}
+.app-shell{display:flex; min-height:100vh}
+.sidebar{width:200px; background:#fff; border-right:1px solid #e5e7eb; padding:16px}
+.content{flex:1; display:flex; flex-direction:column}
+.topbar{height:56px; display:flex; align-items:center; padding:0 16px; background:#fff; border-bottom:1px solid #e5e7eb}
+.pane{padding:24px}
