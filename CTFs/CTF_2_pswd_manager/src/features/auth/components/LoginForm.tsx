@@ -27,16 +27,25 @@ export const LoginForm: React.FC = () => {
 
   return (
     <form onSubmit={onSubmit}>
-      <div>
-        <label>Username</label>
-        <input value={username} onChange={(e) => setUsername(e.target.value)} />
+      <div className="mb-3">
+        <label className="form-label">Username</label>
+        <div className="input-group">
+          <span className="input-group-text"><i className="bi bi-person"></i></span>
+          <input className="form-control" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. abcd12" />
+        </div>
       </div>
-      <div>
-        <label>Password</label>
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <div className="mb-3">
+        <label className="form-label">Password</label>
+        <div className="input-group">
+          <span className="input-group-text"><i className="bi bi-lock"></i></span>
+          <input className="form-control" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        </div>
       </div>
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-      <button type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</button>
+      {error && <div className="alert alert-danger py-2">{error}</div>}
+      <div className="d-flex justify-content-between align-items-center">
+        <button className="btn btn-primary" type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</button>
+        <a href="/forgot-password" className="muted">Forgot password?</a>
+      </div>
     </form>
   )
 }

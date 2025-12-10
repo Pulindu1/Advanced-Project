@@ -1,0 +1,5 @@
+Debugger listening on ws://127.0.0.1:54225/4872bae4-8a9f-4529-a205-ef9a266ea1e0
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger attached.
+Auth server listening on http://localhost:4000
+Waiting for the debugger to disconnect...

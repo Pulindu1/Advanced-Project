@@ -8,6 +8,16 @@ files changed (optional)
 
 # Logs:
 
+
+
+
+
+
+
+
+### Fixed refresh issue - 10/12/25 - CTF 2
+- When logged in, if you refreshed it sent you straight back to the login page. I fixed this. I also added bootstrap/csv to make it look better.
+
 ### Initial Commit CTF2 - 10/12/25 - CTF 2
 - Added general structure and got the basics of CTF working.
 
