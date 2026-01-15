@@ -1,0 +1,12 @@
+{
+  "abcd12": [
+    {
+      "id": "v-1736942400000",
+      "site": "example.com",
+      "username": "demo_user",
+      "password": "SuperSecret123!",
+      "notes": "Demo account",
+      "createdAt": "2026-01-15T10:00:00.000Z"
+    }
+  ]
+}

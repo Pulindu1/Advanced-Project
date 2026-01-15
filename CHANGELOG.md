@@ -12,6 +12,8 @@ files changed (optional)
 
 
 
+### Added Vault Feature (/app/vault) - 15/01/26 - CTF 2
+- Built a /app/vault. It has a with a table interface displaying storing credentials. Implemented server-side storage in vaults.json with JWT-based authentication where vault entries are keyed by username extracted from the session token. Added complete CRUD API endpoints (GET, POST, DELETE) for vault management with intentional vulnerabilities including plaintext password storage and predictable entry IDs for CTF exploitation scenarios.
 
 ### Flag Generation - 10/12/25 - CTF 2
 - I made a generator, similar to CTF1, where with usernames, we can generate individualised flags.

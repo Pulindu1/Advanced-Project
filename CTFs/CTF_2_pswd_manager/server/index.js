@@ -18,6 +18,7 @@ app.use(cors({ origin: 'http://localhost:5173', credentials: true }))
 const DATA_DIR = path.resolve(__dirname, 'data')
 const USERS_FILE = path.join(DATA_DIR, 'users.json')
 const FLAGS_FILE = path.join(DATA_DIR, 'flags.json')
+const VAULTS_FILE = path.join(DATA_DIR, 'vaults.json')
 
 function readUsers() {
   try {
@@ -40,6 +41,20 @@ function readFlags() {
   } catch (err) {
     return {}
   }
+}
+
+function readVaults() {
+  try {
+    const raw = fs.readFileSync(VAULTS_FILE, 'utf8')
+    return JSON.parse(raw)
+  } catch (err) {
+    return {}
+  }
+}
+
+function writeVaults(vaults) {
+  fs.mkdirSync(DATA_DIR, { recursive: true })
+  fs.writeFileSync(VAULTS_FILE, JSON.stringify(vaults, null, 2))
 }
 
 app.post('/api/auth/register', async (req, res) => {
@@ -120,6 +135,82 @@ app.get('/api/debug-cookies', (req, res) => {
 app.post('/api/auth/logout', (req, res) => {
   res.clearCookie('session')
   res.json({ ok: true })
+})
+
+// Vault endpoints
+app.get('/api/vault', (req, res) => {
+  const token = req.cookies.session
+  if (!token) return res.status(401).json({ error: 'not authenticated' })
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET)
+    const username = String(decoded.sub || '').toLowerCase()
+    const vaults = readVaults()
+    const userVault = vaults[username] || []
+    return res.json({ entries: userVault })
+  } catch (err) {
+    return res.status(401).json({ error: 'invalid token' })
+  }
+})
+
+app.post('/api/vault', (req, res) => {
+  const token = req.cookies.session
+  if (!token) return res.status(401).json({ error: 'not authenticated' })
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET)
+    const username = String(decoded.sub || '').toLowerCase()
+    const { site, username: entryUsername, password, notes } = req.body || {}
+    
+    if (!site || !entryUsername || !password) {
+      return res.status(400).json({ error: 'site, username, and password are required' })
+    }
+
+    const vaults = readVaults()
+    if (!vaults[username]) vaults[username] = []
+
+    const entry = {
+      id: 'v-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+      site,
+      username: entryUsername,
+      password,
+      notes: notes || '',
+      createdAt: new Date().toISOString()
+    }
+
+    vaults[username].push(entry)
+    writeVaults(vaults)
+
+    return res.status(201).json({ entry })
+  } catch (err) {
+    return res.status(401).json({ error: 'invalid token' })
+  }
+})
+
+app.delete('/api/vault/:id', (req, res) => {
+  const token = req.cookies.session
+  if (!token) return res.status(401).json({ error: 'not authenticated' })
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET)
+    const username = String(decoded.sub || '').toLowerCase()
+    const { id } = req.params
+
+    const vaults = readVaults()
+    if (!vaults[username]) return res.status(404).json({ error: 'entry not found' })
+
+    const initialLength = vaults[username].length
+    vaults[username] = vaults[username].filter(e => e.id !== id)
+
+    if (vaults[username].length === initialLength) {
+      return res.status(404).json({ error: 'entry not found' })
+    }
+
+    writeVaults(vaults)
+    return res.json({ ok: true })
+  } catch (err) {
+    return res.status(401).json({ error: 'invalid token' })
+  }
 })
 
 app.listen(PORT, () => {
