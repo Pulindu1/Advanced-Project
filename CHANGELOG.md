@@ -10,7 +10,12 @@ files changed (optional)
 
 
 
+### Full CTF completion - 17/01/26 - CTF 2
+- I added the complete implementation of the CTF. It is two stages, once the user solves the /app/challenge,
+they will be able to use the secret JWT signature to forge the cookie. There still remains minor fixes to the CTF though.
 
+### Modified Vault (/app/vault) - 17/01/26 - CTF 2
+- Added a few users for realism, including the flag.
 
 ### Added Vault Feature (/app/vault) - 15/01/26 - CTF 2
 - Built a /app/vault. It has a with a table interface displaying storing credentials. Implemented server-side storage in vaults.json with JWT-based authentication where vault entries are keyed by username extracted from the session token. Added complete CRUD API endpoints (GET, POST, DELETE) for vault management with intentional vulnerabilities including plaintext password storage and predictable entry IDs for CTF exploitation scenarios.

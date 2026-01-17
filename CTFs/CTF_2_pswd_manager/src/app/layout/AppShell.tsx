@@ -14,6 +14,7 @@ export const AppShell: React.FC = () => {
           <ul className="list-unstyled">
             <li className="mb-2"><Link to="/app/vault" className="text-decoration-none"><i className="bi bi-folder2-open me-2"></i>My Vault</Link></li>
             <li className="mb-2"><Link to="/app/teams" className="text-decoration-none"><i className="bi bi-people-fill me-2"></i>Teams</Link></li>
+            <li className="mb-2"><Link to="/app/challenge" className="text-decoration-none"><i className="bi bi-award me-2"></i>Challenge</Link></li>
             <li className="mb-2"><Link to="/app/activity" className="text-decoration-none"><i className="bi bi-graph-up me-2"></i>Activity</Link></li>
             <li className="mb-2"><Link to="/app/settings" className="text-decoration-none"><i className="bi bi-gear-fill me-2"></i>Settings</Link></li>
           </ul>

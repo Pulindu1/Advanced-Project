@@ -39,6 +39,7 @@ This repository contains two CTF example apps. Quick commands below show how to 
 
 	# Vite prints the exact local URL to open (example):
 	# http://localhost:5173
+	(if it does not work try http://localhost:5174)
 	```
 
 Notes
