@@ -12,8 +12,9 @@ export default defineConfig({
       // Proxy API requests to the backend so cookies are same-site during dev
       '/api': {
         target: 'http://localhost:4000',
-        changeOrigin: true,
-        secure: false
+        changeOrigin: false,
+        secure: false,
+        cookieDomainRewrite: 'localhost'
       }
     }
   }

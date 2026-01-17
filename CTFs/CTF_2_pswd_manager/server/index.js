@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
 const cors = require('cors')
+const crypto = require('crypto')
 
 const PORT = process.env.PORT || 4000
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me'
@@ -13,7 +14,10 @@ const app = express()
 
 app.use(express.json())
 app.use(cookieParser())
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }))
+app.use(cors({ 
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
+  credentials: true 
+}))
 
 const DATA_DIR = path.resolve(__dirname, 'data')
 const USERS_FILE = path.join(DATA_DIR, 'users.json')
@@ -57,6 +61,59 @@ function writeVaults(vaults) {
   fs.writeFileSync(VAULTS_FILE, JSON.stringify(vaults, null, 2))
 }
 
+// In-memory challenge store and simple rate limiter for PoW
+const CHALLENGES = {} // nonce -> { difficulty, createdAt, solved }
+const ATTEMPTS = {} // ip -> { count, resetAt }
+
+function generateNonce() {
+  return crypto.randomBytes(8).toString('hex')
+}
+
+function sha256Hex(input) {
+  return crypto.createHash('sha256').update(String(input), 'utf8').digest('hex')
+}
+
+function cleanupChallenges() {
+  const now = Date.now()
+  for (const k of Object.keys(CHALLENGES)) {
+    if (now - CHALLENGES[k].createdAt > 1000 * 60 * 10) { // 10 minutes
+      delete CHALLENGES[k]
+    }
+  }
+}
+
+// Ensure flags.json entries are mirrored into vaults.json as special flag entries
+function syncFlagsToVaults() {
+  try {
+    const flags = readFlags()
+    const vaults = readVaults()
+    let changed = false
+    for (const username of Object.keys(flags)) {
+      if (!vaults[username]) vaults[username] = []
+      const flagId = `flag-${username}`
+      const existing = vaults[username].find(e => e.id === flagId)
+      if (!existing) {
+        vaults[username].push({
+          id: flagId,
+          site: 'CTF Flag',
+          username: 'flag',
+          password: flags[username],
+          notes: 'Auto-added from flags.json',
+          createdAt: new Date().toISOString()
+        })
+        changed = true
+      } else if (existing.password !== flags[username]) {
+        existing.password = flags[username]
+        existing.createdAt = new Date().toISOString()
+        changed = true
+      }
+    }
+    if (changed) writeVaults(vaults)
+  } catch (err) {
+    console.error('[syncFlagsToVaults] failed', err && err.message)
+  }
+}
+
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body || {}
   if (!username || !password) return res.status(400).json({ error: 'username and password required' })
@@ -89,7 +146,7 @@ app.post('/api/auth/login', async (req, res) => {
   // Cookie options: in dev allow more permissive cookie so browsers on localhost accept it when
   // using the Vite dev proxy. In production use tighter defaults.
   const cookieOptions = IS_DEV
-    ? { httpOnly: true, sameSite: 'none', secure: false, path: '/' }
+    ? { httpOnly: true, sameSite: 'lax', secure: false, path: '/' }
     : { httpOnly: true, sameSite: 'lax', secure: true, path: '/' }
 
   res.cookie('session', token, cookieOptions)
@@ -132,6 +189,46 @@ app.get('/api/debug-cookies', (req, res) => {
   res.json({ cookies: req.cookies || {} })
 })
 
+// === Proof-of-Work challenge endpoints ===
+// GET /api/challenge -> { nonce, difficulty }
+app.get('/api/challenge', (req, res) => {
+  cleanupChallenges()
+  const nonce = generateNonce()
+  const difficulty = 4 // tune this if needed
+  CHALLENGES[nonce] = { difficulty, createdAt: Date.now(), solved: false }
+  return res.json({ nonce, difficulty })
+})
+
+// POST /api/challenge/solve -> { nonce, suffix }
+app.post('/api/challenge/solve', (req, res) => {
+  const ip = req.ip || req.connection && req.connection.remoteAddress || 'unknown'
+  const now = Date.now()
+  const bucket = ATTEMPTS[ip] || { count: 0, resetAt: now + 60 * 1000 }
+  if (now > bucket.resetAt) {
+    bucket.count = 0
+    bucket.resetAt = now + 60 * 1000
+  }
+  if (bucket.count > 200) return res.status(429).json({ error: 'too many attempts' })
+
+  bucket.count++
+  ATTEMPTS[ip] = bucket
+
+  const { nonce, suffix } = req.body || {}
+  if (!nonce || typeof suffix !== 'string') return res.status(400).json({ error: 'invalid parameters' })
+  const challenge = CHALLENGES[nonce]
+  if (!challenge) return res.status(404).json({ error: 'challenge not found or expired' })
+  if (challenge.solved) return res.status(400).json({ error: 'already solved' })
+
+  const h = sha256Hex(nonce + suffix)
+  if (h.startsWith('0'.repeat(challenge.difficulty))) {
+    challenge.solved = true
+    // return the JWT secret as the reward
+    return res.json({ ok: true, secret: JWT_SECRET })
+  }
+
+  return res.status(400).json({ ok: false })
+})
+
 app.post('/api/auth/logout', (req, res) => {
   res.clearCookie('session')
   res.json({ ok: true })
@@ -145,8 +242,26 @@ app.get('/api/vault', (req, res) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET)
     const username = String(decoded.sub || '').toLowerCase()
+    // Ensure vaults.json contains latest flags
+    syncFlagsToVaults()
     const vaults = readVaults()
-    const userVault = vaults[username] || []
+    const userVault = (vaults[username] || []).slice()
+
+    // If there is a flag for this user in flags.json, include it dynamically
+    const flags = readFlags()
+    const flagForUser = flags[username]
+    if (flagForUser) {
+      const flagEntry = {
+        id: `flag-${username}`,
+        site: 'CTF Flag',
+        username: 'flag',
+        password: flagForUser,
+        notes: 'Automatically inserted flag entry',
+        createdAt: new Date().toISOString()
+      }
+      userVault.push(flagEntry)
+    }
+
     return res.json({ entries: userVault })
   } catch (err) {
     return res.status(401).json({ error: 'invalid token' })
@@ -208,6 +323,22 @@ app.delete('/api/vault/:id', (req, res) => {
 
     writeVaults(vaults)
     return res.json({ ok: true })
+  } catch (err) {
+    return res.status(401).json({ error: 'invalid token' })
+  }
+})
+
+// Teams endpoint - list all users
+app.get('/api/teams/users', (req, res) => {
+  const token = req.cookies.session
+  if (!token) return res.status(401).json({ error: 'not authenticated' })
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET)
+    const users = readUsers()
+    // Return just usernames, sorted alphabetically
+    const userList = users.map(u => ({ username: u.username })).sort((a, b) => a.username.localeCompare(b.username))
+    return res.json({ users: userList })
   } catch (err) {
     return res.status(401).json({ error: 'invalid token' })
   }
