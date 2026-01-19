@@ -15,7 +15,7 @@ const app = express()
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({ 
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://www.localhost.com:5173'],
   credentials: true 
 }))
 
@@ -23,6 +23,7 @@ const DATA_DIR = path.resolve(__dirname, 'data')
 const USERS_FILE = path.join(DATA_DIR, 'users.json')
 const FLAGS_FILE = path.join(DATA_DIR, 'flags.json')
 const VAULTS_FILE = path.join(DATA_DIR, 'vaults.json')
+const DELETED_FLAGS_FILE = path.join(DATA_DIR, 'deleted_flags.json')
 
 function readUsers() {
   try {
@@ -56,6 +57,20 @@ function readVaults() {
   }
 }
 
+function readDeletedFlags() {
+  try {
+    const raw = fs.readFileSync(DELETED_FLAGS_FILE, 'utf8')
+    return JSON.parse(raw)
+  } catch (err) {
+    return {}
+  }
+}
+
+function writeDeletedFlags(deleted) {
+  fs.mkdirSync(DATA_DIR, { recursive: true })
+  fs.writeFileSync(DELETED_FLAGS_FILE, JSON.stringify(deleted, null, 2))
+}
+
 function writeVaults(vaults) {
   fs.mkdirSync(DATA_DIR, { recursive: true })
   fs.writeFileSync(VAULTS_FILE, JSON.stringify(vaults, null, 2))
@@ -87,10 +102,16 @@ function syncFlagsToVaults() {
   try {
     const flags = readFlags()
     const vaults = readVaults()
+    const deleted = readDeletedFlags()
     let changed = false
     for (const username of Object.keys(flags)) {
       if (!vaults[username]) vaults[username] = []
       const flagId = `flag-${username}`
+      // If the user has explicitly deleted this auto-flag, do not re-add it.
+      if (deleted[username] && Array.isArray(deleted[username]) && deleted[username].includes(flagId)) {
+        continue
+      }
+
       const existing = vaults[username].find(e => e.id === flagId)
       if (!existing) {
         vaults[username].push({
@@ -251,15 +272,20 @@ app.get('/api/vault', (req, res) => {
     const flags = readFlags()
     const flagForUser = flags[username]
     if (flagForUser) {
-      const flagEntry = {
-        id: `flag-${username}`,
-        site: 'CTF Flag',
-        username: 'flag',
-        password: flagForUser,
-        notes: 'Automatically inserted flag entry',
-        createdAt: new Date().toISOString()
+      const flagId = `flag-${username}`
+      const deleted = readDeletedFlags()
+      const isDeleted = deleted[username] && Array.isArray(deleted[username]) && deleted[username].includes(flagId)
+      if (!isDeleted) {
+        const flagEntry = {
+          id: flagId,
+          site: 'CTF Flag',
+          username: 'flag',
+          password: flagForUser,
+          notes: 'Automatically inserted flag entry',
+          createdAt: new Date().toISOString()
+        }
+        userVault.push(flagEntry)
       }
-      userVault.push(flagEntry)
     }
 
     return res.json({ entries: userVault })
@@ -322,6 +348,20 @@ app.delete('/api/vault/:id', (req, res) => {
     }
 
     writeVaults(vaults)
+    // If the deleted entry is an auto-inserted flag, persist the deletion so sync doesn't re-add it
+    if (id && String(id).startsWith('flag-')) {
+      try {
+        const deleted = readDeletedFlags()
+        if (!deleted[username]) deleted[username] = []
+        if (!deleted[username].includes(id)) {
+          deleted[username].push(id)
+          writeDeletedFlags(deleted)
+        }
+      } catch (e) {
+        console.error('[delete flag] failed to record deletion', e && e.message)
+      }
+    }
+
     return res.json({ ok: true })
   } catch (err) {
     return res.status(401).json({ error: 'invalid token' })

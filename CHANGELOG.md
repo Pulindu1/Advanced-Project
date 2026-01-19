@@ -9,6 +9,9 @@ files changed (optional)
 # Logs:
 
 
+### Fixed vault bug - 19/01/26 - CTF 2
+- The vault had a bug where it had the flag on abcd12's account. The server didn't let me delete it.
+I fixed this.
 
 ### Full CTF completion - 17/01/26 - CTF 2
 - I added the complete implementation of the CTF. It is two stages, once the user solves the /app/challenge,
