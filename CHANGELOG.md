@@ -9,6 +9,18 @@ files changed (optional)
 # Logs:
 
 
+
+
+
+
+
+
+
+
+
+### Login Limiter - 19/01/26 - CTF 2
+- Added a login limiter.
+
 ### Fixed vault bug - 19/01/26 - CTF 2
 - The vault had a bug where it had the flag on abcd12's account. The server didn't let me delete it.
 I fixed this.

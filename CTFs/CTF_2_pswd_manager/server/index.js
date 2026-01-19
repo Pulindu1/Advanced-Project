@@ -24,6 +24,7 @@ const USERS_FILE = path.join(DATA_DIR, 'users.json')
 const FLAGS_FILE = path.join(DATA_DIR, 'flags.json')
 const VAULTS_FILE = path.join(DATA_DIR, 'vaults.json')
 const DELETED_FLAGS_FILE = path.join(DATA_DIR, 'deleted_flags.json')
+const LOGIN_ATTEMPTS_FILE = path.join(DATA_DIR, 'login_attempts.json')
 
 function readUsers() {
   try {
@@ -135,6 +136,27 @@ function syncFlagsToVaults() {
   }
 }
 
+function readLoginAttempts() {
+  try {
+    const raw = fs.readFileSync(LOGIN_ATTEMPTS_FILE, 'utf8')
+    return JSON.parse(raw)
+  } catch (err) {
+    return {}
+  }
+}
+
+function writeLoginAttempts(obj) {
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true })
+    fs.writeFileSync(LOGIN_ATTEMPTS_FILE, JSON.stringify(obj, null, 2))
+  } catch (err) {
+    console.error('[writeLoginAttempts] failed', err && err.message)
+  }
+}
+
+// Load persisted login attempts into memory
+let LOGIN_ATTEMPTS = readLoginAttempts() || {}
+
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body || {}
   if (!username || !password) return res.status(400).json({ error: 'username and password required' })
@@ -155,12 +177,49 @@ app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body || {}
   if (!username || !password) return res.status(400).json({ error: 'username and password required' })
 
+  const now = Date.now()
+  const ukey = String(username).toLowerCase()
+  if (!LOGIN_ATTEMPTS[ukey]) LOGIN_ATTEMPTS[ukey] = { count: 0, lockedUntil: 0 }
+  const la = LOGIN_ATTEMPTS[ukey]
+
+  // If currently locked, return 429 with lockedUntil
+  if (la.lockedUntil && now < la.lockedUntil) {
+    return res.status(429).json({ error: 'too many attempts', lockedUntil: la.lockedUntil })
+  }
+
   const users = readUsers()
-  const user = users.find(u => u.username.toLowerCase() === username.toLowerCase())
-  if (!user) return res.status(401).json({ error: 'invalid credentials' })
+  const user = users.find(u => u.username.toLowerCase() === ukey)
+
+  // Helper to record a failed attempt and possibly lock
+  const recordFailure = () => {
+    la.count = (la.count || 0) + 1
+    if (la.count >= 4) {
+      la.lockedUntil = Date.now() + 45 * 1000 // 45 seconds lock
+      la.count = 0
+      writeLoginAttempts(LOGIN_ATTEMPTS)
+      return { locked: true, lockedUntil: la.lockedUntil }
+    }
+    writeLoginAttempts(LOGIN_ATTEMPTS)
+    return { locked: false }
+  }
+
+  if (!user) {
+    const r = recordFailure()
+    if (r.locked) return res.status(429).json({ error: 'too many attempts', lockedUntil: r.lockedUntil })
+    return res.status(401).json({ error: 'invalid credentials' })
+  }
 
   const ok = await bcrypt.compare(password, user.passwordHash)
-  if (!ok) return res.status(401).json({ error: 'invalid credentials' })
+  if (!ok) {
+    const r = recordFailure()
+    if (r.locked) return res.status(429).json({ error: 'too many attempts', lockedUntil: r.lockedUntil })
+    return res.status(401).json({ error: 'invalid credentials' })
+  }
+
+  // success - reset attempts and persist
+  LOGIN_ATTEMPTS[ukey] = { count: 0, lockedUntil: 0 }
+  writeLoginAttempts(LOGIN_ATTEMPTS)
+
   const tokenOpts = IS_DEV ? { expiresIn: '7d' } : { expiresIn: '15m' }
   const token = jwt.sign({ sub: user.username }, JWT_SECRET, tokenOpts)
 
