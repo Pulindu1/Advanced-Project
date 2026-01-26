@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ctf3_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hr_system
+      POSTGRES_USER: hr_admin
+      POSTGRES_PASSWORD: hr_secure_pwd_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hr_admin -d hr_system"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

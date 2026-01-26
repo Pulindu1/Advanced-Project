@@ -16,7 +16,9 @@ files changed (optional)
 
 
 
-
+### Initial Commit - 26/01/26 - CTF 3
+- Initial commit. There is a lot wrong with the current code, so we may have to fall back later, but its okay for now.
+- We are currently working on getting docker working, and having the site up and running still.
 
 ### Login Limiter - 19/01/26 - CTF 2
 - Added a login limiter.
