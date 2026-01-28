@@ -19,6 +19,11 @@ Route::middleware('throttle:api')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
 });
 
+// Test route without middleware
+Route::get('/test', function () {
+    return response()->json(['message' => 'API is working']);
+});
+
 // Protected routes
 Route::middleware(['auth.jwt'])->group(function () {
     // Auth

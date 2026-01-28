@@ -14,7 +14,8 @@ files changed (optional)
 
 
 
-
+### Fixed Login - 28/01/26 - CTF 3
+- We previously was not able to login. Issues with the backend. We now have that working. The website is still bare and has limited useful functionality so we need to take a look at that.
 
 ### Initial Commit - 26/01/26 - CTF 3
 - Initial commit. There is a lot wrong with the current code, so we may have to fall back later, but its okay for now.

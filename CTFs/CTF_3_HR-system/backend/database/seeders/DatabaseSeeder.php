@@ -76,11 +76,11 @@ class DatabaseSeeder extends Seeder
             $dept = $departments[array_rand($departments)];
             $position = $positions[array_rand($positions)];
 
-            // Create user with username as password (simple for CTF)
+            // Create user with 'password' as password (simple for CTF)
             $user = User::create([
                 'username' => $username,
                 'email' => $username . '@company.internal',
-                'password' => Hash::make($username), // Password is same as username
+                'password' => Hash::make('password'), // Password is 'password' for all users
                 'first_name' => ucfirst(substr($username, 0, 2)),
                 'last_name' => ucfirst(substr($username, 2, 2)),
                 'role' => 'employee',
@@ -109,10 +109,10 @@ class DatabaseSeeder extends Seeder
         $this->command->info('');
         $this->command->info('Database seeded successfully!');
         $this->command->info('');
-        $this->command->info('Player credentials (password = username):');
+        $this->command->info('Player credentials (password = password):');
         foreach (array_keys($flags) as $username) {
             if (preg_match('/^[a-z]{4}[0-9]{2}$/', $username)) {
-                $this->command->info("  $username / $username");
+                $this->command->info("  $username / password");
             }
         }
     }

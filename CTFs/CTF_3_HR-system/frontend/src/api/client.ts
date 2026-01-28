@@ -1,4 +1,4 @@
-const API_BASE = '/api'
+const API_BASE = 'http://127.0.0.1:8003/api'
 
 interface ApiOptions extends RequestInit {
   token?: string
@@ -16,17 +16,24 @@ export async function apiFetch<T>(endpoint: string, options: ApiOptions = {}): P
     headers['Authorization'] = `Bearer ${token}`
   }
 
+  console.log('API Request:', `${API_BASE}${endpoint}`, { headers, body: fetchOptions.body })
+
   const response = await fetch(`${API_BASE}${endpoint}`, {
     ...fetchOptions,
     headers,
   })
 
+  console.log('API Response:', response.status, response.statusText)
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }))
+    console.error('API Error:', error)
     throw new Error(error.error || `HTTP ${response.status}`)
   }
 
-  return response.json()
+  const data = await response.json()
+  console.log('API Data:', data)
+  return data
 }
 
 // Auth API

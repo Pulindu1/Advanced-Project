@@ -17,15 +17,19 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $request->validate([
-            'username' => 'required|string|max:255',
-            'password' => 'required|string',
-        ]);
+        try {
+            \Log::info('Login attempt started');
+            
+            $request->validate([
+                'username' => 'required|string|max:255',
+                'password' => 'required|string',
+            ]);
 
-        $username = $request->input('username');
-        $key = 'login-attempts:' . $request->ip() . ':' . strtolower($username);
-
-        // Rate limiting: 5 attempts per minute
+            $username = $request->input('username');
+            \Log::info('Login for user: ' . $username);
+            
+            $key = 'login_' . $request->ip() . '_' . $username;
+            
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
             AuditLog::logAction(null, 'login_rate_limited', 'auth', null, null, ['username' => $username]);
@@ -37,6 +41,7 @@ class AuthController extends Controller
         }
 
         $user = User::where('username', $username)->first();
+        \Log::info('User found: ' . ($user ? 'yes' : 'no'));
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             RateLimiter::hit($key, 60);
@@ -54,6 +59,7 @@ class AuthController extends Controller
         RateLimiter::clear($key);
 
         // Generate JWT
+        \Log::info('Generating JWT token');
         $payload = [
             'iss' => config('app.url'),
             'sub' => $user->id,
@@ -64,6 +70,7 @@ class AuthController extends Controller
         ];
 
         $token = JWT::encode($payload, config('jwt.secret'), config('jwt.algo'));
+        \Log::info('JWT token generated successfully');
 
         AuditLog::logAction($user->id, 'login_success', 'auth');
 
@@ -79,6 +86,14 @@ class AuthController extends Controller
             ],
             'expires_in' => config('jwt.ttl') * 60,
         ]);
+        } catch (\Exception $e) {
+            \Log::error('Login error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Login failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
