@@ -25,20 +25,33 @@ composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed
-php artisan serve --port=8000
+php artisan serve --host=127.0.0.1 --port=8004
 ```
 
 ### 3. Set up React Frontend
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev  # Runs on http://localhost:5174
 ```
 
-### 4. Generate Player Flags
+### 4. Generate Player Credentials & Flags
 ```bash
-cd CTFs/challenge-generation
-node chgen_ctf3.js
+cd ../challenge-generation
+
+# Generate flags for players (username -> flag mapping)
+node chgen_basic1.js
+
+# Generate credentials with employee data (username -> password, employee_id, dept, etc.)
+node generate_credentials.js
+
+# Both files will be created in CTFs/CTF_3_HR-system/
+# - flags.json
+# - credentials.json
+
+# Then reseed the database
+cd ../CTF_3_HR-system/backend
+php artisan migrate:fresh --seed
 ```
 
 ## Architecture
@@ -49,35 +62,74 @@ CTF_3_HR-system/
 │   ├── app/
 │   │   ├── Http/Controllers/
 │   │   ├── Models/
+│   │   │   ├── User.php
+│   │   │   ├── Employee.php
+│   │   │   ├── Credential.php    # VULNERABLE - plaintext passwords
+│   │   │   └── Flag.php
 │   │   └── ...
 │   ├── database/
 │   │   ├── migrations/
-│   │   └── seeders/
+│   │   │   ├── *_create_users_table.php
+│   │   │   ├── *_create_employees_table.php
+│   │   │   ├── *_create_credentials_table.php    # VULNERABLE TABLE
+│   │   │   └── *_create_flags_table.php
+│   │   └── seeders/DatabaseSeeder.php
 │   └── routes/api.php
 ├── frontend/             # React SPA
 │   ├── src/
 │   │   ├── components/
 │   │   ├── pages/
-│   │   └── api/
+│   │   ├── api/client.ts
+│   │   └── context/AuthContext.tsx
 │   └── ...
-├── docker-compose.yml    # PostgreSQL
-└── flags.json            # Generated per-player flags
+├── docker-compose.yml    # PostgreSQL container
+├── flags.json            # Generated per-player flags
+└── credentials.json      # Generated per-player credentials + employee data
 ```
 
-## Security Features (Secure by Default)
+## Security Features
 
-- CSRF protection on all forms
-- Parameterized queries (Eloquent ORM)
-- Password hashing (bcrypt)
-- JWT authentication with short expiry
-- Input validation on all endpoints
-- Rate limiting on auth endpoints
-- Audit logging for sensitive actions
+### Secure Elements (Protected)
+- ✓ CSRF protection on web routes
+- ✓ Parameterized queries for all endpoints (except vulnerable login)
+- ✓ Password hashing with bcrypt in `users` table
+- ✓ JWT authentication with configurable expiry
+- ✓ Input validation on all endpoints
+- ✓ Rate limiting on auth endpoints
+- ✓ Audit logging for sensitive actions
+
+### Intentional Vulnerabilities (For CTF)
+- ✗ **SQL Injection** - Login endpoint uses raw queries (Phase 3 - to be implemented)
+- ✗ **Plaintext password storage** - `credentials` table stores passwords unencrypted
+- ✗ **Information disclosure** - Error messages leak SQL structure
+
+**Note:** The `users` table uses secure bcrypt passwords. The `credentials` table contains plaintext passwords specifically for the SQL injection challenge.
 
 ## CTF Integration
 
 Player flags are generated via `CTFs/challenge-generation/chgen_ctf3.js` and stored in `flags.json`.
 Each player's flag is stored in the database and accessible only to authorized users.
+
+## Running the Application
+
+**Ports:**
+- Backend API: http://127.0.0.1:8004
+- Frontend: http://localhost:5174
+- PostgreSQL Database: localhost:5432
+
+**Start Backend:**
+```bash
+cd backend
+php artisan serve --host=127.0.0.1 --port=8004
+```
+
+**Start Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+**Note:** These ports differ from CTF_2_pswd_manager (which uses 4000/5173) to allow both CTFs to run simultaneously.
 
 ## Default Credentials (Seeded)
 

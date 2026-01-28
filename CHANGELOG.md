@@ -12,7 +12,17 @@ files changed (optional)
 
 
 
-
+### Updated Credentials Database - 28/01/26 - CTF 3
+- Previously, data was stored only in flags.json, including just username and flag. We now generated passwords, as well as other information.
+- Schema:
+  - `username` (primary key)
+  - `password` (plaintext - INSECURE BY DESIGN)
+  - `password_hint` 
+  - `last_login`
+  - `created_at`, `updated_at`
+- We also updated the documentation including the README.md and the SETUP_CREDENTIALS.md.
+- We also changed the port numbers used, there was a clash with CTF2.
+- Fixed CORS bug following the changes too.
 
 ### Fixed Login - 28/01/26 - CTF 3
 - We previously was not able to login. Issues with the backend. We now have that working. The website is still bare and has limited useful functionality so we need to take a look at that.

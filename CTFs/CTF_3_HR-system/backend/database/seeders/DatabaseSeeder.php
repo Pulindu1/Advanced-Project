@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Flag;
+use App\Models\Credential;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
@@ -51,7 +52,8 @@ class DatabaseSeeder extends Seeder
         if (!file_exists($flagsFile)) {
             $this->command->error('flags.json not found! Run the challenge generator first:');
             $this->command->error('  cd CTFs/challenge-generation');
-            $this->command->error('  node chgen_ctf3.js --count 10');
+            $this->command->error('  node chgen_basic1.js --count 10');
+            $this->command->error('  node generate_credentials.js');
             return;
         }
 
@@ -61,10 +63,25 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
+        // Load credentials from credentials.json
+        $credentialsFile = dirname(__DIR__, 3) . '/credentials.json';
+        if (!file_exists($credentialsFile)) {
+            $this->command->error('credentials.json not found! Run the credentials generator:');
+            $this->command->error('  cd CTFs/challenge-generation');
+            $this->command->error('  node generate_credentials.js');
+            return;
+        }
+
+        $credentials = json_decode(file_get_contents($credentialsFile), true);
+        if (!is_array($credentials) || empty($credentials)) {
+            $this->command->error('credentials.json is empty or invalid!');
+            return;
+        }
+
         $this->command->info("Found " . count($flags) . " players in flags.json");
+        $this->command->info("Found " . count($credentials) . " credentials in credentials.json");
 
         // Create a user account for each player in flags.json
-        $empNum = 1;
         foreach ($flags as $username => $flagValue) {
             // Validate username format (4 letters + 2 numbers)
             if (!preg_match('/^[a-z]{4}[0-9]{2}$/', $username)) {
@@ -72,15 +89,46 @@ class DatabaseSeeder extends Seeder
                 continue;
             }
 
-            // Pick random department and position
-            $dept = $departments[array_rand($departments)];
-            $position = $positions[array_rand($positions)];
+            // Get credential data from credentials.json
+            if (!isset($credentials[$username])) {
+                $this->command->warn("No credentials found for $username, skipping");
+                continue;
+            }
 
-            // Create user with 'password' as password (simple for CTF)
+            $credData = $credentials[$username];
+            
+            // Support both old format (string password) and new format (object with details)
+            if (is_string($credData)) {
+                // Old format - generate random data
+                $userPassword = $credData;
+                $employeeId = 'EMP' . str_pad(array_search($username, array_keys($credentials)) + 1, 3, '0', STR_PAD_LEFT);
+                $dept = $departments[array_rand($departments)];
+                $position = $positions[array_rand($positions)];
+                $hireDate = now()->subMonths(rand(1, 36))->format('Y-m-d');
+            } else {
+                // New format - use data from credentials.json
+                $userPassword = $credData['password'];
+                $employeeId = $credData['employee_id'];
+                $credDeptName = $credData['department'];
+                $position = $credData['position'];
+                $hireDate = $credData['hire_date'];
+                
+                // Find matching department
+                $dept = collect($departments)->first(function($d) use ($credDeptName) {
+                    return $d->name === $credDeptName;
+                });
+                
+                if (!$dept) {
+                    $this->command->warn("Department '$credDeptName' not found for $username, using random");
+                    $dept = $departments[array_rand($departments)];
+                }
+            }
+
+            // Create user with bcrypt hashed password (for secure post-exploitation auth)
             $user = User::create([
                 'username' => $username,
                 'email' => $username . '@company.internal',
-                'password' => Hash::make('password'), // Password is 'password' for all users
+                'password' => Hash::make($userPassword),
                 'first_name' => ucfirst(substr($username, 0, 2)),
                 'last_name' => ucfirst(substr($username, 2, 2)),
                 'role' => 'employee',
@@ -90,11 +138,11 @@ class DatabaseSeeder extends Seeder
 
             Employee::create([
                 'user_id' => $user->id,
-                'employee_id' => 'EMP' . str_pad($empNum++, 3, '0', STR_PAD_LEFT),
+                'employee_id' => $employeeId,
                 'department_id' => $dept->id,
                 'position' => $position,
                 'salary' => rand(50000, 90000),
-                'hire_date' => now()->subMonths(rand(1, 36))->format('Y-m-d'),
+                'hire_date' => $hireDate,
             ]);
 
             // Store the flag for this user
@@ -103,17 +151,33 @@ class DatabaseSeeder extends Seeder
                 'flag_value' => $flagValue,
             ]);
 
-            $this->command->info("Created player: $username");
+            // Store credentials in vulnerable table (PLAINTEXT - for SQL injection challenge)
+            Credential::create([
+                'username' => $username,
+                'password' => $userPassword, // PLAINTEXT PASSWORD (intentionally insecure)
+                'password_hint' => 'Contact HR if you forgot your password',
+                'employee_id' => $employeeId,
+                'department' => $dept->name,
+                'position' => $position,
+                'hire_date' => $hireDate,
+            ]);
+
+            $this->command->info("Created player: $username (password: $userPassword, dept: {$dept->name})");
         }
 
         $this->command->info('');
         $this->command->info('Database seeded successfully!');
         $this->command->info('');
-        $this->command->info('Player credentials (password = password):');
+        $this->command->info('Player credentials:');
         foreach (array_keys($flags) as $username) {
             if (preg_match('/^[a-z]{4}[0-9]{2}$/', $username)) {
-                $this->command->info("  $username / password");
+                $credData = $credentials[$username] ?? 'password';
+                $pwd = is_string($credData) ? $credData : $credData['password'];
+                $this->command->info("  $username / $pwd");
             }
         }
+        $this->command->info('');
+        $this->command->info('NOTE: Credentials table contains PLAINTEXT passwords + employee data');
+        $this->command->info('      This is INTENTIONALLY VULNERABLE for SQL injection challenge');
     }
 }
