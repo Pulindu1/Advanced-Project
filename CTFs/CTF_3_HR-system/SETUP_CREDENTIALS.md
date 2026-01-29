@@ -21,6 +21,7 @@
   - `department` (Engineering, HR, Finance, Operations)
   - `position` (job title)
   - `hire_date` (YYYY-MM-DD)
+  - `monthly_pay` (decimal - employee compensation)
   - `last_login`
   - `created_at`, `updated_at`
 
@@ -58,14 +59,16 @@ This creates `CTFs/CTF_3_HR-system/credentials.json`:
     "employee_id": "EMP001",
     "department": "Operations",
     "position": "Software Engineer",
-    "hire_date": "2023-04-28"
+    "hire_date": "2023-04-28",
+    "monthly_pay": 8500
   },
   "efgh34": {
     "password": "WzofNHHMUn",
     "employee_id": "EMP002",
     "department": "Finance",
     "position": "Junior Developer",
-    "hire_date": "2024-06-28"
+    "hire_date": "2024-06-28",
+    "monthly_pay": 5300
   }
 }
 ```
@@ -93,6 +96,17 @@ For each user in `flags.json`, the generator creates:
 5. **Hire Date**: Random date 1-36 months ago
    - Calculated from current date minus random months
    - Format: `YYYY-MM-DD`
+
+6. **Monthly Pay**: Calculated based on position and experience
+   - Base pay varies by position:
+     - Software Engineer: $8,000
+     - Junior Developer: $5,000
+     - Data Analyst: $6,500
+     - Systems Administrator: $7,000
+     - Technical Support: $4,500
+     - Project Coordinator: $5,500
+   - Experience bonus: $200 per year worked
+   - Random variation: +$100 to +$500
 
 **Important**: Once generated, this data is **fixed in credentials.json**. The database seeder uses these exact values - it does NOT regenerate them randomly during seeding.
 

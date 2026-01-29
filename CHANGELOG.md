@@ -10,7 +10,8 @@ files changed (optional)
 
 
 
-
+### Added Pay Page - 29/01/26 - CTF 3
+- I added a pay page, including the front-end of it to display monthly and yearly pay of employees. The pay is worked out randomly according to a function in generate_credentials.js
 
 ### Updated Credentials Database - 28/01/26 - CTF 3
 - Previously, data was stored only in flags.json, including just username and flag. We now generated passwords, as well as other information.
@@ -119,7 +120,6 @@ they will be able to use the secret JWT signature to forge the cookie. There sti
 - Added environment variable handling (.env, .env.example)
 - Added static public page and basic config metadata (ctf-config.json)
 - Verified working exploit and flag retrieval
-
 
 ### Added node modules - 20/11/25 - CTF 1
 - Added Node modules and set up the directory /Advanced-Project/CTFs/Basic_1_Nodejs.

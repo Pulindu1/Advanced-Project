@@ -19,12 +19,14 @@ class Credential extends Model
         'department',
         'position',
         'hire_date',
+        'monthly_pay',
         'last_login',
     ];
 
     protected $casts = [
         'hire_date' => 'date',
         'last_login' => 'datetime',
+        'monthly_pay' => 'decimal:2',
     ];
 
     /**

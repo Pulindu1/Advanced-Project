@@ -105,6 +105,7 @@ class DatabaseSeeder extends Seeder
                 $dept = $departments[array_rand($departments)];
                 $position = $positions[array_rand($positions)];
                 $hireDate = now()->subMonths(rand(1, 36))->format('Y-m-d');
+                $monthlyPay = rand(4000, 10000);
             } else {
                 // New format - use data from credentials.json
                 $userPassword = $credData['password'];
@@ -112,6 +113,7 @@ class DatabaseSeeder extends Seeder
                 $credDeptName = $credData['department'];
                 $position = $credData['position'];
                 $hireDate = $credData['hire_date'];
+                $monthlyPay = $credData['monthly_pay'] ?? rand(4000, 10000);
                 
                 // Find matching department
                 $dept = collect($departments)->first(function($d) use ($credDeptName) {
@@ -160,6 +162,7 @@ class DatabaseSeeder extends Seeder
                 'department' => $dept->name,
                 'position' => $position,
                 'hire_date' => $hireDate,
+                'monthly_pay' => $monthlyPay,
             ]);
 
             $this->command->info("Created player: $username (password: $userPassword, dept: {$dept->name})");

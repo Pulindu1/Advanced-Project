@@ -35,6 +35,26 @@ function generateHireDate() {
   return now.toISOString().split('T')[0]; // YYYY-MM-DD
 }
 
+// Generate monthly pay based on position and experience
+function generateMonthlyPay(position, hireDate) {
+  const basePay = {
+    'Software Engineer': 8000,
+    'Junior Developer': 5000,
+    'Data Analyst': 6500,
+    'Systems Administrator': 7000,
+    'Technical Support': 4500,
+    'Project Coordinator': 5500
+  };
+  
+  const base = basePay[position] || 5000;
+  // Add 100-500 variation based on experience
+  const yearsWorked = Math.floor((new Date() - new Date(hireDate)) / (365 * 24 * 60 * 60 * 1000));
+  const experienceBonus = yearsWorked * 200;
+  const randomVariation = Math.floor(Math.random() * 500) + 100;
+  
+  return base + experienceBonus + randomVariation;
+}
+
 // Departments and positions
 const DEPARTMENTS = ['Engineering', 'Human Resources', 'Finance', 'Operations'];
 const POSITIONS = [
@@ -95,16 +115,18 @@ function main() {
     const department = DEPARTMENTS[Math.floor(Math.random() * DEPARTMENTS.length)];
     const position = POSITIONS[Math.floor(Math.random() * POSITIONS.length)];
     const hireDate = generateHireDate();
+    const monthlyPay = generateMonthlyPay(position, hireDate);
     
     credentials[username] = {
       password,
       employee_id: employeeId,
       department,
       position,
-      hire_date: hireDate
+      hire_date: hireDate,
+      monthly_pay: monthlyPay
     };
     
-    console.log(`  ${username} -> ${password} | ${employeeId} | ${department} | ${position} | ${hireDate}`);
+    console.log(`  ${username} -> ${password} | ${employeeId} | ${department} | ${position} | ${hireDate} | $${monthlyPay}`);
   }
   
   // Write credentials.json

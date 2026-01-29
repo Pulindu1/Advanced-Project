@@ -20,6 +20,7 @@ export function Layout({ children }: { children: ReactNode }) {
     { path: '/dashboard', label: 'Dashboard' },
     { path: '/employees', label: 'Employees' },
     { path: '/departments', label: 'Departments' },
+    { path: '/pay', label: 'Pay' },
   ]
 
   if (user?.role === 'admin') {

@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('department', 100);
             $table->string('position', 100);
             $table->date('hire_date');
+            $table->decimal('monthly_pay', 10, 2);
             $table->timestamp('last_login')->nullable();
             $table->timestamps();
             

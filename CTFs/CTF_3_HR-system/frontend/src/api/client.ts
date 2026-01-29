@@ -164,3 +164,22 @@ export interface PaginatedResponse<T> {
   per_page: number
   total: number
 }
+
+export interface PayData {
+  employee_id: string
+  username: string
+  department: string
+  position: string
+  hire_date: string
+  monthly_pay: number
+  annual_pay: number
+}
+
+// Pay API
+export const payApi = {
+  getMy: (token: string) =>
+    apiFetch<PayData>('/pay', { token }),
+
+  show: (token: string, employeeId: string) =>
+    apiFetch<PayData>(`/pay/${employeeId}`, { token }),
+}

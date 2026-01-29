@@ -7,6 +7,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FlagController;
+use App\Http\Controllers\PayController;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,6 +58,10 @@ Route::middleware(['auth.jwt'])->group(function () {
         Route::put('/departments/{id}', [DepartmentController::class, 'update']);
         Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
     });
+
+    // Pay (all authenticated users can view pay information)
+    Route::get('/pay', [PayController::class, 'index']);
+    Route::get('/pay/{employeeId}', [PayController::class, 'show']);
 
     // Audit Logs (Admin only)
     Route::middleware(['role:admin'])->group(function () {

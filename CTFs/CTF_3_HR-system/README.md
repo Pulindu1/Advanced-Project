@@ -3,7 +3,8 @@
 A deliberately vulnerable internal HR management system built with:
 - **Backend:** PHP (Laravel 11) with PostgreSQL
 - **Frontend:** React (Vite)
-- **Theme:** Internal corporate tool – HR management, employee records, audit logs
+- **Theme:** Internal corporate tool – HR management, employee records, audit logs, payroll
+- **Features:** Dashboard, Employees, Departments, Pay (compensation data)
 
 ## Quick Start
 
@@ -79,6 +80,10 @@ CTF_3_HR-system/
 │   ├── src/
 │   │   ├── components/
 │   │   ├── pages/
+│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── EmployeesPage.tsx
+│   │   │   ├── DepartmentsPage.tsx
+│   │   │   └── PayPage.tsx         # Employee compensation view
 │   │   ├── api/client.ts
 │   │   └── context/AuthContext.tsx
 │   └── ...
