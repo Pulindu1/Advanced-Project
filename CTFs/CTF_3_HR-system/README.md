@@ -74,6 +74,7 @@ See [CTF_SOLUTION.md](CTF_SOLUTION.md) for complete walkthrough.
 3. Seeder populates tables from `credentials.json`
 4. Artisan serves API on port 8004
 5. Vite dev server proxies to backend, serves frontend on 5174
+
 - ✓ JWT authentication with configurable expiry
 - ✓ Input validation on all endpoints
 - ✓ Rate limiting on auth endpoints
@@ -121,4 +122,14 @@ npm run dev
 | Employee| john.doe    | password   |
 
 ---
-*This system is intentionally designed for CTF training. Do not deploy in production.*
+
+## References
+
+**SQL Injection:**
+- TryHackMe Advanced SQL Injection: https://tryhackme.com/room/advancedsqlinjection
+- PortSwigger SQL Injection: https://portswigger.net/web-security/sql-injection
+
+**Development:**
+- Claude Sonnet 4.5 (Anthropic) - API exploitation and curl examples
+
+
