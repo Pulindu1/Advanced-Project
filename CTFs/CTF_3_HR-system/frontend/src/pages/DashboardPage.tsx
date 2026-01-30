@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { dashboardApi, DashboardStats, ActivityItem } from '../api/client'
+// Import legacy utilities for backward compatibility
+import '../utils/legacyAuth'
 
 export function DashboardPage() {
   const { user, token } = useAuth()
@@ -29,6 +31,7 @@ export function DashboardPage() {
 
   return (
     <div style={{ padding: 24 }}>
+      {/* TODO: Fix broken admin link - /admin/../../flag should redirect properly */}
       <h1 style={styles.title}>Dashboard</h1>
       <p style={styles.welcome}>Welcome back, {user?.first_name}!</p>
 

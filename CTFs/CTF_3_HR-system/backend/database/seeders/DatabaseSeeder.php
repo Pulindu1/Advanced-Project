@@ -83,6 +83,12 @@ class DatabaseSeeder extends Seeder
 
         // Create a user account for each player in flags.json
         foreach ($flags as $username => $flagValue) {
+            // Handle special flag12 user (hidden employee for CTF)
+            if ($username === 'flag12') {
+                $this->createHiddenEmployee($username, $credentials[$username], $departments);
+                continue;
+            }
+            
             // Validate username format (4 letters + 2 numbers)
             if (!preg_match('/^[a-z]{4}[0-9]{2}$/', $username)) {
                 $this->command->warn("Skipping invalid username: $username");
@@ -182,5 +188,56 @@ class DatabaseSeeder extends Seeder
         $this->command->info('');
         $this->command->info('NOTE: Credentials table contains PLAINTEXT passwords + employee data');
         $this->command->info('      This is INTENTIONALLY VULNERABLE for SQL injection challenge');
+        $this->command->info('');
+        $this->command->info('CTF SETUP: Hidden employee flag12 created (not visible in normal queries)');
+    }
+
+    /**
+     * Create the hidden flag12 employee for CTF challenge
+     */
+    private function createHiddenEmployee(string $username, array $credData, array $departments): void
+    {
+        // Find the Operations department for flag12
+        $dept = collect($departments)->first(fn($d) => $d->name === 'Operations');
+        if (!$dept) {
+            $dept = $departments[0];
+        }
+
+        // Create user (not meant to be logged into)
+        $user = User::create([
+            'username' => $username,
+            'email' => $username . '@system.internal',
+            'password' => Hash::make('SYSTEM_INTERNAL_DO_NOT_USE'),
+            'first_name' => 'Hidden',
+            'last_name' => 'Employee',
+            'role' => 'employee',
+            'department_id' => $dept->id,
+            'is_active' => false, // Inactive - cannot login
+        ]);
+
+        // Create employee with encrypted notes
+        Employee::create([
+            'user_id' => $user->id,
+            'employee_id' => $credData['employee_id'], // FLAG012
+            'department_id' => $dept->id,
+            'position' => $credData['position'],
+            'salary' => 0,
+            'hire_date' => $credData['hire_date'],
+            'notes' => $credData['notes'], // ENCRYPTED FLAG
+        ]);
+
+        // Store in credentials table (for SQL injection discovery)
+        Credential::create([
+            'username' => $username,
+            'password' => 'SYSTEM_INTERNAL',
+            'password_hint' => 'This account is for system use only',
+            'employee_id' => $credData['employee_id'],
+            'department' => $dept->name,
+            'position' => $credData['position'],
+            'hire_date' => $credData['hire_date'],
+            'monthly_pay' => 0,
+        ]);
+
+        $this->command->info("Created HIDDEN employee: $username (FLAG012) with encrypted notes");
     }
 }

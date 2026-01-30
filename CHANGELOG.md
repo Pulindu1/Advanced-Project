@@ -10,6 +10,12 @@ files changed (optional)
 
 
 
+
+### Partial completion (flags 1 and 2) - 30/01/26 - CTF 3
+- We now have the base for a fun multistage CTF. If you go to source, you can find /flag, which can be accessed via XSS (flag 1), it also has instructions. Furthermore, legacyAuth.ts contains the key (flag 2) to decrypt flag 3. Flag 3 is stored in a hidden user, but that isn't currently working.
+- We are aiming to have advanced SQL injection used for flag 3.
+- Flag 4 will be the decoded flag 3, which is the actual answer and flag players must find.
+
 ### Added Pay Page - 29/01/26 - CTF 3
 - I added a pay page, including the front-end of it to display monthly and yearly pay of employees. The pay is worked out randomly according to a function in generate_credentials.js
 

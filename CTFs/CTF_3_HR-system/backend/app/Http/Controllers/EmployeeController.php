@@ -6,28 +6,134 @@ use App\Models\Employee;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
     /**
+     * "Basic" SQL injection protection - INTENTIONALLY BYPASSABLE
+     * Blocks common patterns but misses advanced techniques
+     * INTENTIONALLY BYPASSABLE using:
+     * - SQL comment injection: O[comment]R instead of OR
+     * - Case mixing with inline comments
+     * - Double URL encoding
+     */
+    private function isBlocked(string $input): bool
+    {
+        // "Security" filter - checks for SQL keywords
+        // VULNERABILITY: Only checks the raw input, not URL-decoded versions
+        // Bypass: Double URL-encode characters (e.g., %256F%2572 for 'or')
+        // Or use: 1=1-- directly without OR (simpler bypass)
+        
+        $dangerousPatterns = [
+            '/\s+or\s+/i',      // Blocks " or " with spaces
+            '/\s+and\s+/i',     // Blocks " and " with spaces
+            '/union\s+select/i', // Blocks UNION SELECT
+            '/;\s*--/',         // Blocks ; --
+            '/drop\s+table/i',
+            '/delete\s+from/i',
+            '/insert\s+into/i',
+        ];
+        
+        foreach ($dangerousPatterns as $pattern) {
+            if (preg_match($pattern, $input)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
      * List employees with optional search/filter
-     * All authenticated users can see basic info
+     * INTENTIONALLY VULNERABLE - Uses raw SQL with bypassable protection
      */
     public function index(Request $request)
     {
-        $query = Employee::with(['user:id,username,email,first_name,last_name', 'department:id,name,code']);
-
-        // Search by name or employee ID (parameterized - secure)
-        if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('employee_id', 'ILIKE', '%' . $search . '%')
-                  ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('first_name', 'ILIKE', '%' . $search . '%')
-                         ->orWhere('last_name', 'ILIKE', '%' . $search . '%')
-                         ->orWhere('email', 'ILIKE', '%' . $search . '%');
-                  });
-            });
+        $search = $request->input('search', '');
+        
+        // "Basic" SQL injection protection - can be bypassed!
+        if ($this->isBlocked($search)) {
+            return response()->json([
+                'error' => 'Invalid search query detected',
+                'message' => 'Your search contains blocked characters'
+            ], 400);
         }
+        
+        // If no search, use safe Eloquent query (filters out flag12)
+        if (empty($search)) {
+            return $this->safeIndex($request);
+        }
+        
+        // VULNERABLE: Raw SQL query with string concatenation
+        // Note: Normally filters out flag12, but SQL injection can bypass this
+        // The search is used in multiple fields, making injection easier to exploit
+        $sql = "
+            SELECT 
+                e.id,
+                e.employee_id,
+                e.position,
+                e.hire_date,
+                e.notes,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.username,
+                d.name as department
+            FROM employees e
+            JOIN users u ON e.user_id = u.id
+            JOIN departments d ON e.department_id = d.id
+            WHERE u.username != 'flag12'
+            AND (
+                e.employee_id ILIKE '%{$search}%'
+                OR u.username ILIKE '%{$search}%'
+                OR u.first_name ILIKE '%{$search}%'
+                OR u.last_name ILIKE '%{$search}%'
+                OR e.position ILIKE '%{$search}%'
+                OR d.name ILIKE '%{$search}%'
+            )
+            ORDER BY e.employee_id
+        ";
+        
+        try {
+            $employees = DB::select($sql);
+            
+            return response()->json([
+                'data' => array_map(function($emp) {
+                    return [
+                        'id' => $emp->id,
+                        'employee_id' => $emp->employee_id,
+                        'position' => $emp->position,
+                        'hire_date' => $emp->hire_date,
+                        'department' => $emp->department,
+                        'notes' => $emp->notes,
+                        'user' => [
+                            'first_name' => $emp->first_name,
+                            'last_name' => $emp->last_name,
+                            'email' => $emp->email,
+                        ],
+                    ];
+                }, $employees),
+                'total' => count($employees),
+            ]);
+        } catch (\Exception $e) {
+            // Return SQL error for CTF hints
+            return response()->json([
+                'error' => 'Database error',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
+    /**
+     * Safe employee list - filters out flag12
+     */
+    private function safeIndex(Request $request)
+    {
+        $query = Employee::with(['user:id,username,email,first_name,last_name', 'department:id,name,code'])
+            ->whereHas('user', function($q) {
+                $q->where('username', '!=', 'flag12');
+            });
 
         // Filter by department
         if ($deptId = $request->input('department_id')) {

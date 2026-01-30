@@ -8,6 +8,7 @@ import { EmployeesPage } from './pages/EmployeesPage'
 import { EmployeeDetailPage } from './pages/EmployeeDetailPage'
 import { DepartmentsPage } from './pages/DepartmentsPage'
 import { PayPage } from './pages/PayPage'
+import { FlagPage } from './pages/FlagPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth()
@@ -52,6 +53,15 @@ function AppRoutes() {
         <Route 
           path="/pay" 
           element={<ProtectedRoute><PayPage /></ProtectedRoute>} 
+        />
+        {/* Hidden route - accessible via direct path */}
+        <Route 
+          path="/flag" 
+          element={<ProtectedRoute><FlagPage /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/admin/../../flag" 
+          element={<ProtectedRoute><FlagPage /></ProtectedRoute>} 
         />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

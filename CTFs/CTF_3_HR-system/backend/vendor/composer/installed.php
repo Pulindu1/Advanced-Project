@@ -3,7 +3,7 @@
         'name' => 'ctf/ctf3-hr-system',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'f89bc787cf0ba9e5035d001d209909332aefb307',
+        'reference' => 'c204b57d5532511fbf0c0e75807be14757854095',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -37,7 +37,7 @@
         'ctf/ctf3-hr-system' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'f89bc787cf0ba9e5035d001d209909332aefb307',
+            'reference' => 'c204b57d5532511fbf0c0e75807be14757854095',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
