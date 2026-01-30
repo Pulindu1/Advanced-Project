@@ -11,6 +11,10 @@ files changed (optional)
 
 
 
+### Mostly complete CTF - 30/01/26 - CTF 3
+- The CTF now has (completed) 4 parts. This includes path traversal, encryption key discovery, finding hidden employee (and finding their details) and decrypting the hidden info.
+- Next stages will include how to incorpeate challenge-generation into the CTF.
+
 ### Partial completion (flags 1 and 2) - 30/01/26 - CTF 3
 - We now have the base for a fun multistage CTF. If you go to source, you can find /flag, which can be accessed via XSS (flag 1), it also has instructions. Furthermore, legacyAuth.ts contains the key (flag 2) to decrypt flag 3. Flag 3 is stored in a hidden user, but that isn't currently working.
 - We are aiming to have advanced SQL injection used for flag 3.

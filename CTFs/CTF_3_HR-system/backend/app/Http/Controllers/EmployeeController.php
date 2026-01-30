@@ -20,14 +20,13 @@ class EmployeeController extends Controller
      */
     private function isBlocked(string $input): bool
     {
-        // "Security" filter - checks for SQL keywords
-        // VULNERABILITY: Only checks the raw input, not URL-decoded versions
-        // Bypass: Double URL-encode characters (e.g., %256F%2572 for 'or')
-        // Or use: 1=1-- directly without OR (simpler bypass)
+        // "Security" filter - checks for SQL keywords with spaces
+        // VULNERABILITY: Filters only check for keywords with surrounding spaces
+        // Bypass: Use inline comments like '/**/OR/**/1=1-- to replace spaces
         
         $dangerousPatterns = [
-            '/\s+or\s+/i',      // Blocks " or " with spaces
-            '/\s+and\s+/i',     // Blocks " and " with spaces
+            '/\s+or\s+/i',      // Blocks " or " with spaces on both sides
+            '/\s+and\s+/i',     // Blocks " and " with spaces on both sides
             '/union\s+select/i', // Blocks UNION SELECT
             '/;\s*--/',         // Blocks ; --
             '/drop\s+table/i',
@@ -66,8 +65,8 @@ class EmployeeController extends Controller
         }
         
         // VULNERABLE: Raw SQL query with string concatenation
-        // Note: Normally filters out flag12, but SQL injection can bypass this
-        // The search is used in multiple fields, making injection easier to exploit
+        // The filter can be bypassed by removing the space after the quote
+        // Simple single ILIKE condition makes injection straightforward
         $sql = "
             SELECT 
                 e.id,
@@ -83,15 +82,7 @@ class EmployeeController extends Controller
             FROM employees e
             JOIN users u ON e.user_id = u.id
             JOIN departments d ON e.department_id = d.id
-            WHERE u.username != 'flag12'
-            AND (
-                e.employee_id ILIKE '%{$search}%'
-                OR u.username ILIKE '%{$search}%'
-                OR u.first_name ILIKE '%{$search}%'
-                OR u.last_name ILIKE '%{$search}%'
-                OR e.position ILIKE '%{$search}%'
-                OR d.name ILIKE '%{$search}%'
-            )
+            WHERE u.username ILIKE '%{$search}%' AND u.username != 'flag12'
             ORDER BY e.employee_id
         ";
         

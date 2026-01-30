@@ -1,5 +1,8 @@
 const API_BASE = 'http://127.0.0.1:8004/api'
 
+// Note: Debug endpoints available at /api/debug/* - remove before production!
+// Example: curl -H "Authorization: Bearer <token>" http://127.0.0.1:8004/api/debug/config?user=<username>
+
 interface ApiOptions extends RequestInit {
   token?: string
 }

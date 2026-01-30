@@ -1,103 +1,61 @@
-# CTF 3 HR System - Credentials Setup
+# Credentials Setup
 
-## Phase 1 & 2 Implementation Complete ✓
+## Login Accounts
 
-### What's Been Set Up
-
-#### 1. Credentials Generator (`generate_credentials.js`)
-- Located in: `CTFs/challenge-generation/`
-- Generates random passwords (8-12 characters) for each user in `flags.json`
-- Generates complete employee data for each user
-- Creates `credentials.json` with username → full employee record mapping
-
-#### 2. Credentials Table (Database)
-- New migration: `create_credentials_table.php`
-- Stores PLAINTEXT passwords (intentionally vulnerable for SQL injection)
-- Schema:
-  - `username` (primary key)
-  - `password` (plaintext - INSECURE BY DESIGN)
-  - `password_hint` 
-  - `employee_id` (e.g., EMP001, EMP002)
-  - `department` (Engineering, HR, Finance, Operations)
-  - `position` (job title)
-  - `hire_date` (YYYY-MM-DD)
-  - `monthly_pay` (decimal - employee compensation)
-  - `last_login`
-  - `created_at`, `updated_at`
-
-#### 3. Updated Database Seeder
-- Now reads both `flags.json` AND `credentials.json`
-- Creates users with bcrypt passwords (for post-exploitation secure auth)
-- Populates `credentials` table with PLAINTEXT passwords (vulnerable)
-- Each user has a unique random password
-
-#### 4. Credential Model
-- `App\Models\Credential` - Eloquent model for credentials table
-- Relationship to User model
-
----
-
-## Usage
-
-### Generate Credentials for Players
-
-```bash
-cd CTFs/challenge-generation
-
-# Generate credentials from existing flags.json
-node generate_credentials.js
-
-# Or specify a custom flags.json path
-node generate_credentials.js /path/to/flags.json
-```
-
-This creates `CTFs/CTF_3_HR-system/credentials.json`:
 ```json
 {
   "abcd12": {
-    "password": "RYjzfJZBd",
+    "password": "RVIFLBfM",
     "employee_id": "EMP001",
-    "department": "Operations",
-    "position": "Software Engineer",
-    "hire_date": "2023-04-28",
-    "monthly_pay": 8500
+    "department": "Engineering",
+    "position": "Project Coordinator",
+    "hire_date": "2024-02-29",
+    "monthly_pay": 5834
   },
   "efgh34": {
-    "password": "WzofNHHMUn",
+    "password": "bcgxO1ZkSle",
     "employee_id": "EMP002",
     "department": "Finance",
-    "position": "Junior Developer",
-    "hire_date": "2024-06-28",
-    "monthly_pay": 5300
+    "position": "Data Analyst",
+    "hire_date": "2025-10-29",
+    "monthly_pay": 6796
+  },
+  "ijkl56": {
+    "password": "kH0g5imYtZ",
+    "employee_id": "EMP003",
+    "department": "Human Resources",
+    "position": "Systems Administrator",
+    "hire_date": "2025-07-28",
+    "monthly_pay": 7565
   }
 }
 ```
 
-### How Employee Data is Generated
+## Hidden Account (CTF Target)
 
-For each user in `flags.json`, the generator creates:
+```json
+{
+  "flag12": {
+    "password": "SYSTEM_INTERNAL",
+    "employee_id": "FLAG012",
+    "department": "Operations",
+    "position": "System Auditor",
+    "hire_date": "2020-01-01",
+    "monthly_pay": 0,
+    "notes": "AES-256-CBC encrypted data: +DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6 (hint: check legacy code for the key)",
+    "hidden": true
+  }
+}
+```
 
-1. **Password**: Random alphanumeric (8-12 characters)
-   - Uses crypto.randomBytes for security
-   - Character set: `a-z, A-Z, 0-9`
+## Database Seeding
 
-2. **Employee ID**: Sequential counter
-   - Format: `EMP` + zero-padded number (EMP001, EMP002, ...)
-   - Increments for each user in order
+The seeder reads from `credentials.json` and populates:
+- `users` table (bcrypt passwords for authentication)
+- `employees` table (employee metadata + notes)
+- `departments` table
 
-3. **Department**: Randomly selected
-   - Options: `Engineering`, `Human Resources`, `Finance`, `Operations`
-   - Each user gets one randomly assigned
-
-4. **Position**: Randomly selected
-   - Options: `Software Engineer`, `Junior Developer`, `Data Analyst`, `Systems Administrator`, `Technical Support`, `Project Coordinator`
-   - Each user gets one randomly assigned
-
-5. **Hire Date**: Random date 1-36 months ago
-   - Calculated from current date minus random months
-   - Format: `YYYY-MM-DD`
-
-6. **Monthly Pay**: Calculated based on position and experience
+Flag12 is excluded from normal employee listings by the `hidden` flag.
    - Base pay varies by position:
      - Software Engineer: $8,000
      - Junior Developer: $5,000

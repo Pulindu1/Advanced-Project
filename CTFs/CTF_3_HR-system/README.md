@@ -1,103 +1,55 @@
-# CTF 3 – HR System (Internal Corporate Tool)
+# CTF 3 – HR System
 
-A deliberately vulnerable internal HR management system built with:
-- **Backend:** PHP (Laravel 11) with PostgreSQL
-- **Frontend:** React (Vite)
-- **Theme:** Internal corporate tool – HR management, employee records, audit logs, payroll
-- **Features:** Dashboard, Employees, Departments, Pay (compensation data)
+Multi-stage CTF with SQL injection, API exploitation, and cryptography.
+
+**Stack:** Laravel 11, React, PostgreSQL
 
 ## Quick Start
 
-### Prerequisites
-- Docker & Docker Compose (for PostgreSQL)
-- PHP 8.2+ with Composer
-- Node.js 18+
-
-### 1. Start PostgreSQL
 ```bash
-cd CTFs/CTF_3_HR-system
+# 1. Start database
 docker-compose up -d
-```
 
-### 2. Set up Laravel Backend
-```bash
+# 2. Backend
 cd backend
 composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed
 php artisan serve --host=127.0.0.1 --port=8004
-```
 
-### 3. Set up React Frontend
-```bash
+# 3. Frontend (new terminal)
 cd frontend
 npm install
-npm run dev  # Runs on http://localhost:5174
+npm run dev  # http://localhost:5174
 ```
 
-### 4. Generate Player Credentials & Flags
-```bash
-cd ../challenge-generation
+## Login Credentials
+- `abcd12` / `RVIFLBfM`
+- `efgh34` / `bcgxO1ZkSle`
+- `ijkl56` / `kH0g5imYtZ`
 
-# Generate flags for players (username -> flag mapping)
-node chgen_basic1.js
+## CTF Flags
 
-# Generate credentials with employee data (username -> password, employee_id, dept, etc.)
-node generate_credentials.js
+**4 Flags Total:**
+1. Path traversal to `/flag` route
+2. Encryption key in source code
+3. SQL injection to find hidden employee
+4. Decrypt encrypted flag
 
-# Both files will be created in CTFs/CTF_3_HR-system/
-# - flags.json
-# - credentials.json
+See [CTF_SOLUTION.md](CTF_SOLUTION.md) for complete walkthrough.
 
-# Then reseed the database
-cd ../CTF_3_HR-system/backend
-php artisan migrate:fresh --seed
-```
+## Vulnerabilities
 
-## Architecture
+- SQL injection in employee search (bypassable filter)
+- Debug API endpoint exposing credentials
+- Hidden route discovery
+- Encryption key in client-side code
 
-```
-CTF_3_HR-system/
-├── backend/              # Laravel API
-│   ├── app/
-│   │   ├── Http/Controllers/
-│   │   ├── Models/
-│   │   │   ├── User.php
-│   │   │   ├── Employee.php
-│   │   │   ├── Credential.php    # VULNERABLE - plaintext passwords
-│   │   │   └── Flag.php
-│   │   └── ...
-│   ├── database/
-│   │   ├── migrations/
-│   │   │   ├── *_create_users_table.php
-│   │   │   ├── *_create_employees_table.php
-│   │   │   ├── *_create_credentials_table.php    # VULNERABLE TABLE
-│   │   │   └── *_create_flags_table.php
-│   │   └── seeders/DatabaseSeeder.php
-│   └── routes/api.php
-├── frontend/             # React SPA
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   │   ├── DashboardPage.tsx
-│   │   │   ├── EmployeesPage.tsx
-│   │   │   ├── DepartmentsPage.tsx
-│   │   │   └── PayPage.tsx         # Employee compensation view
-│   │   ├── api/client.ts
-│   │   └── context/AuthContext.tsx
-│   └── ...
-├── docker-compose.yml    # PostgreSQL container
-├── flags.json            # Generated per-player flags
-└── credentials.json      # Generated per-player credentials + employee data
-```
-
-## Security Features
-
-### Secure Elements (Protected)
-- ✓ CSRF protection on web routes
-- ✓ Parameterized queries for all endpoints (except vulnerable login)
-- ✓ Password hashing with bcrypt in `users` table
+## Ports
+- Backend: `http://127.0.0.1:8004`
+- Frontend: `http://localhost:5174`
+- PostgreSQL: `localhost:5433`
 - ✓ JWT authentication with configurable expiry
 - ✓ Input validation on all endpoints
 - ✓ Rate limiting on auth endpoints

@@ -25,20 +25,25 @@ export function FlagPage() {
             <div style={styles.flagValue}>durham-hr{'{'}w3lc0m3_t0_hr_syst3m{'}'}</div>
           </div>
 
-          
+          <div style={styles.hint}>
+            <strong>💡 Next steps:</strong> Try SQL injection in the Employees search page. 
+            Look for usernames like 'flag12', then use curl to query the /api/debug/config endpoint.
+            Remember to include your authentication token in the request header!
+          </div>
         </div>
       </div>
 
       <div style={styles.infoCard}>
         <h3 style={styles.infoTitle}>Challenge Overview</h3>
         <p style={styles.infoText}>
-          This CTF contains 4 flags total. Each flag builds upon the previous one:
+          This CTF contains 4 flags total. Each flag builds upon the previous one. Here are some slight clues:
         </p>
         <ul style={styles.list}>
           <li><strong>Flag 1:</strong> Path traversal ✅</li>
           <li><strong>Flag 2:</strong> Encryption key discovery </li>
-          <li><strong>Flag 3:</strong> Advanced exploitation</li>
-          <li><strong>Flag 4:</strong> Cryptographic challenge</li>
+          <li><strong>Flag 3.1:</strong> Find hidden employee username (username@email.com).</li>
+          <li><strong>Flag 3.2:</strong> Find hidden employee details. HINT: Use curl to query the /api/debug/config endpoint. Include your authentication token in the request header</li>
+          <li><strong>Flag 4:</strong> Decrypt</li>
         </ul>
       </div>
     </div>

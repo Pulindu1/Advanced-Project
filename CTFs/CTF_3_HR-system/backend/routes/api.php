@@ -8,6 +8,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FlagController;
 use App\Http\Controllers\PayController;
+use App\Http\Controllers\DebugController;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,4 +74,11 @@ Route::middleware(['auth.jwt'])->group(function () {
 
     // Flag (secure - only returns flag for authenticated user)
     Route::get('/flag', [FlagController::class, 'show']);
+    
+    // Debug endpoints - TODO: REMOVE BEFORE PRODUCTION
+    // Temporary debug routes for development
+    Route::prefix('debug')->group(function () {
+        Route::get('/', [DebugController::class, 'index']);
+        Route::get('/config', [DebugController::class, 'getUserConfig']);
+    });
 });
