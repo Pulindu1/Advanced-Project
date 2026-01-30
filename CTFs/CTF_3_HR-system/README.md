@@ -50,6 +50,30 @@ See [CTF_SOLUTION.md](CTF_SOLUTION.md) for complete walkthrough.
 - Backend: `http://127.0.0.1:8004`
 - Frontend: `http://localhost:5174`
 - PostgreSQL: `localhost:5433`
+
+## Tech Stack
+
+**Backend:**
+- Laravel 11 (PHP framework) - REST API with MVC architecture
+- PostgreSQL 16 - Relational database
+- JWT authentication - Token-based auth
+
+**Frontend:**
+- React 18 + Vite - SPA with hot reload
+- TypeScript - Type-safe JavaScript
+- Fetch API - HTTP requests to backend
+
+**Infrastructure:**
+- Docker Compose - Runs PostgreSQL in isolated container
+- Artisan - Laravel CLI for migrations, seeding, dev server
+- NPM - Frontend dependency management
+
+**Setup Flow:**
+1. Docker creates PostgreSQL container with persistent volume
+2. Laravel migrations create database schema
+3. Seeder populates tables from `credentials.json`
+4. Artisan serves API on port 8004
+5. Vite dev server proxies to backend, serves frontend on 5174
 - ✓ JWT authentication with configurable expiry
 - ✓ Input validation on all endpoints
 - ✓ Rate limiting on auth endpoints

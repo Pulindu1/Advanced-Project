@@ -11,6 +11,10 @@ files changed (optional)
 
 
 
+
+### Updated readme to include tech stack - 30/01/26 - CTF 3
+- Updated readme to include tech stack.
+
 ### Mostly complete CTF - 30/01/26 - CTF 3
 - The CTF now has (completed) 4 parts. This includes path traversal, encryption key discovery, finding hidden employee (and finding their details) and decrypting the hidden info.
 - Next stages will include how to incorpeate challenge-generation into the CTF.
