@@ -10,6 +10,13 @@ files changed (optional)
 
 
 
+
+
+
+
+### Saved checkpoint - 02/02/26 - CTF 3
+- Saved everything. I will come back to complete this CTF at a future date. OI wnat to get started on CTF4 now in preperation for the project demo.
+
 ### Added references - 30/01/26 - CTF 3
 - Added references to the end of the readme.md.
 
