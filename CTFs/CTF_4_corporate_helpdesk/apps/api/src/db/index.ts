@@ -18,7 +18,7 @@ export async function initDatabase() {
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
     
     await pool.query(
-      `UPDATE users SET password_hash = $1 WHERE email = $2`,
+      `UPDATE users SET password_hash = $1 WHERE username = $2`,
       [hashedPassword, 'admin@intradesk.local']
     );
 

@@ -3,15 +3,14 @@ import api from '../api';
 
 interface User {
   id: number;
-  email: string;
+  username: string;
   role: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -36,13 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function login(email: string, password: string) {
-    const response = await api.post('/auth/login', { email, password });
-    setUser(response.data.user);
-  }
-
-  async function register(email: string, password: string) {
-    const response = await api.post('/auth/register', { email, password });
+  async function login(username: string, password: string) {
+    const response = await api.post('/auth/login', { username, password });
     setUser(response.data.user);
   }
 
@@ -52,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

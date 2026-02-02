@@ -12,6 +12,12 @@ files changed (optional)
 
 
 
+### Fixed login logic - 02/02/26 - CTF 4
+- Logging in now needs a username/password (no email).
+- We have scripts to automate flag gen and login gen. We just need the usernames of the players to do so.
+- Deleted old scripts and old json data files.
+
+
 ### Initial commit - 02/02/26 - CTF 4
 - We have made the skeleton and UI of CTF 4.
 - We have some front and backend and it is visually ready.

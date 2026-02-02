@@ -31,7 +31,7 @@ router.get('/flag', async (req: AuthRequest, res) => {
 router.get('/reports', async (req, res) => {
   try {
     const result = await query(
-      `SELECT r.id, r.url, r.status, r.created_at, r.visited_at, u.email as reporter_email
+      `SELECT r.id, r.url, r.status, r.created_at, r.visited_at, u.username as reporter_username
        FROM reports r
        JOIN users u ON r.user_id = u.id
        ORDER BY r.created_at DESC

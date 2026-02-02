@@ -3,7 +3,7 @@
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
     flag VARCHAR(255),
@@ -42,19 +42,19 @@ CREATE TABLE IF NOT EXISTS exfil_logs (
 );
 
 -- Create indexes
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_kb_articles_tags ON kb_articles USING GIN(tags);
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at);
 
 -- Insert admin user (password: admin_secure_password_123)
-INSERT INTO users (email, password_hash, role, flag) 
+INSERT INTO users (username, password_hash, role, flag) 
 VALUES (
-    'admin@intradesk.local',
-    '$2b$10$YourHashedPasswordHere',  -- This will be updated by the API on first run
+    'admin',
+    '$2b$10$YourHashedPasswordHere',
     'admin',
     'CTF{admin_default_flag}'
-) ON CONFLICT (email) DO NOTHING;
+) ON CONFLICT (username) DO NOTHING;
 
 -- Insert sample KB articles
 INSERT INTO kb_articles (title, body, tags, author_id) VALUES

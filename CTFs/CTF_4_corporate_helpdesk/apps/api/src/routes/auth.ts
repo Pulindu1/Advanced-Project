@@ -10,15 +10,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 // Login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
     }
 
     const result = await query(
-      'SELECT id, email, password_hash, role, flag FROM users WHERE email = $1',
-      [email]
+      'SELECT id, username, password_hash, role, flag FROM users WHERE username = $1',
+      [username]
     );
 
     if (result.rows.length === 0) {
@@ -33,7 +33,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.id, username: user.username, role: user.role },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -59,7 +59,7 @@ router.post('/login', async (req, res) => {
     res.json({
       user: {
         id: user.id,
-        email: user.email,
+        username: user.username,
         role: user.role
       },
       token
@@ -70,65 +70,16 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Register (for CTF users)
+// Register (disabled)
 router.post('/register', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
-    }
-
-    // Check if user exists
-    const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
-    if (existing.rows.length > 0) {
-      return res.status(400).json({ error: 'User already exists' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Generate unique flag for this user
-    const flag = `CTF{user_${email.split('@')[0]}_${Date.now()}}`;
-
-    const result = await query(
-      'INSERT INTO users (email, password_hash, role, flag) VALUES ($1, $2, $3, $4) RETURNING id, email, role',
-      [email, hashedPassword, 'user', flag]
-    );
-
-    const user = result.rows[0];
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000
-    });
-
-    res.status(201).json({
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role
-      },
-      token
-    });
-  } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ error: 'Registration failed' });
-  }
+  return res.status(403).json({ error: 'Registration is disabled. Please contact admin for credentials.' });
 });
 
 // Get current user
 router.get('/me', authenticate, async (req: AuthRequest, res) => {
   try {
     const result = await query(
-      'SELECT id, email, role FROM users WHERE id = $1',
+      'SELECT id, username, role FROM users WHERE id = $1',
       [req.user?.id]
     );
 

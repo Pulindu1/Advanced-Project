@@ -8,7 +8,7 @@ dotenv.config();
 
 const BOT_BASE_URL = process.env.BOT_BASE_URL || 'http://localhost:5174';
 const BOT_API_URL = process.env.BOT_API_URL || 'http://localhost:4001';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@intradesk.local';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin_secure_password_123';
 
 const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
@@ -31,7 +31,7 @@ async function loginAsAdmin(page: Page) {
   console.log('🔐 Logging in as admin...');
   
   await page.goto(`${BOT_BASE_URL}/login`);
-  await page.fill('input[type="email"]', ADMIN_EMAIL);
+  await page.fill('input[type="text"]', ADMIN_USERNAME);
   await page.fill('input[type="password"]', ADMIN_PASSWORD);
   await page.click('button[type="submit"]');
   
