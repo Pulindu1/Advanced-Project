@@ -12,7 +12,12 @@ files changed (optional)
 
 
 
-
+### Initial commit - 02/02/26 - CTF 4
+- We have made the skeleton and UI of CTF 4.
+- We have some front and backend and it is visually ready.
+- This is just an initial commit, we have no implemented exploit just yet.
+- Documentation needs some work while we are at it.
+- We also have a new PORT_ALLOCATION.md for future use, so that I can keep track of what CTF uses what port.
 
 ### Saved checkpoint - 02/02/26 - CTF 3
 - Saved everything. I will come back to complete this CTF at a future date. OI wnat to get started on CTF4 now in preperation for the project demo.

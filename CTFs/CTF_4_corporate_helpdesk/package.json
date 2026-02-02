@@ -1,0 +1,22 @@
+{
+  "name": "intradesk-kb-ctf",
+  "version": "1.0.0",
+  "description": "DOM XSS CTF Challenge - IntraDesk Knowledge Base",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "cd apps/api && npm run dev",
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:bot": "cd apps/bot && npm run dev",
+    "build:web": "cd apps/web && npm run build",
+    "build:api": "cd apps/api && npm run build",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "docker:clean": "docker compose down -v"
+  },
+  "keywords": ["ctf", "xss", "dom-xss", "security"],
+  "author": "",
+  "license": "MIT"
+}

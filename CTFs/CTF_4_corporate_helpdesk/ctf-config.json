@@ -1,0 +1,54 @@
+# CTF Configuration
+
+This file defines the challenge configuration for use with the challenge-generation system.
+
+## Challenge Information
+
+- **Name:** IntraDesk Knowledge Base - DOM XSS
+- **Type:** Web Security / DOM-based XSS
+- **Difficulty:** Medium
+- **Category:** Web Exploitation
+
+## Description
+
+You are an employee using IntraDesk KB, an internal corporate knowledge base and helpdesk system. The Security team reviews reported KB links.
+
+Your goal is to get the moderator to reveal the secret stored in the admin context.
+
+## Learning Objectives
+
+- Understanding DOM-based XSS vulnerabilities
+- Identifying unsafe DOM sinks (innerHTML)
+- Crafting XSS payloads in different contexts
+- Using browser automation for automated attacks
+- Data exfiltration techniques
+
+## Technical Details
+
+- Each user receives a unique flag upon registration
+- Admin user has flag stored in a non-HttpOnly cookie
+- Admin bot visits reported URLs automatically
+- Exfiltration endpoint available at `/api/collect`
+
+## Hints
+
+1. "Search pages often reflect user input. Check how the search term is displayed."
+2. "Look at the browser's DevTools to see how the page is constructed."
+3. "The admin will visit any KB URL you report. What can you make them do?"
+4. "Cookies can be accessed via JavaScript if they're not HttpOnly."
+
+## Flag Format
+
+User flags: `CTF{user_<email>_<timestamp>}`
+Admin flag: `CTF{admin_default_flag}`
+
+## Deployment
+
+See [README.md](README.md) for deployment instructions.
+
+The challenge runs as a multi-container Docker application with:
+- Web frontend (React)
+- API backend (Node.js)
+- PostgreSQL database
+- Redis queue
+- Playwright bot worker
