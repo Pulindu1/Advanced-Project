@@ -30,15 +30,63 @@ async function initBrowser() {
 async function loginAsAdmin(page: Page) {
   console.log('🔐 Logging in as admin...');
   
-  await page.goto(`${BOT_BASE_URL}/login`);
-  await page.fill('input[type="text"]', ADMIN_USERNAME);
-  await page.fill('input[type="password"]', ADMIN_PASSWORD);
-  await page.click('button[type="submit"]');
-  
-  // Wait for navigation to complete
-  await page.waitForURL(/\/dashboard/, { timeout: 10000 });
-  
-  console.log('✅ Admin logged in successfully');
+  try {
+    console.log(`📍 Navigating to ${BOT_BASE_URL}/login`);
+    await page.goto(`${BOT_BASE_URL}/login`, { timeout: 15000 });
+    console.log('✅ Page loaded');
+    
+    // Log page title and URL for debugging
+    const title = await page.title();
+    const url = page.url();
+    console.log(`📄 Page title: "${title}"`);
+    console.log(`🔗 Current URL: ${url}`);
+    
+    // Get page content for debugging
+    const content = await page.content();
+    if (content.includes('input')) {
+      console.log('✅ Page contains input elements');
+    } else {
+      console.log('❌ Page does NOT contain input elements');
+      console.log('📄 First 500 chars of content:', content.substring(0, 500));
+    }
+    
+    console.log('🔍 Looking for username input...');
+    await page.waitForSelector('input#username', { timeout: 5000 });
+    console.log('✅ Found username input');
+    
+    await page.fill('input#username', ADMIN_USERNAME);
+    await page.fill('input#password', ADMIN_PASSWORD);
+    console.log(`🔑 Filled credentials: ${ADMIN_USERNAME}`);
+    
+    await page.click('button[type="submit"]');
+    console.log('👆 Clicked submit button, waiting for navigation...');
+    
+    // Wait a moment for any error messages to appear
+    await page.waitForTimeout(2000);
+    
+    // Wait for navigation to complete
+    try {
+      await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+      console.log('✅ Admin logged in successfully');
+    } catch (error: any) {
+      const currentUrl = page.url();
+      console.log(`❌ Navigation timeout. Current URL: ${currentUrl}`);
+      
+      // Check if there's an error message on the page
+      const pageText = await page.textContent('body');
+      if (pageText) {
+        if (pageText.includes('Invalid') || pageText.includes('failed') || pageText.includes('error')) {
+          console.log(`❌ Error message found: ${pageText.substring(0, 200)}`);
+        } else {
+          console.log(`📄 No obvious error message. Body text: ${pageText.substring(0, 300)}`);
+        }
+      }
+      throw error;
+    }
+  } catch (error: any) {
+    console.error('❌ Login failed:', error.message);
+    throw error;
+  }
 }
 
 async function visitReportedUrl(reportId: number, url: string) {
@@ -46,8 +94,15 @@ async function visitReportedUrl(reportId: number, url: string) {
   console.log(`📍 URL: ${url}`);
   
   try {
+    // Replace localhost URLs with internal service name
+    let resolvedUrl = url
+      .replace('http://localhost:5173', BOT_BASE_URL)
+      .replace('http://localhost:5174', BOT_BASE_URL);
+    
+    console.log(`🔀 Resolved URL: ${resolvedUrl}`);
+    
     // Validate URL
-    const urlObj = new URL(url, BOT_BASE_URL);
+    const urlObj = new URL(resolvedUrl);
     if (!urlObj.pathname.startsWith('/kb')) {
       throw new Error('Invalid URL: must be a KB path');
     }
@@ -58,13 +113,37 @@ async function visitReportedUrl(reportId: number, url: string) {
       userAgent: 'IntraDesk Review Bot/1.0 (Moderator)',
     });
     const page = await context.newPage();
+    
+    // Log network requests for debugging
+    page.on('request', (request) => {
+      if (request.url().includes('api') || request.url().includes('login')) {
+        console.log(`🌐 Request: ${request.method()} ${request.url()}`);
+      }
+    });
+    
+    page.on('response', async (response) => {
+      if (response.url().includes('api') || response.url().includes('login')) {
+        console.log(`📡 Response: ${response.status()} ${response.url()}`);
+        if (response.status() >= 400) {
+          const text = await response.text().catch(() => 'Unable to read response');
+          console.log(`❌ Error response body: ${text.substring(0, 200)}`);
+        }
+      }
+    });
+    
+    // Intercept all requests to fix Host header for Vite
+    await page.route('**/*', async (route) => {
+      const headers = route.request().headers();
+      headers['host'] = 'localhost:5173';
+      await route.continue({ headers });
+    });
 
     // Login as admin first
     await loginAsAdmin(page);
 
     // Visit the reported URL
     console.log(`🔍 Visiting reported URL...`);
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 10000 });
+    await page.goto(resolvedUrl, { waitUntil: 'networkidle', timeout: 10000 });
 
     // Wait for any JavaScript to execute
     await page.waitForTimeout(3000);

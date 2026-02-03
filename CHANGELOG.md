@@ -10,7 +10,9 @@ files changed (optional)
 
 
 
-
+### Report System Implemented - 03/02/26 - CTF 4
+- Working report system: when a user inputs a valid URL, it cues for the bot to look at.
+- Next is to get the bot working to process the requests.
 
 ### Fixed login logic - 02/02/26 - CTF 4
 - Logging in now needs a username/password (no email).

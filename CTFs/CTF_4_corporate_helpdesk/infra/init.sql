@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS reports (
     url TEXT NOT NULL,
     status VARCHAR(50) DEFAULT 'queued' CHECK (status IN ('queued', 'visited', 'error')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    visited_at TIMESTAMP
+    visited_at TIMESTAMP,
+    last_error TEXT
 );
 
 -- Exfiltration logs (for collecting stolen data)
