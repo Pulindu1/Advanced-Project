@@ -74,4 +74,34 @@ router.get('/my-reports', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+// Internal endpoint for bot to update report status
+// Note: This should ideally be behind internal network only or use a shared secret
+router.put('/internal/update/:reportId', async (req, res) => {
+  try {
+    const { reportId } = req.params;
+    const { status, error } = req.body;
+
+    if (!status || !['visited', 'error'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    if (status === 'visited') {
+      await query(
+        'UPDATE reports SET status = $1, visited_at = NOW() WHERE id = $2',
+        [status, reportId]
+      );
+    } else if (status === 'error') {
+      await query(
+        'UPDATE reports SET status = $1, last_error = $2 WHERE id = $3',
+        [status, error || 'Unknown error', reportId]
+      );
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update report error:', error);
+    res.status(500).json({ error: 'Failed to update report' });
+  }
+});
+
 export default router;

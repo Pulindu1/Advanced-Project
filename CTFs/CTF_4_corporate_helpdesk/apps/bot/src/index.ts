@@ -107,10 +107,11 @@ async function visitReportedUrl(reportId: number, url: string) {
       throw new Error('Invalid URL: must be a KB path');
     }
 
-    // Initialize browser
+    // Initialize browser with fixed viewport for determinism
     const browser = await initBrowser();
     const context = await browser.newContext({
       userAgent: 'IntraDesk Review Bot/1.0 (Moderator)',
+      viewport: { width: 1280, height: 720 }, // Fixed viewport
     });
     const page = await context.newPage();
     
@@ -143,20 +144,16 @@ async function visitReportedUrl(reportId: number, url: string) {
 
     // Visit the reported URL
     console.log(`🔍 Visiting reported URL...`);
-    await page.goto(resolvedUrl, { waitUntil: 'networkidle', timeout: 10000 });
+    await page.goto(resolvedUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
 
-    // Wait for any JavaScript to execute
-    await page.waitForTimeout(3000);
+    // Wait for JavaScript to execute (allows XSS payloads to run)
+    await page.waitForTimeout(2000);
 
     console.log('✅ Visit completed');
 
-    // Update report status
-    await axios.put(`${BOT_API_URL}/api/admin/reports/${reportId}`, {
+    // Update report status to visited with timestamp
+    await axios.put(`${BOT_API_URL}/api/report/internal/update/${reportId}`, {
       status: 'visited',
-    }, {
-      headers: {
-        'Cookie': await getCookies(page),
-      },
     }).catch(err => {
       console.error('Failed to update report status:', err.message);
     });
@@ -168,10 +165,11 @@ async function visitReportedUrl(reportId: number, url: string) {
   } catch (error: any) {
     console.error('❌ Error visiting URL:', error.message);
 
-    // Update report status to error
+    // Update report status to error with error message
     try {
-      await axios.put(`${BOT_API_URL}/api/admin/reports/${reportId}`, {
+      await axios.put(`${BOT_API_URL}/api/report/internal/update/${reportId}`, {
         status: 'error',
+        error: error.message,
       }).catch(() => {});
     } catch (e) {
       // Ignore

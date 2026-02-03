@@ -10,6 +10,13 @@ files changed (optional)
 
 
 
+
+### Bot Updated - 03/02/26 - CTF 4
+- We have updated the bot logic so that it works as intended.
+- When the user submits an issue in the 'Report Issue' (/report), the bot will visit the link.
+- We can use this to implement the XSS, where the bot will visit the link and activate the payload unwittingly.
+- The bot is deterministic.
+
 ### Report System Implemented - 03/02/26 - CTF 4
 - Working report system: when a user inputs a valid URL, it cues for the bot to look at.
 - Next is to get the bot working to process the requests.
