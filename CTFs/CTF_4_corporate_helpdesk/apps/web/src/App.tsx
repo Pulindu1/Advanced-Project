@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import KnowledgeBase from './pages/KnowledgeBase';
 import KBArticle from './pages/KBArticle';
 import Report from './pages/Report';
+import Captures from './pages/Captures';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -21,6 +22,7 @@ function App() {
               <Route path="/kb" element={<KnowledgeBase />} />
               <Route path="/kb/:id" element={<KBArticle />} />
               <Route path="/report" element={<Report />} />
+              <Route path="/captures" element={<Captures />} />
             </Route>
           </Route>
 

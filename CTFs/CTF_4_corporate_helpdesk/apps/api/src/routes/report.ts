@@ -40,12 +40,16 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
 
     const report = result.rows[0];
 
+    console.log(`📝 Report #${report.id} created by user ${req.user?.id}: ${url}`);
+
     // Add to queue for bot processing
     await reportQueue.add('visit', {
       reportId: report.id,
       url,
       userId: req.user?.id,
     });
+
+    console.log(`📬 Report #${report.id} queued for bot processing`);
 
     res.status(201).json({
       message: 'Report submitted successfully. A moderator will review it shortly.',
@@ -78,6 +82,7 @@ router.get('/my-reports', authenticate, async (req: AuthRequest, res) => {
 // Note: This should ideally be behind internal network only or use a shared secret
 router.put('/internal/update/:reportId', async (req, res) => {
   try {
+    console.log(`🔄 Report status update for #${req.params.reportId}:`, req.body);
     const { reportId } = req.params;
     const { status, error } = req.body;
 

@@ -9,6 +9,7 @@ import kbRoutes from './routes/kb';
 import reportRoutes from './routes/report';
 import adminRoutes from './routes/admin';
 import collectRoutes from './routes/collect';
+import exfilRoutes from './routes/exfil';
 import { errorHandler } from './middleware/errorHandler';
 import { initDatabase } from './db';
 
@@ -36,6 +37,7 @@ app.use('/api/kb', kbRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/collect', collectRoutes);
+app.use('/api/exfil', exfilRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

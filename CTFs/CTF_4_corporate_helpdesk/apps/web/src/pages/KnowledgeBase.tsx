@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 
@@ -26,6 +26,38 @@ export default function KnowledgeBase() {
     loadArticles();
     loadTags();
   }, [searchParams]);
+
+  // ⚠️ VULNERABILITY: DOM XSS via innerHTML + eval
+  // Callback ref fires the instant the h2 element is mounted to the DOM
+  const headerCallbackRef = useCallback((node: HTMLHeadingElement | null) => {
+    if (node) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const rawSearch = urlParams.get('search') || '';
+      const rawTag = urlParams.get('tag') || '';
+
+      // Unsafe: directly inserting user input into HTML using innerHTML
+      let headerHTML = '';
+      if (rawSearch) {
+        headerHTML = 'Results for "' + rawSearch + '"';
+      } else if (rawTag) {
+        headerHTML = 'Articles tagged: ' + rawTag;
+      } else {
+        headerHTML = 'All Articles';
+      }
+      node.innerHTML = headerHTML;
+
+      // Unsafe: directly executing user-supplied JavaScript
+      const callback = urlParams.get('callback');
+      if (callback) {
+        try {
+          // eslint-disable-next-line no-eval
+          eval(callback);
+        } catch (e) {
+          console.error('Callback error:', e);
+        }
+      }
+    }
+  }, [searchTerm, selectedTag]);
 
   async function loadArticles() {
     try {
@@ -94,30 +126,6 @@ export default function KnowledgeBase() {
     }
   }
 
-  function renderResultsHeader() {
-    const resultsDiv = document.getElementById('results-header');
-    if (!resultsDiv) return null;
-
-    // ⚠️ VULNERABILITY: DOM XSS via innerHTML
-    // This is the intentional bug for the CTF
-    let headerHTML = '<h2>';
-    if (searchTerm) {
-      // Unsafe: directly inserting user input into innerHTML
-      headerHTML += 'Results for "' + searchTerm + '"';
-    } else if (selectedTag) {
-      headerHTML += 'Articles tagged: ' + selectedTag;
-    } else {
-      headerHTML += 'All Articles';
-    }
-    headerHTML += '</h2>';
-
-    resultsDiv.innerHTML = headerHTML;
-  }
-
-  useEffect(() => {
-    renderResultsHeader();
-  }, [searchTerm, selectedTag]);
-
   if (loading) {
     return <div className="loading">Loading articles...</div>;
   }
@@ -185,8 +193,8 @@ export default function KnowledgeBase() {
         </div>
       )}
 
-      {/* This div will have its innerHTML set by the vulnerable function */}
-      <div id="results-header"></div>
+      {/* Vulnerable: XSS via innerHTML + eval in callback ref */}
+      <h2 ref={headerCallbackRef}></h2>
 
       {articles.length === 0 ? (
         <div className="empty-state">

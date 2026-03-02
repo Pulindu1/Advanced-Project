@@ -99,10 +99,12 @@ async function visitReportedUrl(reportId: number, url: string) {
       .replace('http://localhost:5173', BOT_BASE_URL)
       .replace('http://localhost:5174', BOT_BASE_URL);
     
-    console.log(`🔀 Resolved URL: ${resolvedUrl}`);
-    
-    // Validate URL
+    // Append reportId as query parameter so XSS can access it
     const urlObj = new URL(resolvedUrl);
+    urlObj.searchParams.set('_reportId', reportId.toString());
+    resolvedUrl = urlObj.toString();
+    
+    console.log(`🔀 Resolved URL: ${resolvedUrl}`);
     if (!urlObj.pathname.startsWith('/kb')) {
       throw new Error('Invalid URL: must be a KB path');
     }
@@ -114,6 +116,11 @@ async function visitReportedUrl(reportId: number, url: string) {
       viewport: { width: 1280, height: 720 }, // Fixed viewport
     });
     const page = await context.newPage();
+    
+    // Capture page console messages
+    page.on('console', (msg) => {
+      console.log(`🖥️  Browser console [${msg.type()}]:`, msg.text());
+    });
     
     // Log network requests for debugging
     page.on('request', (request) => {
@@ -144,12 +151,21 @@ async function visitReportedUrl(reportId: number, url: string) {
 
     // Visit the reported URL
     console.log(`🔍 Visiting reported URL...`);
-    await page.goto(resolvedUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
+    await page.goto(resolvedUrl, { waitUntil: 'domcontentloaded', timeout: 8000 });
 
     // Wait for JavaScript to execute (allows XSS payloads to run)
-    await page.waitForTimeout(2000);
+    console.log(`⏱️  Waiting 4s for JavaScript execution...`);
+    await page.waitForTimeout(4000);
 
-    console.log('✅ Visit completed');
+    // Debug: Check what's in the h2 element
+    const h2Content = await page.$eval('h2', el => el.innerHTML).catch(() => 'H2 NOT FOUND');
+    console.log(`� h2 content:`, h2Content);
+    
+    // Debug: Check if img tag exists
+    const imgCount = await page.$$eval('img', imgs => imgs.length).catch(() => 0);
+    console.log(`🖼️  Number of img tags found: ${imgCount}`);
+
+    console.log('✅ Visit completed successfully');
 
     // Update report status to visited with timestamp
     await axios.put(`${BOT_API_URL}/api/report/internal/update/${reportId}`, {
@@ -163,7 +179,11 @@ async function visitReportedUrl(reportId: number, url: string) {
 
     return { success: true };
   } catch (error: any) {
-    console.error('❌ Error visiting URL:', error.message);
+    console.error('❌ Bot error for report #' + reportId + ':', error.message);
+    console.error('Error type:', error.constructor.name);
+    if (error.stack) {
+      console.error('Stack trace:', error.stack.split('\n').slice(0, 3).join('\n'));
+    }
 
     // Update report status to error with error message
     try {

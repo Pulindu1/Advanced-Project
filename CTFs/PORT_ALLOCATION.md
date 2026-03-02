@@ -8,10 +8,10 @@ To run all CTF challenges simultaneously, each uses unique port numbers:
 |--------------|----------|-------------|----------|-------|-------|
 | **Basic_1_Nodejs** | - | 3000 | - | - | - |
 | **CTF_2_pswd_manager** | 5173 | 4000 | - | - | - |
-| **CTF_3_HR-system** | 8080* | 8000 | 5432 | - | - |
+| **CTF_3_HR-system** | 8080 | 8004 | 5434 | - | - |
 | **CTF_4_corporate_helpdesk** | **5174** | **4001** | **5433** | **6380** | - |
 
-*CTF_3 frontend port varies by setup
+**Note: CTF_3 database port changed from 5432 to 5434 to avoid conflicts when running all CTFs simultaneously**
 
 ## CTF_4 Port Details
 
@@ -44,17 +44,21 @@ cd CTFs/Basic_1_Nodejs
 npm start
 # Access: http://localhost:3000
 
-# Terminal 2 - CTF_2
+# Terminal 2 - CTF_2 Backend
 cd CTFs/CTF_2_pswd_manager
-npm run dev  # Frontend: 5173
 npm run server  # Backend: 4000
 
-# Terminal 3 - CTF_3
-cd CTFs/CTF_3_HR-system
-docker compose up
-# Access: http://localhost:8080 (or configured port)
+# Terminal 3 - CTF_2 Frontend
+cd CTFs/CTF_2_pswd_manager
+npm run dev  # Frontend: 5173
 
-# Terminal 4 - CTF_4
+# Terminal 4 - CTF_3
+cd CTFs/CTF_3_HR-system
+docker compose up -d  # Database: 5434
+cd backend && php artisan serve --host=127.0.0.1 --port=8004  # Backend: 8004
+cd frontend && npm run dev  # Frontend: 8080
+
+# Terminal 5 - CTF_4
 cd CTFs/CTF_4_corporate_helpdesk
 docker compose up
 # Access: http://localhost:5174

@@ -8,19 +8,44 @@ const router = Router();
 router.use(authenticate);
 router.use(requireAdmin);
 
-// Get admin flag
+// Get flag by reportId - returns the flag of the user who submitted the report
+// This ensures the bot (logged in as admin) gets the reporter's flag, not admin's flag
 router.get('/flag', async (req: AuthRequest, res) => {
   try {
+    const { reportId } = req.query;
+
+    if (!reportId) {
+      return res.status(400).json({ error: 'reportId query parameter required' });
+    }
+
+    // Get the report and find the user who submitted it, along with the user's stored flag
     const result = await query(
-      'SELECT flag FROM users WHERE id = $1 AND role = $2',
-      [req.user?.id, 'admin']
+      `SELECT r.user_id, r.status, u.flag
+       FROM reports r
+       JOIN users u ON r.user_id = u.id
+       WHERE r.id = $1`,
+      [reportId]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Flag not found' });
+      return res.status(404).json({ error: 'Report not found' });
     }
 
-    res.json({ flag: result.rows[0].flag });
+    const { user_id: userId, status, flag } = result.rows[0];
+
+    // Only allow accessing flags for queued or visited reports
+    if (status !== 'queued' && status !== 'visited') {
+      return res.status(400).json({ error: 'Invalid report status' });
+    }
+
+    if (!flag) {
+      return res.status(404).json({ error: 'Flag not found for this user' });
+    }
+
+    // Log flag access
+    console.log(`🚩 Admin flag accessed - Report #${reportId}, User ID: ${userId}, Flag: ${flag}, Admin: ${req.user?.username}`);
+
+    res.json({ flag, userId });
   } catch (error) {
     console.error('Admin flag error:', error);
     res.status(500).json({ error: 'Failed to fetch flag' });

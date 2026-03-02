@@ -41,6 +41,11 @@ export default function Layout() {
                 </Link>
               </li>
               <li>
+                <Link to="/captures" className={isActive('/captures')}>
+                  📦 My Captures
+                </Link>
+              </li>
+              <li>
                 <a href="#" style={{ opacity: 0.5, cursor: 'not-allowed' }}>
                   🎫 Tickets (Coming Soon)
                 </a>
