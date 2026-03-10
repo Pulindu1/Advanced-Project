@@ -40,30 +40,31 @@ export default function Captures() {
   return (
     <div>
       <h1>My Captures</h1>
-      <p style={{ color: '#666', marginBottom: '2rem' }}>
-        View data captured from your submitted reports
+      <p style={{ color: '#666', marginBottom: '1rem' }}>
+        If a script running elsewhere on this system sends data to the capture
+        endpoint, it will appear here. Think of it as your personal drop box —
+        anything posted here under your session is yours to read.
       </p>
 
+      <div className="alert alert-info" style={{ marginBottom: '2rem' }}>
+        <strong>How captures work:</strong>
+        <br />
+        When a bot visits a page containing your JavaScript payload, any data
+        POSTed to <code>POST /api/exfil/capture</code> will appear here.
+        <br /><br />
+        Expected JSON body: <code>{'{"data": ..., "reportId": ...}'}</code>
+        <br />
+        No authentication required on that endpoint.
+      </div>
+
       {captures.length === 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{
-            padding: '2rem',
-            background: '#f5f5f5',
-            borderRadius: '8px',
-            textAlign: 'center'
-          }}>
-            <p style={{ marginBottom: '1rem' }}>No captures yet. Submit a report to see exfiltrated data here.</p>
-          </div>
-          <div className="alert alert-info" style={{ margin: 0 }}>
-            <strong>💡 How captures work:</strong>
-            <br />
-            When a bot visits a page containing your JavaScript payload, any data
-            POSTed to <code>POST /api/exfil/capture</code> will appear here.
-            <br /><br />
-            Expected JSON body: <code>{'{"data": ..., "reportId": ...}'}</code>
-            <br />
-            No authentication required on that endpoint.
-          </div>
+        <div style={{
+          padding: '2rem',
+          background: '#f5f5f5',
+          borderRadius: '8px',
+          textAlign: 'center'
+        }}>
+          <p>No captures yet. Submit a report to see exfiltrated data here.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

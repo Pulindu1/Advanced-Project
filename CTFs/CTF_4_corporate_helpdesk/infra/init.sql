@@ -49,6 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_kb_articles_tags ON kb_articles USING GIN(tags);
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_kb_articles_title ON kb_articles(title);
 
 -- Insert admin user (password: admin_secure_password_123)
 -- Note: password_hash placeholder is replaced at runtime by initDatabase()
@@ -115,6 +116,22 @@ INSERT INTO kb_articles (title, body, tags, author_id) VALUES
         'Remote Work Policy',
         'Employees may work remotely up to 3 days per week with manager approval. Maintain core hours 10am-3pm in your timezone. Use VPN for all company system access.',
         ARRAY['hr', 'remote-work', 'policies'],
+        1
+    )
+ON CONFLICT DO NOTHING;
+
+-- Scaffolding articles: breadcrumbs for CTF players (idempotent via unique title index)
+INSERT INTO kb_articles (title, body, tags, author_id) VALUES
+    (
+        'IntraDesk API Reference (Internal)',
+        'IntraDesk exposes a set of internal REST APIs for system integration and automation. Public endpoints are under /api/auth/ and /api/kb/. Authenticated employee endpoints are under /api/report/ and /api/exfil/. Administrator-only endpoints are located under /api/admin/ and require an active admin session cookie. These endpoints are used by automated systems for compliance reporting and flag verification. Direct access by non-admin users will result in a 403 Forbidden response.',
+        ARRAY['admin', 'internal', 'api', 'developer'],
+        1
+    ),
+    (
+        'Browser Developer Console Tips',
+        E'The browser developer console (F12 or Ctrl+Shift+J) lets you run JavaScript directly on the current page.\n\nReading URL parameters in JS:\n  new URLSearchParams(location.search).get(''paramName'')\n\nMaking an API call from the console:\n  fetch(''/api/kb/articles'').then(r => r.json()).then(console.log)\n\nURL encoding note: the + character inside a URL parameter is decoded as a space before the code runs. Use .concat() to join strings safely inside URL parameters:\n  Safe:  ''prefix''.concat(someVariable)\n  Risky: ''prefix'' + someVariable  (the + may become a space)\n\nChaining two fetch calls:\n  fetch(''/api/first'').then(function(r){ return r.json() }).then(function(data){ fetch(''/api/second'', {method:''POST'', headers:{''Content-Type'':''application/json''}, body:JSON.stringify(data)}) })',
+        ARRAY['tips', 'browser', 'javascript', 'developer'],
         1
     )
 ON CONFLICT DO NOTHING;

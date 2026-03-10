@@ -44,6 +44,31 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// API route discovery — intentional CTF breadcrumb
+app.get('/api/routes', (_req, res) => {
+  res.json({
+    public: [
+      'POST /api/auth/login',
+      'POST /api/auth/register',
+      'POST /api/exfil/capture',
+    ],
+    authenticated: [
+      'GET  /api/auth/me',
+      'GET  /api/kb/articles',
+      'GET  /api/kb/articles/:id',
+      'GET  /api/kb/tags',
+      'POST /api/report',
+      'GET  /api/report/my-reports',
+      'GET  /api/exfil/my-captures',
+    ],
+    admin: [
+      'GET  /api/admin/flag?reportId=<id>',
+      'GET  /api/admin/reports',
+      'GET  /api/admin/exfil-logs',
+    ],
+  });
+});
+
 // Error handling
 app.use(errorHandler);
 

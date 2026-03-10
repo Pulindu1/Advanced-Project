@@ -11,6 +11,26 @@ files changed (optional)
 
 
 
+### Fixed XSS exploit path - 10/03/26 - CTF 4
+- Before, the XSS worked, but the exploit path was too difficult for the target players (Y2 CS students) to workout withgout prior knowledge.
+Backend:
+  - Added /api/routes endpoint for API discovery.
+  - Improved /api/admin/flag 403 responses with usage and hints.
+  - Fixed reportId handling and capture filtering in /api/exfil.
+  - Added DB migrations for visited_url and bot_console_logs.
+  - Seeded scaffolding KB articles and ensured player users are upserted with bcrypt passwords.
+Infrastructure:
+  - Updated DB schema to include visited_url and bot_console_logs.
+  - Added unique index on kb_articles.title.
+  - Included scaffolding KB article seeds.
+Frontend
+  - Improved /captures hints (now always visible).
+  - Enhanced /report UI with report ID confirmation, visited URL display, and bot console logs.
+Docs
+  - Simplified exploit instructions in SOLUTION.md.
+  - Removed outdated payload examples and raw backend port references.
+  - Updated workflow.md to reflect current UX and documentation fixes.
+
 ### Quick changes - 10/03/26 - CTF 4
 - A few save.
 - Minor changes. The current exploit path is difficult to figure out, so attempting to make it easier and more intuitive.

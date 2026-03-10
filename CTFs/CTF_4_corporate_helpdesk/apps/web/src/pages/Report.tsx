@@ -173,6 +173,11 @@ export default function Report() {
                     <code style={{ wordBreak: 'break-all', fontSize: '0.8rem', color: '#333' }}>
                       {report.visited_url}
                     </code>
+                    <div style={{ marginTop: '0.4rem', color: '#555', fontSize: '0.78rem' }}>
+                      ℹ️ The bot appends <code>_reportId</code> to every URL it visits.
+                      A script running on that page can read it with:{' '}
+                      <code>new URLSearchParams(location.search).get('_reportId')</code>
+                    </div>
                   </div>
                 )}
 

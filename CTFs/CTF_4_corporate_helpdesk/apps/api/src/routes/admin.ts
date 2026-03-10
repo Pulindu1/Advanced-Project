@@ -15,7 +15,9 @@ router.get('/flag', async (req: AuthRequest, res) => {
   if (req.user?.role !== 'admin') {
     return res.status(403).json({
       error: 'Admin access required',
-      hint: 'This endpoint requires admin authentication. Expected query param: reportId'
+      hint: 'This endpoint requires an active admin session.',
+      usage: 'GET /api/admin/flag?reportId=<reportId>',
+      description: 'Returns the flag associated with the given report. The flag belongs to the user who submitted the report, not the admin.',
     });
   }
   try {
