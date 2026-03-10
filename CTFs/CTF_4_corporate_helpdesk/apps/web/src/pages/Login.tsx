@@ -28,7 +28,7 @@ export default function Login() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>📚 IntraDesk KB</h1>
+        <h1>IntraDesk KB</h1>
         <h2 style={{ textAlign: 'center', marginBottom: '2rem', color: '#666' }}>Sign In</h2>
 
         {error && (

@@ -7,6 +7,8 @@ interface Report {
   status: string;
   created_at: string;
   visited_at: string | null;
+  visited_url: string | null;
+  bot_console_logs: string | null;
 }
 
 export default function Report() {
@@ -15,6 +17,7 @@ export default function Report() {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [reports, setReports] = useState<Report[]>([]);
+  const [expandedLogs, setExpandedLogs] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadMyReports();
@@ -36,8 +39,8 @@ export default function Report() {
     setLoading(true);
 
     try {
-      await api.post('/report', { url });
-      setSuccess('Report submitted successfully! A moderator will review it shortly.');
+      const response = await api.post('/report', { url });
+      setSuccess(`Report #${response.data.reportId} submitted! A moderator bot will review it shortly.`);
       setUrl('');
       loadMyReports();
     } catch (err: any) {
@@ -45,6 +48,35 @@ export default function Report() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function toggleLogs(id: number) {
+    setExpandedLogs(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function statusBadge(status: string) {
+    const styles: Record<string, { bg: string; color: string }> = {
+      visited: { bg: '#d4edda', color: '#155724' },
+      error:   { bg: '#f8d7da', color: '#721c24' },
+      queued:  { bg: '#fff3cd', color: '#856404' },
+    };
+    const s = styles[status] || { bg: '#e2e3e5', color: '#383d41' };
+    return (
+      <span style={{
+        padding: '0.25rem 0.75rem',
+        borderRadius: '12px',
+        fontSize: '0.875rem',
+        backgroundColor: s.bg,
+        color: s.color,
+      }}>
+        {status}
+      </span>
+    );
   }
 
   return (
@@ -59,8 +91,10 @@ export default function Report() {
         </p>
 
         <div className="alert alert-info" style={{ marginBottom: '1.5rem' }}>
-          <strong>📌 Note:</strong> Only Knowledge Base URLs (/kb paths) can be reported.
-          The security team will visit your submitted URL to verify the issue.
+          <strong>Note:</strong> Only Knowledge Base URLs (/kb paths) can be reported.
+          The security team will visit your submitted URL to verify the issue. A bot will
+          visit the URL you submit and append the report ID to it for tracking 
+          (e.g. <code>http://localhost:5173/kb?search=example&_reportId=123</code>).
         </div>
 
         {success && (
@@ -102,43 +136,88 @@ export default function Report() {
         {reports.length === 0 ? (
           <p style={{ color: '#999' }}>No reports submitted yet.</p>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e0e0e0' }}>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>URL</th>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>Status</th>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>Submitted</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map(report => (
-                  <tr key={report.id} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                    <td style={{ padding: '1rem', maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {report.url}
-                    </td>
-                    <td style={{ padding: '1rem' }}>
-                      <span
-                        style={{
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '12px',
-                          fontSize: '0.875rem',
-                          backgroundColor: report.status === 'visited' ? '#d4edda' : 
-                                         report.status === 'error' ? '#f8d7da' : '#fff3cd',
-                          color: report.status === 'visited' ? '#155724' : 
-                                report.status === 'error' ? '#721c24' : '#856404',
-                        }}
-                      >
-                        {report.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '1rem', color: '#666' }}>
-                      {new Date(report.created_at).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {reports.map(report => (
+              <div
+                key={report.id}
+                style={{
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '1.25rem',
+                  background: '#fafafa',
+                }}
+              >
+                {/* Header row */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <strong>Report #{report.id}</strong>
+                  {statusBadge(report.status)}
+                </div>
+
+                {/* Submitted URL */}
+                <div style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                  <span style={{ color: '#666' }}>Submitted URL: </span>
+                  <code style={{ wordBreak: 'break-all', fontSize: '0.8rem' }}>{report.url}</code>
+                </div>
+
+                {/* Bot visited URL — shows _reportId appended by bot */}
+                {report.visited_url && (
+                  <div style={{
+                    margin: '0.75rem 0',
+                    padding: '0.6rem 0.75rem',
+                    background: '#e8f4fd',
+                    borderRadius: '4px',
+                    borderLeft: '3px solid #0d6efd',
+                    fontSize: '0.85rem',
+                  }}>
+                    <span style={{ color: '#0d6efd', fontWeight: 600 }}>🤖 Bot visited URL: </span>
+                    <code style={{ wordBreak: 'break-all', fontSize: '0.8rem', color: '#333' }}>
+                      {report.visited_url}
+                    </code>
+                  </div>
+                )}
+
+                {/* Timestamps */}
+                <div style={{ display: 'flex', gap: '2rem', color: '#999', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                  <span>Submitted: {new Date(report.created_at).toLocaleString()}</span>
+                  {report.visited_at && <span>Reviewed: {new Date(report.visited_at).toLocaleString()}</span>}
+                </div>
+
+                {/* Bot console logs — expandable */}
+                {report.bot_console_logs && (
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <button
+                      onClick={() => toggleLogs(report.id)}
+                      style={{
+                        fontSize: '0.8rem',
+                        background: 'none',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        padding: '0.25rem 0.6rem',
+                        cursor: 'pointer',
+                        color: '#555',
+                      }}
+                    >
+                      {expandedLogs.has(report.id) ? '▲ Hide' : '▼ Show'} bot console logs
+                    </button>
+                    {expandedLogs.has(report.id) && (
+                      <pre style={{
+                        marginTop: '0.5rem',
+                        background: '#1e1e1e',
+                        color: '#d4d4d4',
+                        padding: '0.75rem',
+                        borderRadius: '4px',
+                        fontSize: '0.78rem',
+                        overflow: 'auto',
+                        maxHeight: '220px',
+                        whiteSpace: 'pre-wrap',
+                      }}>
+                        {report.bot_console_logs}
+                      </pre>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

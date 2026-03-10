@@ -9,7 +9,14 @@ files changed (optional)
 # Logs:
 
 
-### CTF 4 Complete - 04/02/26 - CTF 4
+
+
+### Quick changes - 10/03/26 - CTF 4
+- A few save.
+- Minor changes. The current exploit path is difficult to figure out, so attempting to make it easier and more intuitive.
+
+### CTF 4 Complete - 04/03/26 - CTF 4
+- The main exploit is now working, but we have a lot more work to do.
 - Fully functional DOM XSS challenge with bot-based exploitation
 - Per-user flag derivation using HMAC-SHA256
 - Exfiltration system with player-accessible capture view

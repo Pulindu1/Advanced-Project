@@ -92,10 +92,13 @@ async function loginAsAdmin(page: Page) {
 async function visitReportedUrl(reportId: number, url: string) {
   console.log(`\n🤖 Processing report #${reportId}`);
   console.log(`📍 URL: ${url}`);
-  
+
+  let resolvedUrl = url;
+  const consoleLogs: string[] = [];
+
   try {
     // Replace localhost URLs with internal service name
-    let resolvedUrl = url
+    resolvedUrl = url
       .replace('http://localhost:5173', BOT_BASE_URL)
       .replace('http://localhost:5174', BOT_BASE_URL);
     
@@ -119,7 +122,9 @@ async function visitReportedUrl(reportId: number, url: string) {
     
     // Capture page console messages
     page.on('console', (msg) => {
-      console.log(`🖥️  Browser console [${msg.type()}]:`, msg.text());
+      const entry = `[${msg.type()}] ${msg.text()}`;
+      console.log(`🖥️  Browser console:`, entry);
+      consoleLogs.push(entry);
     });
     
     // Log network requests for debugging
@@ -170,6 +175,8 @@ async function visitReportedUrl(reportId: number, url: string) {
     // Update report status to visited with timestamp
     await axios.put(`${BOT_API_URL}/api/report/internal/update/${reportId}`, {
       status: 'visited',
+      visited_url: resolvedUrl,
+      console_logs: consoleLogs.join('\n') || null,
     }).catch(err => {
       console.error('Failed to update report status:', err.message);
     });
@@ -190,6 +197,8 @@ async function visitReportedUrl(reportId: number, url: string) {
       await axios.put(`${BOT_API_URL}/api/report/internal/update/${reportId}`, {
         status: 'error',
         error: error.message,
+        visited_url: resolvedUrl || null,
+        console_logs: consoleLogs.join('\n') || null,
       }).catch(() => {});
     } catch (e) {
       // Ignore

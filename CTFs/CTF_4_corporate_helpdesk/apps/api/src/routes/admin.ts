@@ -4,13 +4,20 @@ import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
-// All admin routes require authentication and admin role
+// All admin routes require authentication
 router.use(authenticate);
-router.use(requireAdmin);
+// Note: requireAdmin is applied per-route so /flag can return a richer 403 hint
 
 // Get flag by reportId - returns the flag of the user who submitted the report
 // This ensures the bot (logged in as admin) gets the reporter's flag, not admin's flag
 router.get('/flag', async (req: AuthRequest, res) => {
+  // Custom 403 with discovery hint — players can find this endpoint and learn the query param
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({
+      error: 'Admin access required',
+      hint: 'This endpoint requires admin authentication. Expected query param: reportId'
+    });
+  }
   try {
     const { reportId } = req.query;
 
@@ -53,7 +60,7 @@ router.get('/flag', async (req: AuthRequest, res) => {
 });
 
 // Get all reports
-router.get('/reports', async (req, res) => {
+router.get('/reports', requireAdmin, async (req, res) => {
   try {
     const result = await query(
       `SELECT r.id, r.url, r.status, r.created_at, r.visited_at, u.username as reporter_username
@@ -71,7 +78,7 @@ router.get('/reports', async (req, res) => {
 });
 
 // Get exfiltration logs
-router.get('/exfil-logs', async (req, res) => {
+router.get('/exfil-logs', requireAdmin, async (req, res) => {
   try {
     const result = await query(
       'SELECT id, data, user_agent, ip_address, report_id, created_at FROM exfil_logs ORDER BY created_at DESC LIMIT 100'

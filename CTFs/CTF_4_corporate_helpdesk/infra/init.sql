@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS reports (
     status VARCHAR(50) DEFAULT 'queued' CHECK (status IN ('queued', 'visited', 'error')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     visited_at TIMESTAMP,
+    visited_url TEXT,
+    bot_console_logs TEXT,
     last_error TEXT
 );
 
@@ -49,13 +51,21 @@ CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at);
 
 -- Insert admin user (password: admin_secure_password_123)
+-- Note: password_hash placeholder is replaced at runtime by initDatabase()
 INSERT INTO users (username, password_hash, role, flag) 
 VALUES (
     'admin',
-    '$2b$10$YourHashedPasswordHere',
+    '$2b$10$placeholder_replaced_by_init',
     'admin',
     'CTF{admin_default_flag}'
 ) ON CONFLICT (username) DO NOTHING;
+
+-- Insert player users (passwords replaced at runtime by initDatabase())
+INSERT INTO users (username, password_hash, role, flag) VALUES
+    ('abcd12', '$2b$10$placeholder_replaced_by_init', 'user', 'CTF{user_abcd12_8bb73ad76fdd80e0}'),
+    ('efgh34', '$2b$10$placeholder_replaced_by_init', 'user', 'CTF{user_efgh34_80eb85d81b52e9ca}'),
+    ('ijkl56', '$2b$10$placeholder_replaced_by_init', 'user', 'CTF{user_ijkl56_1fb81908a0e8ba91}')
+ON CONFLICT (username) DO NOTHING;
 
 -- Insert sample KB articles
 INSERT INTO kb_articles (title, body, tags, author_id) VALUES

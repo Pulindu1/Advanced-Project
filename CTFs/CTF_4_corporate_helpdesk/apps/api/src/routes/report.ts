@@ -67,7 +67,8 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
 router.get('/my-reports', authenticate, async (req: AuthRequest, res) => {
   try {
     const result = await query(
-      'SELECT id, url, status, created_at, visited_at FROM reports WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20',
+      `SELECT id, url, status, created_at, visited_at, visited_url, bot_console_logs
+       FROM reports WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20`,
       [req.user?.id]
     );
 
@@ -78,13 +79,34 @@ router.get('/my-reports', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+// Get a single report (owner only) — used by frontend for detailed view including visited_url
+router.get('/:id', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const result = await query(
+      `SELECT id, url, status, created_at, visited_at, visited_url, bot_console_logs, last_error
+       FROM reports WHERE id = $1 AND user_id = $2`,
+      [id, req.user?.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    res.json({ report: result.rows[0] });
+  } catch (error) {
+    console.error('Get report error:', error);
+    res.status(500).json({ error: 'Failed to fetch report' });
+  }
+});
+
 // Internal endpoint for bot to update report status
 // Note: This should ideally be behind internal network only or use a shared secret
 router.put('/internal/update/:reportId', async (req, res) => {
   try {
     console.log(`🔄 Report status update for #${req.params.reportId}:`, req.body);
     const { reportId } = req.params;
-    const { status, error } = req.body;
+    const { status, error, visited_url, console_logs } = req.body;
 
     if (!status || !['visited', 'error'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
@@ -92,13 +114,17 @@ router.put('/internal/update/:reportId', async (req, res) => {
 
     if (status === 'visited') {
       await query(
-        'UPDATE reports SET status = $1, visited_at = NOW() WHERE id = $2',
-        [status, reportId]
+        `UPDATE reports
+         SET status = $1, visited_at = NOW(), visited_url = $2, bot_console_logs = $3
+         WHERE id = $4`,
+        [status, visited_url || null, console_logs || null, reportId]
       );
     } else if (status === 'error') {
       await query(
-        'UPDATE reports SET status = $1, last_error = $2 WHERE id = $3',
-        [status, error || 'Unknown error', reportId]
+        `UPDATE reports
+         SET status = $1, last_error = $2, visited_url = $3, bot_console_logs = $4
+         WHERE id = $5`,
+        [status, error || 'Unknown error', visited_url || null, console_logs || null, reportId]
       );
     }
 

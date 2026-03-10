@@ -12,10 +12,10 @@ export default function Layout() {
       <header className="header">
         <div className="header-content">
           <Link to="/dashboard" className="logo">
-            📚 IntraDesk KB
+            IntraDesk KB
           </Link>
           <nav className="header-nav">
-            <span>{user?.email}</span>
+            <span>{user?.username}</span>
             <button onClick={logout}>Logout</button>
           </nav>
         </div>
@@ -27,32 +27,32 @@ export default function Layout() {
             <ul className="sidebar-nav">
               <li>
                 <Link to="/dashboard" className={isActive('/dashboard')}>
-                  🏠 Dashboard
+                  Dashboard
                 </Link>
               </li>
               <li>
                 <Link to="/kb" className={isActive('/kb')}>
-                  📖 Knowledge Base
+                  Knowledge Base
                 </Link>
               </li>
               <li>
                 <Link to="/report" className={isActive('/report')}>
-                  🚨 Report Issue
+                  Report Issue
                 </Link>
               </li>
               <li>
                 <Link to="/captures" className={isActive('/captures')}>
-                  📦 My Captures
+                  My Captures
                 </Link>
               </li>
               <li>
                 <a href="#" style={{ opacity: 0.5, cursor: 'not-allowed' }}>
-                  🎫 Tickets (Coming Soon)
+                  Tickets (Coming Soon)
                 </a>
               </li>
               <li>
                 <a href="#" style={{ opacity: 0.5, cursor: 'not-allowed' }}>
-                  👤 Profile (Coming Soon)
+                  Profile (Coming Soon)
                 </a>
               </li>
             </ul>

@@ -45,13 +45,25 @@ export default function Captures() {
       </p>
 
       {captures.length === 0 ? (
-        <div style={{ 
-          padding: '2rem', 
-          background: '#f5f5f5', 
-          borderRadius: '8px',
-          textAlign: 'center' 
-        }}>
-          <p>No captures yet. Submit a report to see exfiltrated data here.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{
+            padding: '2rem',
+            background: '#f5f5f5',
+            borderRadius: '8px',
+            textAlign: 'center'
+          }}>
+            <p style={{ marginBottom: '1rem' }}>No captures yet. Submit a report to see exfiltrated data here.</p>
+          </div>
+          <div className="alert alert-info" style={{ margin: 0 }}>
+            <strong>💡 How captures work:</strong>
+            <br />
+            When a bot visits a page containing your JavaScript payload, any data
+            POSTed to <code>POST /api/exfil/capture</code> will appear here.
+            <br /><br />
+            Expected JSON body: <code>{'{"data": ..., "reportId": ...}'}</code>
+            <br />
+            No authentication required on that endpoint.
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
