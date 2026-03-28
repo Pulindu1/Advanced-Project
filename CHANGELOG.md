@@ -11,6 +11,11 @@ files changed (optional)
 
 
 
+
+
+### CTF analysis - 28/03/26 - Repo
+- Created CTF_REPO_ANALYSIS.md to doccument progress and what i have done so far.
+
 ### Fixed XSS exploit path - 10/03/26 - CTF 4
 - Before, the XSS worked, but the exploit path was too difficult for the target players (Y2 CS students) to workout withgout prior knowledge.
 Backend:
