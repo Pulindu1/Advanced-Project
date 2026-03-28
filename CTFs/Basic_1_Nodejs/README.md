@@ -6,28 +6,36 @@ The challenge is browser-first — participants should be able to complete it us
 
 ---
 
-## Quick start
+## Quick start (Docker — recommended)
 
-1. Install dependencies
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/). No Node.js installation needed.
+
+```bash
+cd CTFs/Basic_1_Nodejs
+cp .env.example .env
+docker compose up --build
+```
+
+Open the site at http://localhost:3000.
+
+To stop: `docker compose down`
+To reset to a clean state: `docker compose down && docker compose up --build`
+
+### Running without Docker (development)
+
+Requires Node.js 18+.
 
 ```bash
 cd CTFs/Basic_1_Nodejs
 npm install
-```
-
-2. Start the server (development)
-
-```bash
 npm run dev
 ```
 
-If port 3000 is in use you can start on a different port:
+If port 3000 is in use:
 
 ```bash
 PORT=3001 npm run dev
 ```
-
-Open the site at http://localhost:3000 (or the port you chose).
 
 ---
 
@@ -39,12 +47,17 @@ Open the site at http://localhost:3000 (or the port you chose).
 - Insecure session cookie (intentionally unsigned/unencrypted)
 - An example rate-limiter middleware to prevent brute-force by IP
 
-Notes about developer/testing mode
+### Developer/testing mode
 
-- The application supports a development compatibility mode for testing tolerant username lookups and synthesized flags. Start the server with the environment variable `CTF_DEV=1` to enable fuzzy matching and dev flag generation:
+The application supports a development compatibility mode with tolerant username lookups and synthesised flags. Set `CTF_DEV=1` to enable it:
 
 ```bash
+# Without Docker
 CTF_DEV=1 npm run dev
+
+# With Docker — add to your .env file:
+# CTF_DEV=1
+docker compose up --build
 ```
 
 In normal mode (default), flag lookup requires an exact username match in `src/data/flags.json`.
@@ -122,4 +135,4 @@ Local/in-repo references
 - Challenge-generation documentation and examples: `CTFs/challenge-generation/README.md`
 - Solution walkthrough: `SOLUTIONS.md`
 
-If you need additional attribution added (paper references, lecture slides, or other libraries), tell me which sources to include and I'll append them.
+If you need additional attribution added (paper references, lecture slides, or other libraries), add them here.

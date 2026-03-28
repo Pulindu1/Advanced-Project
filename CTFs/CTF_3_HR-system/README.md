@@ -1,14 +1,40 @@
-# CTF 3 – HR System
+# CTF 3 — HR System
 
-Multi-stage CTF with SQL injection, API exploitation, and cryptography.
+Multi-stage CTF covering SQL injection, API exploitation, and cryptography.
 
-**Stack:** Laravel 11, React, PostgreSQL
+**Stack:** Laravel 11 (PHP 8.2), React + Vite, PostgreSQL 16
 
-## Quick Start
+---
+
+## Quick Start (Docker — recommended)
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/). No PHP, Composer, or Node.js needed.
 
 ```bash
-# 1. Start database
-docker-compose up -d
+cd CTFs/CTF_3_HR-system
+cp .env.example .env
+docker compose up --build
+```
+
+Docker will:
+1. Start a PostgreSQL 16 database
+2. Build and start the Laravel backend (runs migrations + seeders automatically)
+3. Build and start the React frontend
+
+- Frontend: http://localhost:5174
+- Backend API: http://localhost:8004
+- PostgreSQL: localhost:5434 (for debugging)
+
+To stop: `docker compose down`
+To reset to a clean state (wipes the database): `docker compose down -v && docker compose up --build`
+
+### Running without Docker (development)
+
+Requires PHP 8.2, Composer, Node.js 18+, and a running PostgreSQL instance.
+
+```bash
+# 1. Start database only
+docker compose up -d db
 
 # 2. Backend
 cd backend
@@ -24,112 +50,56 @@ npm install
 npm run dev  # http://localhost:5174
 ```
 
-## Login Credentials
-- `abcd12` / `RVIFLBfM`
-- `efgh34` / `bcgxO1ZkSle`
-- `ijkl56` / `kH0g5imYtZ`
+---
+
+## Login Credentials (Seeded)
+
+| Username | Password     |
+|----------|--------------|
+| abcd12   | RVIFLBfM     |
+| efgh34   | bcgxO1ZkSle  |
+| ijkl56   | kH0g5imYtZ   |
+
+---
 
 ## CTF Flags
 
-**4 Flags Total:**
-1. Path traversal to `/flag` route
-2. Encryption key in source code
-3. SQL injection to find hidden employee
-4. Decrypt encrypted flag
+**4 flags total:**
+1. Path traversal to the `/flag` route
+2. Encryption key exposed in client-side source code
+3. SQL injection in employee search to find a hidden employee
+4. Decrypt the encrypted flag using the discovered key
 
-See [CTF_SOLUTION.md](CTF_SOLUTION.md) for complete walkthrough.
+See [CTF_SOLUTION.md](CTF_SOLUTION.md) for the complete walkthrough (instructors/markers only).
+
+---
 
 ## Vulnerabilities
 
-- SQL injection in employee search (bypassable filter)
-- Debug API endpoint exposing credentials
-- Hidden route discovery
-- Encryption key in client-side code
+- SQL injection in the employee search endpoint (bypassable filter)
+- Debug API endpoint that leaks credentials
+- Hidden route discoverable via path traversal
+- Encryption key embedded in client-side code
 
-## Ports
-- Backend: `http://127.0.0.1:8004`
-- Frontend: `http://localhost:5174`
-- PostgreSQL: `localhost:5433`
+**Note:** The `users` table uses secure bcrypt passwords. The `credentials` table stores plaintext passwords specifically for the SQL injection challenge.
+
+---
 
 ## Tech Stack
 
-**Backend:**
-- Laravel 11 (PHP framework) - REST API with MVC architecture
-- PostgreSQL 16 - Relational database
-- JWT authentication - Token-based auth
+**Backend:** Laravel 11, PostgreSQL 16, JWT authentication
+**Frontend:** React 18, Vite, TypeScript
+**Infrastructure:** Docker Compose (PostgreSQL + backend + frontend, all containerised)
 
-**Frontend:**
-- React 18 + Vite - SPA with hot reload
-- TypeScript - Type-safe JavaScript
-- Fetch API - HTTP requests to backend
-
-**Infrastructure:**
-- Docker Compose - Runs PostgreSQL in isolated container
-- Artisan - Laravel CLI for migrations, seeding, dev server
-- NPM - Frontend dependency management
-
-**Setup Flow:**
-1. Docker creates PostgreSQL container with persistent volume
-2. Laravel migrations create database schema
-3. Seeder populates tables from `credentials.json`
-4. Artisan serves API on port 8004
-5. Vite dev server proxies to backend, serves frontend on 5174
-
-- ✓ JWT authentication with configurable expiry
-- ✓ Input validation on all endpoints
-- ✓ Rate limiting on auth endpoints
-- ✓ Audit logging for sensitive actions
-
-### Intentional Vulnerabilities (For CTF)
-- ✗ **SQL Injection** - Login endpoint uses raw queries (Phase 3 - to be implemented)
-- ✗ **Plaintext password storage** - `credentials` table stores passwords unencrypted
-- ✗ **Information disclosure** - Error messages leak SQL structure
-
-**Note:** The `users` table uses secure bcrypt passwords. The `credentials` table contains plaintext passwords specifically for the SQL injection challenge.
+---
 
 ## CTF Integration
 
-Player flags are generated via `CTFs/challenge-generation/chgen_ctf3.js` and stored in `flags.json`.
-Each player's flag is stored in the database and accessible only to authorized users.
-
-## Running the Application
-
-**Ports:**
-- Backend API: http://127.0.0.1:8004
-- Frontend: http://localhost:5174
-- PostgreSQL Database: localhost:5432
-
-**Start Backend:**
-```bash
-cd backend
-php artisan serve --host=127.0.0.1 --port=8004
-```
-
-**Start Frontend:**
-```bash
-cd frontend
-npm run dev
-```
-
-**Note:** These ports differ from CTF_2_pswd_manager (which uses 4000/5173) to allow both CTFs to run simultaneously.
-
-## Default Credentials (Seeded)
-
-| Role    | Username    | Password   |
-|---------|-------------|------------|
-| Admin   | admin       | admin123   |
-| HR      | hr.manager  | hr1234     |
-| Employee| john.doe    | password   |
+Per-player flags are generated via `CTFs/challenge-generation/chgen_ctf3.js` and stored in `flags.json`. Each player's flag is seeded into the database at startup.
 
 ---
 
 ## References
 
-**SQL Injection:**
-- TryHackMe Advanced SQL Injection: https://tryhackme.com/room/advancedsqlinjection
 - PortSwigger SQL Injection: https://portswigger.net/web-security/sql-injection
-
-**Development:**
-- Claude Sonnet 4.5 (Anthropic) - API exploitation and curl examples
-
-
+- TryHackMe Advanced SQL Injection: https://tryhackme.com/room/advancedsqlinjection

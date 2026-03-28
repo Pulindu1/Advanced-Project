@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: ctf2-api
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    volumes:
+      - ctf2-data:/app/server/data
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ctf2-web
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  ctf2-data:

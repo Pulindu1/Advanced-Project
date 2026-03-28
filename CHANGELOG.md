@@ -11,7 +11,9 @@ files changed (optional)
 
 
 
-
+### Finished Docker - 28/03/26 - Repo
+- Made each of the CTFs work using docker rather than worrying about dependencies
+- CTF1 works but the others have some work to do.
 
 ### CTF analysis - 28/03/26 - Repo
 - Created CTF_REPO_ANALYSIS.md to doccument progress and what i have done so far.

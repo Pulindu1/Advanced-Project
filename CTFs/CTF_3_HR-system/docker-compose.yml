@@ -1,9 +1,9 @@
-version: '3.8'
+version: "3.9"
 
 services:
-  postgres:
+  db:
     image: postgres:16-alpine
-    container_name: ctf3_postgres
+    container_name: ctf3-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: hr_system
@@ -12,12 +12,60 @@ services:
     ports:
       - "5434:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ctf3-postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hr_admin -d hr_system"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - ctf3-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ctf3-backend
+    ports:
+      - "8004:8004"
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: hr_system
+      DB_USERNAME: hr_admin
+      DB_PASSWORD: hr_secure_pwd_2026
+      APP_ENV: production
+      APP_DEBUG: "false"
+      JWT_SECRET: ${JWT_SECRET:-change-this-before-deployment}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - ctf3-network
+    # Auto-run migrations and seeders before starting the server
+    command: >
+      sh -c "php artisan migrate --force &&
+             php artisan db:seed --force &&
+             php artisan serve --host=0.0.0.0 --port=8004"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8004
+    container_name: ctf3-frontend
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+    networks:
+      - ctf3-network
+
+networks:
+  ctf3-network:
+    driver: bridge
 
 volumes:
-  postgres_data:
+  ctf3-postgres-data:
