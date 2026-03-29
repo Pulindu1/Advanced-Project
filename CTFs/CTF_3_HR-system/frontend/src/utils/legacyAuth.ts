@@ -17,6 +17,8 @@
  * Migrated by: System Administrator
  */
 
+console.warn('[HR System] Legacy auth module loaded — this should have been removed in v2.0 migration')
+
 // Legacy session handler - no longer used
 export const legacySessionCheck = () => {
   console.warn('legacySessionCheck is deprecated. Use JWT tokens instead.')

@@ -1,0 +1,22 @@
+{
+  "name": "HR System Frontend",
+  "version": "2.0.0",
+  "sourceRoot": "/src/",
+  "sources": [
+    "App.tsx",
+    "main.tsx",
+    "index.css",
+    "api/client.ts",
+    "components/Layout.tsx",
+    "context/AuthContext.tsx",
+    "pages/LoginPage.tsx",
+    "pages/DashboardPage.tsx",
+    "pages/DepartmentsPage.tsx",
+    "pages/EmployeeDetailPage.tsx",
+    "pages/EmployeesPage.tsx",
+    "pages/FlagPage.tsx",
+    "pages/PayPage.tsx",
+    "utils/legacyAuth.ts"
+  ],
+  "note": "Debug manifest — remove before production deployment"
+}

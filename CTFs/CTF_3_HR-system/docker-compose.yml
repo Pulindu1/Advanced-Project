@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16-alpine
@@ -38,6 +36,9 @@ services:
       APP_ENV: production
       APP_DEBUG: "false"
       JWT_SECRET: ${JWT_SECRET:-change-this-before-deployment}
+    volumes:
+      - ./flags.json:/var/www/flags.json:ro
+      - ./credentials.json:/var/www/credentials.json:ro
     depends_on:
       db:
         condition: service_healthy

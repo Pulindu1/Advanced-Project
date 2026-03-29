@@ -50,23 +50,6 @@ Frontend is usually at http://localhost:5173 or :5174.
 
 ---
 
-## How to Solve (Brief)
-
-1. Log in or register.
-2. Visit `/app/challenge` — fetch the PoW (`nonce` + `difficulty`). Use the console helper on that page to find a `suffix` such that `sha256(nonce + suffix)` has the required leading hex zeros. Submit the suffix — the server returns the JWT secret.
-3. Forge a JWT for `flag12` signed with the returned secret:
-
-```js
-// example (Node.js)
-const jwt = require('jsonwebtoken')
-const token = jwt.sign({ sub: 'flag12' }, '<SECRET_FROM_STEP_2>', { expiresIn: '7d' })
-console.log(token)
-```
-
-4. Replace the `session` cookie in your browser (DevTools → Application → Cookies) with the forged token, then open `/app/vault` — the `flag12` entry contains the flag.
-
----
-
 ## Notes
 
 - Flags are generated into `server/data/flags.json` by the challenge generator and mirrored into `server/data/vaults.json` on first access.
@@ -79,4 +62,4 @@ console.log(token)
 
 - PortSwigger JWT guide — https://portswigger.net/web-security/jwt
 - Intigriti November CTF (JWT exploitation) — https://www.intigriti.com/researchers/blog/hacking-tools/november-ctf-challenge-exploiting-jwt-vulnerabilities
-- Solution walkthrough: `SOLUTIONS.md` (instructors/markers only)
+- Solution walkthrough and test credentials: `SOLUTIONS.md` (instructors/markers only)

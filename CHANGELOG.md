@@ -11,6 +11,12 @@ files changed (optional)
 
 
 
+
+### Pt2 Docker setup - 29/03/26 - Repo
+- Carrying on from the previous git commit.
+- CTF2 is now done, however the actual exploit needs some work.
+- CTF3 is now working too but only on chrome. Some work needs to be done for it to work properly on safari.
+
 ### Finished Docker - 28/03/26 - Repo
 - Made each of the CTFs work using docker rather than worrying about dependencies
 - CTF1 works but the others have some work to do.

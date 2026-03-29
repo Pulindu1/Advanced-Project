@@ -14,28 +14,12 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create departments
+        // Create departments (idempotent - safe to re-run on restart)
         $departments = [
-            Department::create([
-                'name' => 'Engineering',
-                'code' => 'ENG',
-                'description' => 'Software development and infrastructure',
-            ]),
-            Department::create([
-                'name' => 'Human Resources',
-                'code' => 'HR',
-                'description' => 'Employee management and recruitment',
-            ]),
-            Department::create([
-                'name' => 'Finance',
-                'code' => 'FIN',
-                'description' => 'Financial operations and accounting',
-            ]),
-            Department::create([
-                'name' => 'Operations',
-                'code' => 'OPS',
-                'description' => 'Day-to-day business operations',
-            ]),
+            Department::firstOrCreate(['name' => 'Engineering'], ['code' => 'ENG', 'description' => 'Software development and infrastructure']),
+            Department::firstOrCreate(['name' => 'Human Resources'], ['code' => 'HR', 'description' => 'Employee management and recruitment']),
+            Department::firstOrCreate(['name' => 'Finance'], ['code' => 'FIN', 'description' => 'Financial operations and accounting']),
+            Department::firstOrCreate(['name' => 'Operations'], ['code' => 'OPS', 'description' => 'Day-to-day business operations']),
         ];
 
         $positions = [
@@ -132,44 +116,50 @@ class DatabaseSeeder extends Seeder
                 }
             }
 
-            // Create user with bcrypt hashed password (for secure post-exploitation auth)
-            $user = User::create([
-                'username' => $username,
-                'email' => $username . '@company.internal',
-                'password' => Hash::make($userPassword),
-                'first_name' => ucfirst(substr($username, 0, 2)),
-                'last_name' => ucfirst(substr($username, 2, 2)),
-                'role' => 'employee',
-                'department_id' => $dept->id,
-                'is_active' => true,
-            ]);
+            // Create user (idempotent - skip if already exists)
+            $user = User::firstOrCreate(
+                ['username' => $username],
+                [
+                    'email' => $username . '@company.internal',
+                    'password' => Hash::make($userPassword),
+                    'first_name' => ucfirst(substr($username, 0, 2)),
+                    'last_name' => ucfirst(substr($username, 2, 2)),
+                    'role' => 'employee',
+                    'department_id' => $dept->id,
+                    'is_active' => true,
+                ]
+            );
 
-            Employee::create([
-                'user_id' => $user->id,
-                'employee_id' => $employeeId,
-                'department_id' => $dept->id,
-                'position' => $position,
-                'salary' => rand(50000, 90000),
-                'hire_date' => $hireDate,
-            ]);
+            Employee::firstOrCreate(
+                ['employee_id' => $employeeId],
+                [
+                    'user_id' => $user->id,
+                    'department_id' => $dept->id,
+                    'position' => $position,
+                    'salary' => rand(50000, 90000),
+                    'hire_date' => $hireDate,
+                ]
+            );
 
             // Store the flag for this user
-            Flag::create([
-                'username' => $username,
-                'flag_value' => $flagValue,
-            ]);
+            Flag::firstOrCreate(
+                ['username' => $username],
+                ['flag_value' => $flagValue]
+            );
 
             // Store credentials in vulnerable table (PLAINTEXT - for SQL injection challenge)
-            Credential::create([
-                'username' => $username,
-                'password' => $userPassword, // PLAINTEXT PASSWORD (intentionally insecure)
-                'password_hint' => 'Contact HR if you forgot your password',
-                'employee_id' => $employeeId,
-                'department' => $dept->name,
-                'position' => $position,
-                'hire_date' => $hireDate,
-                'monthly_pay' => $monthlyPay,
-            ]);
+            Credential::firstOrCreate(
+                ['username' => $username],
+                [
+                    'password' => $userPassword, // PLAINTEXT PASSWORD (intentionally insecure)
+                    'password_hint' => 'Contact HR if you forgot your password',
+                    'employee_id' => $employeeId,
+                    'department' => $dept->name,
+                    'position' => $position,
+                    'hire_date' => $hireDate,
+                    'monthly_pay' => $monthlyPay,
+                ]
+            );
 
             $this->command->info("Created player: $username (password: $userPassword, dept: {$dept->name})");
         }
@@ -203,40 +193,46 @@ class DatabaseSeeder extends Seeder
             $dept = $departments[0];
         }
 
-        // Create user (not meant to be logged into)
-        $user = User::create([
-            'username' => $username,
-            'email' => $username . '@system.internal',
-            'password' => Hash::make('SYSTEM_INTERNAL_DO_NOT_USE'),
-            'first_name' => 'Hidden',
-            'last_name' => 'Employee',
-            'role' => 'employee',
-            'department_id' => $dept->id,
-            'is_active' => false, // Inactive - cannot login
-        ]);
+        // Create user (idempotent - not meant to be logged into)
+        $user = User::firstOrCreate(
+            ['username' => $username],
+            [
+                'email' => $username . '@system.internal',
+                'password' => Hash::make('SYSTEM_INTERNAL_DO_NOT_USE'),
+                'first_name' => 'Hidden',
+                'last_name' => 'Employee',
+                'role' => 'employee',
+                'department_id' => $dept->id,
+                'is_active' => false, // Inactive - cannot login
+            ]
+        );
 
         // Create employee with encrypted notes
-        Employee::create([
-            'user_id' => $user->id,
-            'employee_id' => $credData['employee_id'], // FLAG012
-            'department_id' => $dept->id,
-            'position' => $credData['position'],
-            'salary' => 0,
-            'hire_date' => $credData['hire_date'],
-            'notes' => $credData['notes'], // ENCRYPTED FLAG
-        ]);
+        Employee::firstOrCreate(
+            ['employee_id' => $credData['employee_id']],
+            [
+                'user_id' => $user->id,
+                'department_id' => $dept->id,
+                'position' => $credData['position'],
+                'salary' => 0,
+                'hire_date' => $credData['hire_date'],
+                'notes' => $credData['notes'], // ENCRYPTED FLAG
+            ]
+        );
 
         // Store in credentials table (for SQL injection discovery)
-        Credential::create([
-            'username' => $username,
-            'password' => 'SYSTEM_INTERNAL',
-            'password_hint' => 'This account is for system use only',
-            'employee_id' => $credData['employee_id'],
-            'department' => $dept->name,
-            'position' => $credData['position'],
-            'hire_date' => $credData['hire_date'],
-            'monthly_pay' => 0,
-        ]);
+        Credential::firstOrCreate(
+            ['username' => $username],
+            [
+                'password' => 'SYSTEM_INTERNAL',
+                'password_hint' => 'This account is for system use only',
+                'employee_id' => $credData['employee_id'],
+                'department' => $dept->name,
+                'position' => $credData['position'],
+                'hire_date' => $credData['hire_date'],
+                'monthly_pay' => 0,
+            ]
+        );
 
         $this->command->info("Created HIDDEN employee: $username (FLAG012) with encrypted notes");
     }
