@@ -207,8 +207,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Create employee with encrypted notes
-        Employee::firstOrCreate(
+        // Create employee with encrypted notes (updateOrCreate so re-seeding picks up new encrypted values)
+        Employee::updateOrCreate(
             ['employee_id' => $credData['employee_id']],
             [
                 'user_id' => $user->id,

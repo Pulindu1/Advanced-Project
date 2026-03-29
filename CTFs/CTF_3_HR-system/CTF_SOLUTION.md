@@ -48,7 +48,7 @@ The employee search filters basic injection like `' OR 1=1--` but misses no-spac
 {
   "employee_id": "FLAG012",
   "username": "flag12",
-  "notes": "AES-256-CBC encrypted data: +DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6 (hint: check legacy code for the key)"
+  "notes": "AES-256-CBC encrypted data: 2Mc2NehcojWoJDxQfeZmAQ==:n9huRl/J+s87oF1G8uJD5emX7W5XH0O7Jh+vL1Eq9v3xtB/FMjflNbU2gm8nk819 (hint: check legacy code for the key)"
 }
 ```
 
@@ -78,7 +78,7 @@ curl "http://127.0.0.1:8004/api/debug/config?user=flag12" \
 {
   "user": "flag12",
   "config": {
-    "notes": "AES-256-CBC encrypted data: +DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6 (hint: check legacy code for the key)"
+    "notes": "AES-256-CBC encrypted data: 2Mc2NehcojWoJDxQfeZmAQ==:n9huRl/J+s87oF1G8uJD5emX7W5XH0O7Jh+vL1Eq9v3xtB/FMjflNbU2gm8nk819 (hint: check legacy code for the key)"
   }
 }
 ```
@@ -89,7 +89,7 @@ curl "http://127.0.0.1:8004/api/debug/config?user=flag12" \
 ```javascript
 const crypto = require('crypto');
 
-const encrypted = '+DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6';
+const encrypted = '2Mc2NehcojWoJDxQfeZmAQ==:n9huRl/J+s87oF1G8uJD5emX7W5XH0O7Jh+vL1Eq9v3xtB/FMjflNbU2gm8nk819';
 const key_passphrase = 'CTF_2026_SECRET_KEY_XJ9K2L';
 
 const [ivBase64, ciphertext] = encrypted.split(':');
@@ -107,7 +107,7 @@ console.log(decrypted);
 from Crypto.Cipher import AES
 import hashlib, base64
 
-encrypted = '+DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6'
+encrypted = '2Mc2NehcojWoJDxQfeZmAQ==:n9huRl/J+s87oF1G8uJD5emX7W5XH0O7Jh+vL1Eq9v3xtB/FMjflNbU2gm8nk819'
 key_passphrase = 'CTF_2026_SECRET_KEY_XJ9K2L'
 
 iv_b64, ciphertext = encrypted.split(':')
@@ -118,7 +118,7 @@ decrypted = cipher.decrypt(base64.b64decode(ciphertext))
 print(decrypted.decode('utf-8').rstrip('\x00'))
 ```
 
-**Flag 4:** `durham-hr{h1dd3n_3mpl0y33_4dv4nc3d_sql1_m4st3r}`
+**Flag 4:** `durham-hr{c3f8a12b4d7e9056fa21_flag12}`
 
 ---
 
@@ -129,7 +129,7 @@ print(decrypted.decode('utf-8').rstrip('\x00'))
 | 1 | Path traversal | `durham-hr{w3lc0m3_t0_hr_syst3m}` |
 | 2 | Source code inspection | `CTF_2026_SECRET_KEY_XJ9K2L` |
 | 3 | SQL injection | Found FLAG012 + encrypted data |
-| 4 | Debug API + AES decrypt | `durham-hr{h1dd3n_3mpl0y33_4dv4nc3d_sql1_m4st3r}` |
+| 4 | Debug API + AES decrypt | `durham-hr{c3f8a12b4d7e9056fa21_flag12}` |
 ```
 
 **Decryption Script (Python):**
@@ -138,7 +138,7 @@ from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 import base64
 
-encrypted_data = '+DUi/1MfXD1MDdwdvzE2YA==:uj1qPXtZow7ovD1UgKZT6PAmDWWZScvFnJqgpxY4bsWeApZZ7pZY4GN64Fa1SBj6'
+encrypted_data = '2Mc2NehcojWoJDxQfeZmAQ==:n9huRl/J+s87oF1G8uJD5emX7W5XH0O7Jh+vL1Eq9v3xtB/FMjflNbU2gm8nk819'
 passphrase = 'CTF_2026_SECRET_KEY_XJ9K2L'
 
 iv_b64, ciphertext_b64 = encrypted_data.split(':')
@@ -167,7 +167,7 @@ Use CyberChef with:
 ## Final Flag
 
 ```
-durham-hr{h1dd3n_3mpl0y33_4dv4nc3d_sql1_m4st3r}
+durham-hr{c3f8a12b4d7e9056fa21_flag12}
 ```
 
 ## Summary of Techniques Used

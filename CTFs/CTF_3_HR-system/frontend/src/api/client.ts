@@ -110,6 +110,7 @@ export interface EmployeeListItem {
   hire_date: string
   department: string
   salary?: number
+  notes?: string
   user: {
     first_name: string
     last_name: string

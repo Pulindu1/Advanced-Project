@@ -10,7 +10,8 @@ files changed (optional)
 
 
 
-
+### Flag path fix - 29/03/26 - CTF3
+- CTF3 needed some work since the path to get the flag wasn't great. We updated the solution and also made it more intuitive.
 
 ### Pt2 Docker setup - 29/03/26 - Repo
 - Carrying on from the previous git commit.

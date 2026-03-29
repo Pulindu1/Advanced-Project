@@ -33,7 +33,7 @@ export function DashboardPage() {
     <div style={{ padding: 24 }}>
       {/* TODO: Fix broken admin link - /admin/../../flag should redirect properly */}
       <h1 style={styles.title}>Dashboard</h1>
-      <p style={styles.welcome}>Welcome back, {user?.first_name}!</p>
+      <p style={styles.welcome}>Welcome back, {user?.first_name}! This CTF will NOT WORK ON SAFARI, try Chrome instead.</p>
 
       <div style={styles.statsGrid}>
         <StatCard label="Total Employees" value={stats?.total_employees || 0} />

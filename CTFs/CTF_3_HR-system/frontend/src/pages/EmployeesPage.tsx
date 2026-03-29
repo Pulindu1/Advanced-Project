@@ -77,6 +77,7 @@ export function EmployeesPage() {
                 <th>Position</th>
                 {canViewSalary && <th>Salary</th>}
                 <th>Hire Date</th>
+                <th>Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -95,6 +96,7 @@ export function EmployeesPage() {
                     <td>${emp.salary?.toLocaleString() || '-'}</td>
                   )}
                   <td>{emp.hire_date}</td>
+                  <td>{emp.notes || '-'}</td>
                 </tr>
               ))}
             </tbody>

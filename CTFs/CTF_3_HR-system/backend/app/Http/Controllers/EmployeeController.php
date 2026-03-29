@@ -142,6 +142,7 @@ class EmployeeController extends Controller
                 'position' => $emp->position,
                 'hire_date' => $emp->hire_date?->format('Y-m-d'),
                 'department' => $emp->department?->name,
+                'notes' => $emp->notes,
                 'user' => [
                     'first_name' => $emp->user?->first_name,
                     'last_name' => $emp->user?->last_name,
