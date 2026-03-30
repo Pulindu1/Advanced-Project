@@ -15,7 +15,9 @@ files changed (optional)
 
 
 
-
+### CTF5 setup - 30/03/26 - CTF5
+- CTF5's readme and references have been setup.
+- We have a detailed plan now to create CTF5.
 
 ### Rate limiter ctf4 - 30/03/26 - CTF4
 - added rate limiter to stop brute force login (in case students accidently login as admin)
