@@ -9,6 +9,8 @@ files changed (optional)
 # Logs:
 
 
+### Pt3 Docker setup - 30/03/26 - CTF3
+- CTF4 now done. Docker is set up for the 4 CTFs
 
 ### Flag path fix - 29/03/26 - CTF3
 - CTF3 needed some work since the path to get the flag wasn't great. We updated the solution and also made it more intuitive.
