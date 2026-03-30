@@ -1,14 +1,23 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import { query } from '../db';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 
+const loginLimiter = rateLimit({
+  windowMs: 30 * 1000, // 30 seconds
+  max: 10,
+  message: { error: 'Too many login attempts. Please try again in 30 seconds.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
 

@@ -9,7 +9,18 @@ files changed (optional)
 # Logs:
 
 
-### Pt3 Docker setup - 30/03/26 - CTF3
+
+
+
+
+
+
+
+
+### Rate limiter ctf4 - 30/03/26 - CTF4
+- added rate limiter to stop brute force login (in case students accidently login as admin)
+
+### Pt3 Docker setup - 30/03/26 - CTF4
 - CTF4 now done. Docker is set up for the 4 CTFs
 
 ### Flag path fix - 29/03/26 - CTF3
