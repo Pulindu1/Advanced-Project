@@ -15,6 +15,12 @@ files changed (optional)
 
 
 
+
+
+### Rate limiter + Tests - 30/03/26 - CTF5
+- Added flask rate limiter
+- Added basic testing too
+
 ### CTF5 main app - 30/03/26 - CTF5
 - Big change. We have the majority of the app built and the general structure. We have a lot more testing and other work to do though.
 

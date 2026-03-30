@@ -39,20 +39,13 @@ def seed_database(app):
         db.session.flush()
 
         # Store flags
-        first_flag3 = None
         first_flag4 = None
         for username, user_flags in flags_data.items():
             for flag_key, flag_value in user_flags.items():
                 flag = Flag(username=username, flag_key=flag_key, flag_value=flag_value)
                 db.session.add(flag)
-                if flag_key == 'flag3' and first_flag3 is None:
-                    first_flag3 = flag_value
                 if flag_key == 'flag4' and first_flag4 is None:
                     first_flag4 = flag_value
-
-        # Store flag3 in Flask config (accessible via WAF bypass SSTI)
-        if first_flag3:
-            app.config['WAF_SECRET_FLAG'] = first_flag3
 
         # Write flag4 to /app/secret/flag.txt
         if first_flag4:

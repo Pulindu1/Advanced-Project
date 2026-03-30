@@ -2,21 +2,18 @@ import pytest
 import json
 import os
 import tempfile
-from app import create_app
+from app import create_app, limiter
 from app.models import db as _db
 
 
 @pytest.fixture(scope='session')
 def app():
     """Create application for testing."""
-    # Create temp dir for test instance
     test_dir = tempfile.mkdtemp()
     instance_dir = os.path.join(test_dir, 'instance')
     os.makedirs(instance_dir, exist_ok=True)
-    secret_dir = os.path.join(test_dir, 'secret')
-    os.makedirs(secret_dir, exist_ok=True)
+    os.makedirs(os.path.join(test_dir, 'secret'), exist_ok=True)
 
-    # Write test flags.json and credentials.json
     flags = {
         'testuser': {
             'flag1': 'durham-cms-flag1{test_flag1_testuser}',
@@ -32,7 +29,6 @@ def app():
         }
     }
 
-    # Write to the app's parent directory (where seed.py expects them)
     app_dir = os.path.join(os.path.dirname(__file__), '..')
     with open(os.path.join(app_dir, 'flags.json'), 'w') as f:
         json.dump(flags, f)
@@ -44,14 +40,26 @@ def app():
 
     app = create_app()
     app.config['TESTING'] = True
+    # Disable rate limiting for all tests except the rate limit test itself
+    app.config['RATELIMIT_ENABLED'] = False
 
     yield app
 
 
 @pytest.fixture
 def client(app):
-    """Flask test client."""
+    """Flask test client with rate limiting disabled."""
     return app.test_client()
+
+
+@pytest.fixture
+def rate_limited_client(app):
+    """Flask test client with rate limiting enabled."""
+    app.config['RATELIMIT_ENABLED'] = True
+    client = app.test_client()
+    limiter.reset()
+    yield client
+    app.config['RATELIMIT_ENABLED'] = False
 
 
 @pytest.fixture

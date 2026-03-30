@@ -2,11 +2,13 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required
 import bcrypt
 from ..models import db, User
+from .. import limiter
 
 auth_bp = Blueprint('auth', __name__)
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit('10 per 30 seconds')
 def login():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
