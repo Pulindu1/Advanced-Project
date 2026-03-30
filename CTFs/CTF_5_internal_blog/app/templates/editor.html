@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Editor - NovaCMS{% endblock %}
+{% block content %}
+<!-- TODO: sanitise preview input before Jinja render -->
+<!-- Debug: /api/status with X-Debug-Token: novacms-internal -->
+<div class="editor-layout">
+    <div class="editor-panel">
+        <h1>{{ 'Edit Post' if post else 'New Post' }}</h1>
+        <form id="post-form" method="POST" action="{{ url_for('blog.save_post') }}">
+            {% if post %}
+            <input type="hidden" name="post_id" value="{{ post.id }}">
+            {% endif %}
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" value="{{ post.title if post else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="body">Body</label>
+                <textarea id="body" name="body" rows="15">{{ post.body if post else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="publish" {{ 'checked' if post and post.published else '' }}>
+                    Publish
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Post</button>
+                <button type="button" class="btn btn-secondary" onclick="previewContent()">Preview</button>
+            </div>
+        </form>
+        <div class="preview-toggle">
+            <label>
+                <input type="checkbox" id="use-v2" onchange="updatePreviewLabel()">
+                Use Filtered Preview (v2)
+            </label>
+        </div>
+    </div>
+    <div class="preview-panel">
+        <h2>Live Preview</h2>
+        <div id="preview-output" class="preview-output">
+            <p class="placeholder">Click "Preview" to render your content.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewContent() {
+    const body = document.getElementById('body').value;
+    const useV2 = document.getElementById('use-v2').checked;
+    const endpoint = useV2 ? '/preview/v2' : '/preview';
+    const output = document.getElementById('preview-output');
+
+    output.innerHTML = '<p>Loading...</p>';
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'body=' + encodeURIComponent(body),
+        credentials: 'same-origin'
+    })
+    .then(response => response.text())
+    .then(html => { output.innerHTML = html; })
+    .catch(err => { output.innerHTML = '<div class="error">Preview failed: ' + err.message + '</div>'; });
+}
+
+function updatePreviewLabel() {
+    const label = document.querySelector('.preview-panel h2');
+    const useV2 = document.getElementById('use-v2').checked;
+    label.textContent = useV2 ? 'Live Preview (Filtered v2)' : 'Live Preview';
+}
+</script>
+{% endblock %}

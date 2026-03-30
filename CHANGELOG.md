@@ -15,6 +15,9 @@ files changed (optional)
 
 
 
+### CTF5 main app - 30/03/26 - CTF5
+- Big change. We have the majority of the app built and the general structure. We have a lot more testing and other work to do though.
+
 ### CTF5 setup - 30/03/26 - CTF5
 - CTF5's readme and references have been setup.
 - We have a detailed plan now to create CTF5.

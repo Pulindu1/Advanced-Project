@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} - NovaCMS{% endblock %}
+{% block content %}
+<article class="post">
+    <h1>{{ post.title }}</h1>
+    <div class="post-meta">
+        By {{ post.author.username }} | {{ post.created_at.strftime('%Y-%m-%d %H:%M') if post.created_at else '' }}
+        | {{ 'Published' if post.published else 'Draft' }}
+    </div>
+    <div class="post-body">
+        {{ post.body | safe }}
+    </div>
+    <a href="{{ url_for('blog.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+</article>
+{% endblock %}

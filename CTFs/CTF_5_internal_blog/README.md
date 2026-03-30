@@ -95,7 +95,7 @@ See [SOLUTIONS.md](SOLUTIONS.md) for the complete walkthrough (instructors/marke
 
 ## CTF Integration
 
-Per-player flags are generated via `CTFs/challenge-generation/chgen_ctf5.js` and stored in `flags.json`. Each player's flags are seeded into the database at startup. The RCE flag (Flag 4) is also written to `/app/secret/flag.txt` inside the container.
+Per-player flags are generated via `CTFs/challenge-generation/chgen_ctf5.js` and stored in `flags.json`. Flag format: `durham-cms-flagN{<hash>_<username>}` where N is the flag number (1-4). Each player's flags are seeded into the database at startup. The RCE flag (Flag 4) is also written to `/app/secret/flag.txt` inside the container.
 
 ---
 

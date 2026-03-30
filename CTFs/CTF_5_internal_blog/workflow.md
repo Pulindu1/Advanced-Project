@@ -8,7 +8,7 @@
 | Stack | Python 3.11, Flask 3.x, Jinja2, SQLite, Docker |
 | Flags | 4 |
 | Vulnerability class | Server-Side Template Injection (SSTI) |
-| Flag prefix | `durham-cms{...}` |
+| Flag prefix | `durham-cms-flagN{...}` |
 | Port (frontend/app) | `5175` (host) -> `5000` (container) |
 
 ---
@@ -82,10 +82,10 @@ Create `CTFs/challenge-generation/chgen_ctf5.js` following the existing HMAC-SHA
 
 | Flag | Key | Format |
 |------|-----|--------|
-| Flag 1 | `flag1` | `durham-cms{<20-hex>_<username>}` |
-| Flag 2 | `flag2` | `durham-cms{<20-hex>_<username>}` |
-| Flag 3 | `flag3` | `durham-cms{<20-hex>_<username>}` |
-| Flag 4 | `flag4` | `durham-cms{<20-hex>_<username>}` |
+| Flag 1 | `flag1` | `durham-cms-flag1{<20-hex>_<username>}` |
+| Flag 2 | `flag2` | `durham-cms-flag2{<20-hex>_<username>}` |
+| Flag 3 | `flag3` | `durham-cms-flag3{<20-hex>_<username>}` |
+| Flag 4 | `flag4` | `durham-cms-flag4{<20-hex>_<username>}` |
 
 **Generator logic:**
 
@@ -93,7 +93,7 @@ Create `CTFs/challenge-generation/chgen_ctf5.js` following the existing HMAC-SHA
 For each username:
   For each flag (1-4):
     token = HMAC-SHA256(salt + flagNumber, username).hex().slice(0, 20)
-    flag  = `durham-cms{${token}_${username}}`
+    flag  = `durham-cms-flag${flagNumber}{${token}_${username}}`
 ```
 
 **Output files:**
@@ -102,10 +102,10 @@ For each username:
 ```json
 {
   "abcd12": {
-    "flag1": "durham-cms{a1b2c3d4e5f6a7b8c9d0_abcd12}",
-    "flag2": "durham-cms{...}",
-    "flag3": "durham-cms{...}",
-    "flag4": "durham-cms{...}"
+    "flag1": "durham-cms-flag1{a1b2c3d4e5f6a7b8c9d0_abcd12}",
+    "flag2": "durham-cms-flag2{...}",
+    "flag3": "durham-cms-flag3{...}",
+    "flag4": "durham-cms-flag4{...}"
   }
 }
 ```
@@ -188,7 +188,7 @@ SECRET_KEY=novacms-dev-2024
 DATABASE_URL=sqlite:///instance/novacms.db
 ```
 
-Note: `SECRET_KEY=novacms-dev-2024` is intentionally weak -- it IS Flag 2 (formatted as `durham-cms{novacms-dev-2024}`). The per-user flag from `flags.json` is used for Flags 1/3/4; the SECRET_KEY is a static flag identical for all users to keep the config-leak path realistic.
+Note: `SECRET_KEY=novacms-dev-2024` is intentionally weak -- it IS Flag 2 (formatted as `durham-cms-flag2{novacms-dev-2024}`). The per-user flag from `flags.json` is used for Flags 1/3/4; the SECRET_KEY is a static flag identical for all users to keep the config-leak path realistic.
 
 **Decision: Flag 2 is static, not per-user.** Rationale: `{{config}}` dumps the real Flask SECRET_KEY. Making it per-user would require dynamically setting SECRET_KEY per session, which breaks Flask's session signing. Instead, Flag 2 is the SECRET_KEY itself, and the SOLUTIONS.md explains this. The per-user flags are used for Flags 1, 3, and 4.
 
@@ -249,7 +249,7 @@ Note: `SECRET_KEY=novacms-dev-2024` is intentionally weak -- it IS Flag 2 (forma
 - Seed sample blog posts (3-4 posts with realistic CMS content)
 - Use `firstOrCreate` / `get_or_create` pattern for idempotency
 
-**Decision: Flag 4 file.** Since `/app/secret/flag.txt` can only hold one value but we have per-user flags, store a static RCE flag here: `durham-cms{rce_flag_check_your_username}`. The actual per-user flag4 is returned via a different mechanism -- the RCE reads `flag.txt` which contains a message directing the player to use their username to query the Flag table via SSTI/RCE. OR simpler: write the first user's flag4 and accept that in a multi-user deployment each instance would have its own flag.txt. **Chosen approach:** Write a generic flag4 to `/app/secret/flag.txt` at build time. The actual per-user flag4 is in the database Flag table, accessible via RCE with `cat /app/secret/flag.txt` returning a hint, then querying the DB. This adds one more step to the RCE challenge.
+**Decision: Flag 4 file.** Since `/app/secret/flag.txt` can only hold one value but we have per-user flags, store a static RCE flag here: `durham-cms-flag4{rce_flag_check_your_username}`. The actual per-user flag4 is returned via a different mechanism -- the RCE reads `flag.txt` which contains a message directing the player to use their username to query the Flag table via SSTI/RCE. OR simpler: write the first user's flag4 and accept that in a multi-user deployment each instance would have its own flag.txt. **Chosen approach:** Write a generic flag4 to `/app/secret/flag.txt` at build time. The actual per-user flag4 is in the database Flag table, accessible via RCE with `cat /app/secret/flag.txt` returning a hint, then querying the DB. This adds one more step to the RCE challenge.
 
 **Revised simpler approach:** Write the first player's flag4 to `/app/secret/flag.txt`. In a single-player deployment (one instance per student, which is the model), this is correct. The challenge-generation system generates per-user instances anyway.
 
@@ -392,7 +392,7 @@ def check_input(text: str) -> tuple[bool, str | None]:
 **Verification test:**
 ```bash
 curl -H "X-Debug-Token: novacms-internal" http://localhost:5175/api/status
-# -> { "flag": "durham-cms{...}" }
+# -> { "flag": "durham-cms-flag1{...}" }
 ```
 
 ### Flag 2 -- Basic SSTI: Config Leak
@@ -401,7 +401,7 @@ curl -H "X-Debug-Token: novacms-internal" http://localhost:5175/api/status
 1. Login as editor
 2. Go to editor, type `{{7*7}}` in body, click Preview -> see `49`
 3. Type `{{config}}` -> see full Flask config including SECRET_KEY
-4. Flag 2 is `durham-cms{novacms-dev-2024}` (the SECRET_KEY value, static for all users)
+4. Flag 2 is `durham-cms-flag2{novacms-dev-2024}` (the SECRET_KEY value, static for all users)
 
 **Verification test:**
 ```bash
@@ -464,7 +464,7 @@ and navigate to the config from there.
 ```bash
 # From inside container:
 docker exec novacms cat /app/secret/flag.txt
-# -> durham-cms{...}
+# -> durham-cms-flag4{...}
 ```
 
 ---
