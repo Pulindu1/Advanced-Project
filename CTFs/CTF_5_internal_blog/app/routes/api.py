@@ -13,6 +13,8 @@ def health():
         'engine': 'jinja2',
         'status': 'running',
         'note': 'Debug endpoints require X-Debug-Token header',
+        'config_note': 'SECRET_KEY rotation pending -- current key may be a flag',
+        'changelog': '/static/CHANGELOG.md',
     })
 
 

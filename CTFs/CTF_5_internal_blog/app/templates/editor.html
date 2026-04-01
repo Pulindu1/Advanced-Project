@@ -3,6 +3,9 @@
 {% block content %}
 <!-- TODO: sanitise preview input before Jinja render -->
 <!-- Debug: /api/status with X-Debug-Token: novacms-internal -->
+<!-- Note: app SECRET_KEY is the CMS master credential -- flag2 -->
+<!-- SECURITY: template sandbox does NOT prevent os.popen() -- see /app/secret/ for sensitive files -->
+<!-- See /static/CHANGELOG.md for WAF update notes -->
 <div class="editor-layout">
     <div class="editor-panel">
         <h1>{{ 'Edit Post' if post else 'New Post' }}</h1>
@@ -32,8 +35,11 @@
         <div class="preview-toggle">
             <label>
                 <input type="checkbox" id="use-v2" onchange="updatePreviewLabel()">
-                Use Filtered Preview (v2)
+                <span class="v1-label" style="opacity:0.6; text-decoration:line-through">Legacy Preview (v1 &mdash; deprecated)</span>
+                /
+                <span class="v2-label"><strong>Production Preview (v2 &mdash; WAF-protected)</strong></span>
             </label>
+            <p class="toggle-help" style="font-size:0.85em; color:#666; margin-top:4px;">v2 applies WAF filtering required for production.</p>
         </div>
     </div>
     <div class="preview-panel">

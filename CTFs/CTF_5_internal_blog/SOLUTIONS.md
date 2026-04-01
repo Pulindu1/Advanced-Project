@@ -1,5 +1,16 @@
 # CTF 5: NovaCMS -- Solutions
 
+## Player Onboarding
+
+On first login, the dashboard shows a dismissible onboarding banner:
+- **4 flags** to find
+- Flag format: `durham-cms-flagN{...}` (N = 1–4)
+- Difficulty tiers: **Recon** (Flag 1) → **Exploit** (Flags 2 & 3) → **RCE** (Flag 4)
+
+The banner disappears after clicking "Got it" and does not reappear within the same session.
+
+---
+
 ## Credentials
 
 - `abcd12` / *(see credentials.json)*
@@ -12,21 +23,45 @@
 
 ### Discovery Path
 
-1. Login and navigate to the post editor at `/editor`
-2. View page source (Ctrl+U) -- find HTML comments:
+Multiple breadcrumb chains lead here:
+
+**Chain A (page source):**
+1. Login -- view page source on any page. The `<head>` contains:
    ```html
-   <!-- TODO: sanitise preview input before Jinja render -->
-   <!-- Debug: /api/status with X-Debug-Token: novacms-internal -->
+   <!-- NovaCMS v2.1.0-beta | internal API: /health -->
    ```
-3. OR visit `/health` which returns:
+2. Visit `/health`:
    ```json
    {
      "app": "NovaCMS",
      "version": "2.1.0-internal",
      "engine": "jinja2",
      "status": "running",
-     "note": "Debug endpoints require X-Debug-Token header"
+     "note": "Debug endpoints require X-Debug-Token header",
+     "config_note": "SECRET_KEY rotation pending -- current key may be a flag",
+     "changelog": "/static/CHANGELOG.md"
    }
+   ```
+3. `note` hints at a debug token. `config_note` is a breadcrumb for Flag 2. `changelog` leads to the WAF keyword list for Flag 3.
+
+**Chain B (login page source):**
+1. View source on the login page -- find:
+   ```html
+   <!-- Auth endpoint hardened Q3 2024 -- see /health for service status -->
+   ```
+2. Follow to `/health` as above.
+
+**Chain C (editor source):**
+1. Navigate to the editor -- view source -- find:
+   ```html
+   <!-- Debug: /api/status with X-Debug-Token: novacms-internal -->
+   ```
+   This directly reveals the token and endpoint.
+
+**Chain D (dashboard source):**
+1. View source on the dashboard -- find:
+   ```html
+   <!-- Dashboard v2 | debug endpoints still active (see /api/*) -->
    ```
 
 ### Exploit
@@ -51,20 +86,30 @@ curl -H "X-Debug-Token: novacms-internal" http://localhost:5175/api/status
 
 ### Discovery Path
 
-1. From Flag 1, the player knows the app uses Jinja2 for rendering
-2. The editor has a "Live Preview" feature that renders post content server-side
-3. The HTML comment says "sanitise preview input before Jinja render" -- hinting the input is rendered unsafely
+1. From Flag 1, the `/health` response confirms the engine is `jinja2` and hints `config_note: "SECRET_KEY rotation pending -- current key may be a flag"`.
+2. The editor has a "Live Preview" feature. The toggle shows **Legacy Preview (v1 — deprecated)** / **Production Preview (v2 — WAF-protected)**, pushing toward v1 for initial exploration.
+3. Editor source contains:
+   ```html
+   <!-- TODO: sanitise preview input before Jinja render -->
+   <!-- Note: app SECRET_KEY is the CMS master credential -- flag2 -->
+   ```
+4. CHANGELOG (`/static/CHANGELOG.md`, linked from the page footer and `/health`) has:
+   ```
+   [SECURITY] Rotated SECRET_KEY. Old value was being used as internal auth token (flag2).
+   ```
 
 ### Exploit
 
-1. Go to the post editor
-2. In the body field, type `{{7*7}}` and click Preview
-3. The preview shows `49` -- confirming SSTI
-4. Type `{{config}}` and click Preview
-5. The output contains the full Flask config including:
+1. Go to the post editor. Ensure the **v1 (Legacy)** toggle is selected (unchecked).
+2. Type `{{7*7}}` and click Preview → output shows `49`, confirming SSTI.
+3. Type `{{config}}` and click Preview.
+4. The output contains the full Flask config including:
    ```
    SECRET_KEY: novacms-dev-2024
    ```
+5. The editor source and CHANGELOG both confirm this is the flag.
+
+> Note: after 5 uses of v1, a deprecation notice appears in the preview output nudging toward v2.
 
 **Flag 2:** `durham-cms-flag2{novacms-dev-2024}` *(static -- the SECRET_KEY itself)*
 
@@ -74,10 +119,14 @@ curl -H "X-Debug-Token: novacms-internal" http://localhost:5175/api/status
 
 ### Discovery Path
 
-1. The editor has a toggle for "Filtered Preview (v2)" which uses `/preview/v2`
-2. Trying `{{config}}` on v2 returns: "Blocked: input contains forbidden keyword 'config'"
-3. Visit `/static/CHANGELOG.md` to read the WAF source:
-   - Blocked keywords: `__`, `config`, `os`, `class`, `subclasses`, `request`, `import`, `popen`, `system`, `eval`, `exec`, `builtins`
+1. The editor toggle labels v2 as **Production Preview (WAF-protected)**. After 5 v1 uses, a deprecation notice pushes players to v2.
+2. Switch to v2, try `{{config}}` → "Blocked: input contains forbidden keyword 'config'". The error response also says:
+   > *"Blocked keywords listed in /static/CHANGELOG.md. Hex encoding (\x5f\x5f) can represent blocked characters."*
+3. Visit `/static/CHANGELOG.md` -- discoverable via:
+   - Footer link on every page (`v2.1.0-beta`)
+   - `/health` JSON: `"changelog": "/static/CHANGELOG.md"`
+   - Editor source: `<!-- See /static/CHANGELOG.md for WAF update notes -->`
+4. CHANGELOG lists blocked keywords: `__`, `config`, `os`, `class`, `subclasses`, `request`, `import`, `popen`, `system`, `eval`, `exec`, `builtins`
 
 ### Bypass Techniques
 
@@ -121,8 +170,13 @@ Note: Flag 3 is stored in `os.environ['WAF_FLAG3']` — it does **not** appear i
 
 ### Discovery Path
 
-1. With WAF bypass mastered from Flag 3, the player now needs to execute a system command
-2. Goal: read `/app/secret/flag.txt` from the server filesystem
+1. With WAF bypass mastered from Flag 3, escalate to command execution.
+2. Multiple hints point toward `os.popen()` and `/app/secret/`:
+   - **Editor source**: `<!-- SECURITY: template sandbox does NOT prevent os.popen() -- see /app/secret/ for sensitive files -->`
+   - **CHANGELOG**: `[TODO] Audit popen/system calls in template sandbox` and `Flag files relocated to /app/secret/`
+   - **WAF block response**: hints at hex encoding for blocked chars
+   - **"Internal: Security Audit Notes" blog post** (visible to authenticated users): *"Audit finding: Jinja2 sandbox does not restrict os.popen() or subprocess calls. Sensitive files under /app/secret/ must be protected at the OS level."*
+3. Goal: `cat /app/secret/flag.txt`
 
 ### Exploit
 

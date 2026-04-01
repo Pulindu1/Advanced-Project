@@ -1,6 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Dashboard - NovaCMS{% endblock %}
 {% block content %}
+<!-- Dashboard v2 | debug endpoints still active (see /api/*) -->
+{% if show_onboarding %}
+<div class="onboarding-banner">
+    <h2>Welcome to NovaCMS CTF</h2>
+    <p>There are <strong>4 flags</strong> to find.</p>
+    <p>Flag format: <code>durham-cms-flagN{...}</code> where N is 1-4.</p>
+    <ul>
+        <li><strong>Recon</strong> (Flag 1) &mdash; explore the application surface</li>
+        <li><strong>Exploit</strong> (Flags 2 &amp; 3) &mdash; template injection, WAF bypass</li>
+        <li><strong>RCE</strong> (Flag 4) &mdash; remote code execution</li>
+    </ul>
+    <form method="post">
+        <button name="action" value="dismiss_onboarding" class="btn btn-secondary">Got it</button>
+    </form>
+</div>
+{% endif %}
 <h1>Dashboard</h1>
 <p>Welcome, <strong>{{ current_user.username }}</strong>.</p>
 

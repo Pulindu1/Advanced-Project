@@ -68,7 +68,7 @@ def seed_database(app):
             },
             {
                 'title': 'Internal: Security Audit Notes',
-                'body': '<p>Audit flagged the preview endpoint for potential template injection. WAF v2 filter has been deployed to the /preview/v2 endpoint. See CHANGELOG for blocked keywords.</p><p>TODO: migrate all preview traffic to v2 before next release.</p>',
+                'body': '<p>Audit flagged the preview endpoint for potential template injection. WAF v2 filter has been deployed to the /preview/v2 endpoint. See CHANGELOG for blocked keywords.</p><p>TODO: migrate all preview traffic to v2 before next release.</p><p><strong>Audit finding:</strong> Jinja2 sandbox does not restrict os.popen() or subprocess calls. Sensitive files under /app/secret/ must be protected at the OS level.</p>',
                 'published': False,
             },
         ]

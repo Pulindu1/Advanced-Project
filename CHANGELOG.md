@@ -17,6 +17,16 @@ files changed (optional)
 
 
 
+
+### Improved scaffolding - 01/04/26 - CTF5
+- Add a one-time login modal showing flag count, format, and difficulty per flag
+- Add a subtle HTML comment hinting toward `/health` for Flag 1 discovery.
+- Make the SECRET_KEY self-evidently the Flag 2 answer via an in-app signal
+- Deprecate the v1 preview endpoint and add a narrative driver pushing players to v2.
+- Add a realistic developer artefact that hints at `/static/CHANGELOG.md` existing
+- Redesign Flag 4 scaffolding so the RCE payload is a direct extension of the Flag 3
+   bypass technique, with each prior flag teaching one composable piece of the final chain.
+
 ### Rate limiter + Tests - 30/03/26 - CTF5
 - Added flask rate limiter
 - Added basic testing too

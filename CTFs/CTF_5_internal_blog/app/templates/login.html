@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Login - NovaCMS{% endblock %}
 {% block content %}
+<!-- Auth endpoint hardened Q3 2024 -- see /health for service status -->
 <div class="login-container">
     <h1>NovaCMS Login</h1>
     <form method="POST" action="{{ url_for('auth.login') }}">

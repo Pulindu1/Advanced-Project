@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}NovaCMS{% endblock %}</title>
+    <!-- NovaCMS v2.1.0-beta | internal API: /health -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -28,5 +29,9 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </main>
+    <footer class="site-footer">
+        <span><a href="/static/CHANGELOG.md">v2.1.0-beta</a></span>
+        <span>&copy; 2024 NovaCMS</span>
+    </footer>
 </body>
 </html>

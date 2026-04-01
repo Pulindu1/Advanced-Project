@@ -35,8 +35,13 @@ def app():
     with open(os.path.join(app_dir, 'credentials.json'), 'w') as f:
         json.dump(creds, f)
 
-    os.environ['DATABASE_URL'] = f'sqlite:///{os.path.join(instance_dir, "test.db")}'
+    db_url = f'sqlite:///{os.path.join(instance_dir, "test.db")}'
+    os.environ['DATABASE_URL'] = db_url
     os.environ['SECRET_KEY'] = 'novacms-dev-2024'
+
+    # Override Config before create_app reads it
+    from app.config import Config
+    Config.SQLALCHEMY_DATABASE_URI = db_url
 
     app = create_app()
     app.config['TESTING'] = True
@@ -56,10 +61,11 @@ def client(app):
 def rate_limited_client(app):
     """Flask test client with rate limiting enabled."""
     app.config['RATELIMIT_ENABLED'] = True
-    client = app.test_client()
     limiter.reset()
+    client = app.test_client()
     yield client
     app.config['RATELIMIT_ENABLED'] = False
+    limiter.reset()
 
 
 @pytest.fixture

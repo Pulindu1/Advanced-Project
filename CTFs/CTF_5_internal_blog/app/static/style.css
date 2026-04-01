@@ -103,3 +103,28 @@ body {
 
 section { margin-bottom: 2rem; }
 section h2 { margin-bottom: 0.8rem; }
+
+/* Onboarding banner */
+.onboarding-banner {
+    background: #e3f2fd;
+    border: 2px solid #2563eb;
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+}
+.onboarding-banner h2 { margin-bottom: 0.5rem; color: #1a1a2e; }
+.onboarding-banner ul { margin: 0.5rem 0 1rem 1.5rem; }
+.onboarding-banner code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 0.95em; }
+
+/* Footer */
+.site-footer {
+    text-align: center;
+    padding: 1.5rem;
+    color: #999;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+}
+.site-footer a { color: #888; text-decoration: none; }
+.site-footer a:hover { color: #555; }
