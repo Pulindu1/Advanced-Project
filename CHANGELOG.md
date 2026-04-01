@@ -16,6 +16,9 @@ files changed (optional)
 
 
 
+### E2E testing scripts - 01/04/26 - Repo
+- Set up E2E testing for CTF 1 and CTF 5. We can come back to the others once we are done with them. 
+
 
 
 ### Improved scaffolding - 01/04/26 - CTF5

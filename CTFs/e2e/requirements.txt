@@ -1,0 +1,4 @@
+requests>=2.31
+pytest>=8.0
+PyJWT>=2.8
+pycryptodome>=3.20
