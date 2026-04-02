@@ -14,12 +14,11 @@ files changed (optional)
 
 
 
-
+### CTF6 Setup - 02/04/26 - CTF6
+- Most of the structure of the CTF is built. We have a lot left to do such as testing and teh actual CTF, but for now, logging in works and the front-end is mostly done.
 
 ### E2E testing scripts - 01/04/26 - Repo
 - Set up E2E testing for CTF 1 and CTF 5. We can come back to the others once we are done with them. 
-
-
 
 ### Improved scaffolding - 01/04/26 - CTF5
 - Add a one-time login modal showing flag count, format, and difficulty per flag

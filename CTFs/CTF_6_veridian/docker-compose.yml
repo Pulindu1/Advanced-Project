@@ -1,0 +1,50 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: veridian-app
+    ports:
+      - "5180:8080"
+    volumes:
+      - ./flags.json:/app/flags.json:ro
+      - ./credentials.json:/app/credentials.json:ro
+    depends_on:
+      metadata:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks:
+      veridian-internal:
+    restart: unless-stopped
+
+  metadata:
+    build:
+      context: ./metadata
+      dockerfile: Dockerfile
+    container_name: veridian-metadata
+    networks:
+      veridian-internal:
+        aliases:
+          - "169.254.169.254"
+    restart: unless-stopped
+
+  redis:
+    build:
+      context: ./redis
+      dockerfile: Dockerfile
+    container_name: veridian-redis
+    networks:
+      veridian-internal:
+        aliases:
+          - redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  veridian-internal:
+    driver: bridge

@@ -1,0 +1,36 @@
+{
+  "id": "veridian-ssrf",
+  "title": "Veridian Secure -- Server-Side Request Forgery",
+  "category": "web",
+  "difficulty": "advanced",
+  "flagFormat": "durham-vsec-flagN{.*}",
+  "flagCount": 4,
+  "points": 400,
+  "owasp": "A10:2021 Server-Side Request Forgery",
+  "description": "Investigate a fictional security firm's internal portal by exploiting SSRF vulnerabilities to reach internal cloud metadata, enumerate network services, pivot to an unauthenticated Redis instance, and replay a cached admin session token.",
+  "learningObjectives": [
+    "Understanding SSRF attack vectors and impact",
+    "Exploiting cloud metadata services (AWS IMDSv1)",
+    "Using alternative URL schemes (dict://) for non-HTTP service interaction",
+    "Redis enumeration and data exfiltration via SSRF",
+    "Session token replay attacks"
+  ],
+  "techStack": [
+    "Rust (Actix-web 4)",
+    "Python (Flask metadata mock)",
+    "Redis 7",
+    "SQLite",
+    "Docker Compose"
+  ],
+  "hints": [
+    "The link previewer fetches URLs from the server side. What internal addresses might be reachable?",
+    "Cloud instances often have a metadata service at a well-known IP address.",
+    "Not all URLs use the http:// scheme. What other schemes might the preview tool accept?",
+    "If you find a session token, where might you use it?"
+  ],
+  "deployment": {
+    "port": 5180,
+    "command": "docker compose up --build",
+    "containers": 3
+  }
+}

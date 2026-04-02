@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridian Secure -- Dashboard</title>
+    <!-- dashboard v3 | link preview tool available at /preview -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #c0c0c0;
+            min-height: 100vh;
+        }
+        .nav {
+            background: #111;
+            border-bottom: 1px solid #333;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-brand {
+            color: #4a9e4a;
+            font-size: 1em;
+            letter-spacing: 3px;
+        }
+        .nav-links a {
+            color: #777;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.85em;
+        }
+        .nav-links a:hover {
+            color: #4a9e4a;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .welcome {
+            background: #111;
+            border: 1px solid #333;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .welcome h2 {
+            color: #4a9e4a;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+        .welcome p {
+            font-size: 0.85em;
+            color: #888;
+        }
+        .post {
+            background: #111;
+            border: 1px solid #333;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .post-header {
+            border-bottom: 1px solid #222;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .post-title {
+            color: #4a9e4a;
+            font-size: 1em;
+        }
+        .post-meta {
+            color: #555;
+            font-size: 0.75em;
+            margin-top: 5px;
+        }
+        .post-body {
+            font-size: 0.85em;
+            line-height: 1.6;
+            white-space: pre-line;
+            color: #999;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 15px;
+            font-size: 0.7em;
+            color: #444;
+            border-top: 1px solid #222;
+        }
+        .footer a {
+            color: #555;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            color: #4a9e4a;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <span class="nav-brand">VERIDIAN SECURE</span>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/preview">Link Previewer</a>
+            <a href="/logout">Logout ({{ username }})</a>
+        </div>
+    </div>
+    <div class="container">
+        <div class="welcome">
+            <h2>INTERNAL COMMUNICATIONS</h2>
+            <p>Welcome, {{ username }}. Below are recent internal posts from Veridian Secure staff.</p>
+        </div>
+        {% for post in posts %}
+        <div class="post">
+            <div class="post-header">
+                <div class="post-title">{{ post.title }}</div>
+                <div class="post-meta">{{ post.author }} -- {{ post.date }}</div>
+            </div>
+            <div class="post-body">{{ post.body }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="footer">
+        <a href="/static/CHANGELOG.md">Changelog v3.2.1</a> | Veridian Secure Ltd.
+    </div>
+</body>
+</html>

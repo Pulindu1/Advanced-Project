@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridian Secure -- Link Previewer</title>
+    <!-- fetch endpoint: /api/preview -- no validation implemented yet, see issue #47 -->
+    <!-- preview accepts JSON body: {"url": "https://example.com"} -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #c0c0c0;
+            min-height: 100vh;
+        }
+        .nav {
+            background: #111;
+            border-bottom: 1px solid #333;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-brand {
+            color: #4a9e4a;
+            font-size: 1em;
+            letter-spacing: 3px;
+        }
+        .nav-links a {
+            color: #777;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.85em;
+        }
+        .nav-links a:hover {
+            color: #4a9e4a;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .tool-header {
+            background: #111;
+            border: 1px solid #333;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .tool-header h2 {
+            color: #4a9e4a;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+        .tool-header p {
+            font-size: 0.85em;
+            color: #888;
+        }
+        .preview-form {
+            background: #111;
+            border: 1px solid #333;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #c0c0c0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4a9e4a;
+        }
+        button {
+            padding: 10px 20px;
+            background: #1a3a1a;
+            border: 1px solid #4a9e4a;
+            color: #4a9e4a;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background: #2a4a2a;
+        }
+        .result-container {
+            background: #111;
+            border: 1px solid #333;
+            padding: 20px;
+            display: none;
+        }
+        .result-label {
+            color: #4a9e4a;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .result-body {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            padding: 15px;
+            font-size: 0.85em;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 500px;
+            overflow-y: auto;
+            color: #aaa;
+        }
+        .error-msg {
+            color: #cc4444;
+        }
+        .loading {
+            color: #4a9e4a;
+            font-size: 0.85em;
+            display: none;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 15px;
+            font-size: 0.7em;
+            color: #444;
+            border-top: 1px solid #222;
+        }
+        .footer a {
+            color: #555;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            color: #4a9e4a;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <span class="nav-brand">VERIDIAN SECURE</span>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/preview">Link Previewer</a>
+            <a href="/logout">Logout ({{ username }})</a>
+        </div>
+    </div>
+    <div class="container">
+        <div class="tool-header">
+            <h2>LINK PREVIEWER</h2>
+            <p>Preview external intelligence report URLs. Enter a URL below to fetch and display its contents. This tool retrieves the content server-side for security screening.</p>
+        </div>
+        <div class="preview-form">
+            <div class="input-group">
+                <input type="text" id="url-input" placeholder="https://example.com/report.html" value="{{ submitted_url }}">
+                <button id="fetch-btn" onclick="fetchPreview()">FETCH</button>
+            </div>
+            <div class="loading" id="loading">Fetching URL...</div>
+        </div>
+        <div class="result-container" id="result-container">
+            <div class="result-label">RESPONSE</div>
+            <div class="result-body" id="result-body"></div>
+        </div>
+    </div>
+    <div class="footer">
+        <a href="/static/CHANGELOG.md">Changelog v3.2.1</a> | Veridian Secure Ltd.
+    </div>
+    <script>
+        async function fetchPreview() {
+            const urlInput = document.getElementById('url-input');
+            const resultContainer = document.getElementById('result-container');
+            const resultBody = document.getElementById('result-body');
+            const loading = document.getElementById('loading');
+            const fetchBtn = document.getElementById('fetch-btn');
+
+            const url = urlInput.value.trim();
+            if (!url) return;
+
+            loading.style.display = 'block';
+            resultContainer.style.display = 'none';
+            fetchBtn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url }),
+                });
+
+                const contentType = resp.headers.get('content-type') || '';
+                let text;
+                if (contentType.includes('application/json')) {
+                    const data = await resp.json();
+                    text = data.error ? 'Error: ' + data.error : JSON.stringify(data, null, 2);
+                    if (data.error) {
+                        resultBody.className = 'result-body error-msg';
+                    } else {
+                        resultBody.className = 'result-body';
+                    }
+                } else {
+                    text = await resp.text();
+                    resultBody.className = 'result-body';
+                }
+
+                resultBody.textContent = text;
+                resultContainer.style.display = 'block';
+            } catch (e) {
+                resultBody.className = 'result-body error-msg';
+                resultBody.textContent = 'Network error: ' + e.message;
+                resultContainer.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+                fetchBtn.disabled = false;
+            }
+        }
+
+        document.getElementById('url-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') fetchPreview();
+        });
+    </script>
+</body>
+</html>

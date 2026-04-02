@@ -1,0 +1,20 @@
+{
+  "abcd12": {
+    "flag1": "durham-vsec-flag1{4978085d94998dceb8ad_abcd12}",
+    "flag2": "durham-vsec-flag2{e33b29e7dd1158131c01_abcd12}",
+    "flag3": "durham-vsec-flag3{b2029f88112f0ad71795_abcd12}",
+    "flag4": "durham-vsec-flag4{f0078c4b9a485e6ac59a_abcd12}"
+  },
+  "efgh34": {
+    "flag1": "durham-vsec-flag1{54c19e1c891b7e69566c_efgh34}",
+    "flag2": "durham-vsec-flag2{7a069c3d54b21867abdd_efgh34}",
+    "flag3": "durham-vsec-flag3{e2dc33d392b99e606696_efgh34}",
+    "flag4": "durham-vsec-flag4{329c0295423466f97ba1_efgh34}"
+  },
+  "ijkl56": {
+    "flag1": "durham-vsec-flag1{e2305f45a3afe3c49fee_ijkl56}",
+    "flag2": "durham-vsec-flag2{705d2966294c8c3739cf_ijkl56}",
+    "flag3": "durham-vsec-flag3{a7509b7dd65d55941004_ijkl56}",
+    "flag4": "durham-vsec-flag4{9d5fb37423b41c9a1ec4_ijkl56}"
+  }
+}

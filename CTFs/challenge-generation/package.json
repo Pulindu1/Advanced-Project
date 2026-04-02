@@ -7,6 +7,7 @@
     "generate-flags-ctf2": "node chgen_ctf2.js",
     "generate-flags-ctf3": "node chgen_ctf3.js",
     "generate-flags-ctf5": "node chgen_ctf5.js",
-    "generate-flags": "npm run generate-flags-basic1 && npm run generate-flags-ctf2 && npm run generate-flags-ctf3 && npm run generate-flags-ctf5"
+    "generate-flags-ctf6": "node chgen_ctf6.js",
+    "generate-flags": "npm run generate-flags-basic1 && npm run generate-flags-ctf2 && npm run generate-flags-ctf3 && npm run generate-flags-ctf5 && npm run generate-flags-ctf6"
   }
 }
