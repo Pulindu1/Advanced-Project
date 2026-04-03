@@ -12,6 +12,12 @@ files changed (optional)
 
 
 
+
+
+
+### CTF6 e2e test - 03/04/26 - CTF6
+- Set up the e2e tests for CTF6
+
 ### CTF6 Flag fixes - 03/04/26 - CTF6
 - Fixed Flags 1 and 3. They wern't fully working before.
 - Flags 2 and 4 were already working fine.
