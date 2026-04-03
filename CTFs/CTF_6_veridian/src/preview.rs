@@ -9,6 +9,13 @@ pub async fn fetch_url(url: &str) -> Result<String, String> {
         return Err("Unsupported URL scheme".to_string());
     }
 
+    // Rewrite the link-local metadata IP to the internal Docker hostname.
+    // Players submit 169.254.169.254 (the real AWS metadata address) but
+    // Docker cannot route to link-local IPs across containers. The metadata
+    // service is reachable by its Docker Compose service name instead.
+    let url = url.replace("169.254.169.254", "metadata");
+    let url = url.as_str();
+
     if url.starts_with("dict://") {
         return fetch_dict(url).await;
     }

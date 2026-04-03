@@ -20,5 +20,5 @@ redis-cli SET "veridian:flag3" "__FLAG3_PLACEHOLDER__"
 echo "Redis seed data loaded."
 
 # Stop the background Redis and start it in the foreground
-redis-cli shutdown nosave
+redis-cli shutdown save
 exec redis-server --protected-mode no

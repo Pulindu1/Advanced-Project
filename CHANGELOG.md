@@ -12,7 +12,10 @@ files changed (optional)
 
 
 
-
+### CTF6 Flag fixes - 03/04/26 - CTF6
+- Fixed Flags 1 and 3. They wern't fully working before.
+- Flags 2 and 4 were already working fine.
+- Minor bug fixes.
 
 ### CTF6 Setup - 02/04/26 - CTF6
 - Most of the structure of the CTF is built. We have a lot left to do such as testing and teh actual CTF, but for now, logging in works and the front-end is mostly done.
