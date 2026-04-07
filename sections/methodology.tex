@@ -1,0 +1,49 @@
+\section{Methodology}
+\subsection{Research Strategy \& Specification}
+
+
+
+\begin{itemize}
+\item \textbf{Design Philosophy}: Transition from monolithic VMs to containerized microservices to solve root-access bypasses and AI-assisted cheating. (\textbf{Advanced deliverables}).
+\item \textbf{Requirement Specification}: Implementing "Jeopardy-style" CTFs featuring per-user randomized flags, multi-stage exploit chains, and Docker isolation.
+\item \textbf{Scaffolding Framework}: Three-tier difficulty taxonomy (Basic, Intermediate, Advanced) mapped to OWASP Top 10 categories to maintain cognitive "flow".
+\end{itemize}
+
+\subsection{Technical System Design \& Tools}
+\begin{itemize}
+\item \textbf{Infrastructure}: Deployment of Node.js/Express (CTF1), React/Vite (CTF2, 4), and Laravel (CTF3) using Docker Compose for environmental reproducibility.
+\item \textbf{Bot Simulation}: Implementing a Playwright and BullMQ-driven "Admin Bot" in CTF4 to model authentic XSS-to-CSRF threat vectors.
+\end{itemize}
+
+\subsection{Algorithms \& Logical Design}
+\begin{itemize}
+\item \textbf{Flag Generation}
+\item \textbf{Proof-of-Work (PoW)}: SHA-256 prefix-matching algorithm used in CTF2 to gate JWT secrets and prevent brute-force exploitation - This is just a "mini game".
+\end{itemize}
+
+\subsection{Verification, Validation, and Evaluation (VV\&E)}
+\begin{itemize}
+\item \textbf{Verification}: Two-layer testing using Jest/Supertest for access control smoke tests and standalone exploit scripts to confirm solvability.
+\item \textbf{Validation}: Systematic "Intentional Vulnerability Audits" (e.g., CTF4 \texttt{workflow.md}) to identify and document unintended solve paths.
+\item \textbf{Evaluation Metrics}: Quantitative measurement via Normalized Gain ⟨g⟩ and Time-to-Flag (T2F), plus qualitative player surveys.
+\end{itemize}
+
+\section{Results and Evaluation}
+\subsection{Evaluation of Method and Results}
+\begin{itemize}
+\item \textbf{Evaluation Method Appraisal}: Critique of the mixed-methods approach (quantitative logs vs. qualitative feedback) and the utility of automated "Exploit-as-a-Test" verification.
+\item \textbf{Clarity of Results}: Summary tables of functional verification success, automated test outcomes, and (if applicable) student solve-time distributions.
+\item \textbf{Approach Suitability}: Evaluating if the modern stack choices and "bread-crumbing" design effectively met pedagogical goals and realism requirements.
+\end{itemize}
+
+\subsection{Implementation Issues and Discussion}
+\begin{itemize}
+\item \textbf{Implementation Issues}: Analysis of challenges such as CTF3 non-determinism, Docker resource overhead, and specific logic hurdles like URL encoding in XSS payloads.
+\item \textbf{Strengths and Limitations}
+\end{itemize}
+
+\subsection{Process and Organizational Appraisal}
+\begin{itemize}
+\item \textbf{SE Process Evaluation}: Effectiveness of the Build-Audit-Fix workflow and the alignment of the final system with the initial GANTT chart.
+\item \textbf{Project Organisation}: Appraising the efficiency of shared generation modules and the strategic mapping of challenges to the OWASP Top 10.
+\end{itemize}

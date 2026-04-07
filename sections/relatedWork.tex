@@ -1,0 +1,77 @@
+\newpage
+.
+\newpage
+
+
+
+\section{Related Work}
+
+\subsection{Introduction to Literature Survey [title placeholder, write last]}
+[insert later, a brief intro]
+
+
+\subsection{CTF Pedagogy and Experiential Learning}
+Capture-the-Flag (CTF) competitions have become widely adopted as a
+useful pedagogical tool in cybersecurity education. Leune and Petrilli \cite{KeesPetrelli} demonstrate that CTF participation significantly enhances technical proficiency, student engagement, and self-confidence. By providing a hands-on environment for skill refinement, where exercises can effectively bridge the gap between theoretical knowledge and real-world cybersecurity practice. This is aligned with Dewey's principle that practical and theoretical instruction must proceed together. However, the study draws primarily on self-reported student attitudes rather than controlled experimental designs, limiting the strength of their causal claims.
+
+Meinsma et al. \cite{Meinsma2022} provide a measurement framework linking Jeopardy-style challenges to specific knowledge, skill, and attitude objectives using the CTFd platform \cite{CTFd}. Their results challenge the assumption that participation automatically builds competence, finding no clear evidence of measurable learning growth or a consistent correlation between performance and enthusiasm. They concluded that logging data alone cannot reveal how or why learning occurs. For this project, their work underscores the necessity of considering explicit learning objectives within each challenge and capturing process-based evidence of skill development rather than relying solely on flag completion.
+
+The tension between these positions highlights a gap in empirical evidence for learning gain within graded, web-specific coursework. Vykopal et al. \cite{Vykopal} address this by identifying four risks when integrating CTFs into formal assessments: improper scoring, insufficient scaffolding, plagiarism, and limited analytics. They notably found that the pressure of a graded module can shift student focus from conceptual learning to "flag hunting," where the desire to win eclipses the pedagogical intent. This is directly relevant to the current project, as it underscores the need to prioritize instructional design over competitive dynamics to ensure that solving a challenge requires true understanding rather than just guesswork.
+
+The literature establishes a consensus on the pedagogical potential of CTFs, though empirical validation for graded, web-specific coursework remains limited. Effective challenge design frequently employs a multi-level progression and practitioner-driven maxims—such as realism, fairness, and ensuring that learning is the direct path to the flag such as the ones proposed by \cite{Balaji2025}.
+
+The integration of these principles is best understood through Csíkszentmihályi’s Flow Theory \cite{Csikszentmihalyi}, which suggests that optimal engagement occurs when challenge difficulty precisely matches participant skill. This project adopts a tiered structure (from basic cookie tampering to complex SSRF pivoting) to maintain this "flow," mitigating the frustration of over-taxing novices or the boredom of under-challenging experts.
+
+This project addresses these gaps and aligns with the literature by mapping challenges directly to OWASP \cite{OWASP2025} categories and utilizing a dual-evaluation approach—human participant testing and automated LLM analysis—to rigorously assess difficulty and pedagogical alignment.
+
+
+
+\subsection{Designing CTF Challenges: Progressive Difficulty and Multi-Stage Exploits}
+Balaji et al. \cite{Balaji2025} describe a structured learning path in which each flag unlocks the next level, progressing from basic to advanced topics. This sequential gating mechanism ensures that players demonstrate
+competence at each stage before proceeding, which aligns with the
+pedagogical principle of scaffolding. However, their platform spans
+cryptography, reverse engineering, forensics, and web exploitation
+simultaneously, meaning the difficulty gradient operates across domains
+rather than within a single domain. The present project adopts both that approach along with a
+different approach: the difficulty progression is achieved through increasing the complexity of the exploit chain within the same domain. This within-domain
+progression, from a single-step cookie manipulation (CTF1) through to a two-stage JWT forgery (CTF2) allows for more linear scaffolding.
+
+Fuzyll's practitioner maxims \cite{Fuzyll2015} argue that challenges should reward
+understanding over guesswork, and that learning should be the path to
+the flag rather than a coincidental byproduct. This principle motivates
+a deliberate design decision in this project: each challenge embeds
+multiple discovery chains leading to the same exploit, so that players
+who approach the problem from different angles can still reach the
+intended learning outcome. The trade-off is that multiple discovery
+paths increase the risk of unintended solutions, which must be
+mitigated through post-design vulnerability auditing, a process
+documented for each challenge in the project's workflow artefacts A 'safer example' would be in allowing a few edge cases of SQL injection rather than only a singular payload working.
+
+
+\subsection{Web Application Vulnerabilities and OWASP Coverage}
+The selection of vulnerability classes for the challenge suite is
+grounded in the OWASP Top 10 \cite{OWASP2025}, the most widely adopted taxonomy of
+web application security risks. OWASP serves as a practical framework
+for both industry practitioners and educators, and several authors have
+used it to structure CTF curricula. Sadat et al. \cite{sadat2024} survey common web
+application vulnerabilities alongside countermeasure strategies,
+confirming that classic flaws such as SQL injection, cross-site
+scripting (XSS), and broken authentication remain the most prevalent
+targets for defensive training. Nawrocki et al. [18] provide a
+complementary OWASP-mapped analysis, including an experimental test
+application and developer checklist. Both papers are useful for
+justifying the inclusion of foundational vulnerability classes, though
+neither addresses the more recent additions to the OWASP Top 10, nor do
+they consider how challenge design should adapt when targeting
+framework-specific vulnerabilities rather than language-level flaws.
+
+
+
+
+
+
+
+
+\newpage
+.
+\newpage
