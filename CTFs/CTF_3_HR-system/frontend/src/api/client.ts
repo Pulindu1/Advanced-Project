@@ -1,4 +1,4 @@
-const API_BASE = 'http://127.0.0.1:8004/api'
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8004') + '/api'
 
 // Note: Debug endpoints available at /api/debug/* - remove before production!
 // Example: curl -H "Authorization: Bearer <token>" http://127.0.0.1:8004/api/debug/config?user=<username>

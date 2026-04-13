@@ -11,7 +11,8 @@ files changed (optional)
 
 
 
-
+### Minor bug fixes CTF3 - 13/04/26 - CTF3
+- Fixed bug that didn't let you login.
 
 ### Per-user flags implementation - 13/04/26 - CTF2 & CTF3
 - CTF1 per user credentials implemented.
