@@ -15,8 +15,88 @@
 
 
 \subsection{Research question and aims}
-\subsubsection{Research question and aims}
+
+The research question guiding this project is:
+\begin{quote}
+\textit{``\textbf{How can modern web application vulnerabilities be authentically
+modelled and pedagogically structured within Capture-the-Flag
+environments to enhance learning outcomes in cybersecurity education?}''}
+\end{quote}
+[BRIEFLY DISCUSS]
+
 \subsubsection{Deliverables}
+The project deliverables are organised into three tiers of increasing
+scope and complexity, summarised in Table~\ref{tab:deliverables}.
+These tiers also relate to increasing difficulty, where \textit{Basic}
+deliverables include fairly accessible single-step CTFs, while
+\textit{Intermediate} and \textit{Advanced} tiers ramp up in both
+exploit complexity and engineering rigour. Collectively, the
+deliverables address a gap identified in the literature: existing
+educational CTF platforms typically offer narrow vulnerability coverage
+limited to classical flaws such as SQL injection and XSS
+\cite{Sasiwanit}, lack per-user flag personalisation beyond simple
+randomisation, and do not account for the ease with
+which LLMs can solve uniform, well-documented challenges
+\cite{ji2025}. This project targets all three shortcomings within a
+single web-specific, graded coursework context.
+
+
+\begin{table}[h]
+\centering
+\caption{Project Deliverables by Tier}
+\label{tab:deliverables}
+\begin{tabular}{|p{1.5cm}|p{6.2cm}|}
+\hline
+\textbf{Tier} & \textbf{Deliverables} \\ \hline
+Basic &
+Design and implement introductory CTF challenges targeting
+foundational web vulnerabilities (e.g.\ insecure session handling,
+weak authentication mechanisms). Each challenge is a standalone
+web application with a single intended exploit path and per-user
+flag personalisation. \\ \hline
+Intermediate &
+Design and implement medium-to-hard CTF challenges featuring
+multi-stage exploit chains, where solving one stage reveals the
+information required for the next. These challenges will also target more
+complex vulnerability classes (e.g.\ SQL injection with filter
+bypass, DOM XSS with bot-based privilege escalation, SSTI with
+WAF evasion, SSRF with internal service pivoting) and require
+players to synthesise knowledge across multiple techniques within
+a single challenge. \\ \hline
+Advanced &
+End-to-end and unit testing for each challenge to verify that
+intended exploit paths function correctly and that unintended
+solutions are mitigated.
+Full Dockerisation of each challenge as a self-contained
+Docker Compose stack for portable distribution.
+Per-user flag generation and credential management via the
+shared challenge-generation system.
+LLM-based difficulty validation using multiple models to assess
+challenge resistance to automated solving.
+Human participant evaluation with feedback collection. \\ \hline
+\end{tabular}
+\end{table}
+
 \subsubsection{Measures of success}
+
+\paragraph{\textbf{Basic}} Each challenge functions correctly when deployed, the
+intended exploit path leads to a valid per-user flag, and the
+application behaves realistically (i.e.\ non-exploitable features
+function as expected alongside the deliberate vulnerability).
+\paragraph{\textbf{Intermediate}} Multi-stage challenges are solvable through
+their intended exploit chains without requiring knowledge external
+to the challenge environment. Each stage teaches a discrete skill,
+and exhibits a bread-crumbing mechanism (where one exploit reveals information
+for the next or increases in difficulty). Post-design vulnerability auditing
+confirms that no trivial unintended solution bypasses the intended
+chain.
+\paragraph{\textbf{Advanced}} Automated tests pass for each challenge, confirming that exploit paths remain functional after code changes. Docker
+Compose stacks build and run successfully on a clean machine without
+manual configuration beyond providing a student identifier. Human
+testers of varying skill levels can engage with the challenges and
+provide structured feedback. LLM evaluation produces documented
+transcripts showing each model's approach, with results analysed
+for patterns in where automated solvers succeed or fail.
+
 \subsection{Achievements - What did I achieve?}
 

@@ -1,13 +1,17 @@
-\newpage
-.
-\newpage
-
-
-
 \section{Related Work}
+\label{sec:relatedwork}
 
-\subsection{Introduction to Literature Survey [title placeholder, write last]}
-[insert later, a brief intro]
+\subsection{Introduction to Related Works}
+This section surveys published work across five areas relevant to the
+design and evaluation of the challenge suite: CTF pedagogy and its
+integration into graded coursework, progressive difficulty and
+multi-stage exploit design, web application vulnerability taxonomies
+(particularly OWASP coverage), containerised challenge distribution,
+and the emerging use of LLMs as automated CTF solvers. For each area,
+the review identifies key findings, evaluates methodological
+limitations, and highlights gaps that this project addresses. The
+overarching aim is to establish the academic and practitioner
+foundations for the design decisions described in the Methodology.
 
 
 \subsection{CTF Pedagogy and Experiential Learning}
@@ -55,23 +59,83 @@ web application security risks. OWASP serves as a practical framework
 for both industry practitioners and educators, and several authors have
 used it to structure CTF curricula. Sadat et al. \cite{sadat2024} survey common web
 application vulnerabilities alongside countermeasure strategies,
-confirming that classic flaws such as SQL injection, cross-site
-scripting (XSS), and broken authentication remain the most prevalent
-targets for defensive training. Nawrocki et al. [18] provide a
+confirming that classic flaws such as SQLi, XSS, and broken authentication remain the most prevalent
+targets for defensive training. Nawrocki et al. \cite{nawrocki} provide a
 complementary OWASP-mapped analysis, including an experimental test
 application and developer checklist. Both papers are useful for
-justifying the inclusion of foundational vulnerability classes, though
-neither addresses the more recent additions to the OWASP Top 10, nor do
-they consider how challenge design should adapt when targeting
-framework-specific vulnerabilities rather than language-level flaws.
+justifying the inclusion of foundational vulnerability classes.
+
+The challenge suite in this project is designed to cover a broad range
+of OWASP Top 10 (2021-2025) categories, including Broken Access
+Control, Cryptographic Failures, Injection, Identification and Authentication Failures, and Server-Side
+Request Forgery. Within the injection category alone, the suite
+encompasses SQL injection with filter bypass, DOM-based XSS, and
+server-side template injection, each implemented in a distinct
+technology stack. This breadth of coverage is deliberately wider than
+existing educational CTF platforms, which Sasiwanit et al. \cite{Sasiwanit} observe
+typically remain limited to classical vulnerabilities such as brute
+force, SQL injection, and XSS, omitting modern exploit classes such as
+SSTI, deserialisation, and prototype pollution.
+
+Two vulnerability classes warrant particular discussion because they are under-represented in CTF education literature and form key components of the challenge suite.
+
+Server-Side Template Injection (SSTI) falls under OWASP's Injection category
+and occurs when user input is unsafely embedded into a template engine's rendering pipeline. Unlike SQL injection, which targets the database layer, SSTI targets the application's view layer and can escalate directly to remote code execution (RCE) by traversing the template
+engine's object hierarchy \cite{PortSwiggerSSTI}. Check
+Point Research \cite{CheckPointSSTI2024} reports that as of 2024, an average of one in sixteen organisations faced SSTI attacks weekly, with cloud-based organisations experiencing 30\% more frequent attacks than on-premises environments. Despite this prevalence, SSTI is rarely included in educational CTF platforms. An SSTI challenge in this project such as CTF5 addresses this gap by implementing a Jinja2/Flask environment where players progress from information disclosure through basic template injection to WAF-bypassed RCE, modelling the escalation path that practitioners encounter in real-world engagements.
+
+Server-Side Request Forgery (SSRF) was in the 2021 OWASP Top 10 \cite{OWASP2025}, driven by community consensus regarding its high severity in cloud-native architectures despite a relatively low incidence rate of 2.72\%. The 2019 Capital One breach, analysed by Khan et al. \cite{khan2022}, exemplifies the catastrophic potential of this vulnerability. In that instance, an attacker exploited an SSRF flaw to query the AWS Instance Metadata Service (IMDSv1), obtaining role credentials that exposed over 100 million records. Khan et al. highlighted a critical design flaw in IMDSv1: the service implicitly trusted any local process request, a vulnerability AWS subsequently mitigated with the session-based token authentication of IMDSv2. Literature such as Khan et al. show the importance of the inclusion of SSRF vulnerabilities.
 
 
+\subsection{Containerisation and Secure Challenge Distribution}
+Modern CTF deployments increasingly look into the use Docker containers rather than full virtual machines, offering advantages in scalability, resource
+efficiency, and isolation. Raj et al. \cite{raj2016} introduced a CTF
+infrastructure using Docker containers, showing that containerisation
+significantly reduces the resource requirements for organisers and
+automates many setup tasks. Because containers share the host OS kernel,
+running many instances is far more efficient than spawning multiple VMs,
+and a single machine can host challenges for many participants
+simultaneously. Sasiwanit et al. \cite{Sasiwanit} validate this approach in their
+CTFd-integrated platform, using Docker for challenge isolation and VPN access control, and demonstrate through Apache JMeter stress testing that the architecture remains responsive under load.
+ 
+However, Neither Raj et al. nor Sasiwanit et al. discuss the
+problem of having flag data within the docker images, as their platforms assume a centralised hosting model where students connect to a remote service rather than running containers
+locally.
+
+\subsection{LLM-Based Evaluation of CTF Challenges}
+Ji et al. \cite{ji2025} reported that LLMs possess substantial technical knowledge about
+vulnerability classes but struggle to apply that knowledge to specific
+scenarios and to adapt their strategies based on feedback from the CTF
+environment. With appropriate scaffolding, including retrieval-augmented
+generation and interactive environmental augmentation, their CTFAgent
+framework achieved over 80\% performance improvement on standard CTF
+datasets. This result has a direct implication for this project: the
+difficulty an LLM experiences with a challenge depends heavily on
+whether it is given raw prompts or an agentic framework with tool
+access, and any LLM evaluation methodology must control for this
+variable.
 
 
+\subsection{Summary of Findings}
+The literature establishes broad consensus that CTF exercises are
+pedagogically valuable for cybersecurity education, yet rigorous
+empirical evidence for measurable learning gain remains limited,
+particularly for web-specific challenges embedded within graded
+university coursework rather than stand-alone competitions. Existing
+educational CTF platforms predominantly cover classical vulnerability
+classes such as SQL injection and XSS, with modern exploit categories
+including SSTI and SSRF rarely represented despite their growing
+real-world prevalence and severity. The problem of securely
+distributing containerised challenges while protecting embedded
+sensitive data is a practical concern not addressed by the current
+literature on Docker-based CTF infrastructure. Finally, LLM-based
+evaluation of CTF challenges is a nascent but rapidly developing field;
+early benchmarks demonstrate that LLMs struggle with multi-stage
+exploitation requiring adaptive reasoning, though performance is highly
+dependent on the scaffolding provided. This project addresses these gaps
+by designing a challenge suite with broad OWASP coverage including
+under-taught vulnerability classes, packaging challenges as
+distributable Docker containers, and employing a dual evaluation
+methodology combining human participant testing with systematic
+LLM-based difficulty assessment.
 
-
-
-
-\newpage
-.
-\newpage

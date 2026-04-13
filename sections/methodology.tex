@@ -1,49 +1,99 @@
+\newpage
+[DELETE LATER]
+\newpage
+
+
 \section{Methodology}
-\subsection{Research Strategy \& Specification}
+\label{sec:methodology}
+ 
+\subsection{Design Philosophy and Guiding Principles}
+\label{sec:design-philosophy}
+ 
+The Related Work identified several gaps in the current landscape of
+CTF-based cybersecurity education: a narrow focus on classical
+vulnerability classes with modern exploit categories rarely
+represented~\cite{Sasiwanit}, limited empirical evidence for
+measurable learning gain within graded web-specific
+coursework~\cite{Meinsma2022}, unresolved challenges around secure
+distribution of containerised challenges with embedded
+secrets~\cite{raj2016}, and a nascent understanding of how LLM-based
+solvers interact with multi-stage exploitation
+tasks~\cite{ji2025}. This section describes the methodology by which
+these gaps were translated into a concrete suite of web
+exploitation CTF challenges, beginning with the design philosophy that
+governed every subsequent architectural and pedagogical decision. The
+remainder of the Methodology then details the challenge
+implementations (Section~\ref{sec:challenge-design}), the
+academic integrity infrastructure
+(Section~\ref{sec:flag-personalisation}), the containerisation
+strategy (Section~\ref{sec:containerisation}), and the
+verification, validation, and testing methodology
+(Section~\ref{sec:vvt}) whose results are presented in
+Section~\ref{sec:results}.
+ 
+Five core principles were established at the outset of the project and
+applied consistently across all challenges. Each principle
+addresses a specific finding from the literature and imposes a
+measurable constraint on the design. Table~\ref{tab:design-principles}
+summarises the mapping between principles and their motivating sources;
+the paragraphs that follow elaborate on each in turn.
+ 
+\begin{table}[h]
+\centering
+\caption{Design Principles and Their Literature Foundations}
+\label{tab:design-principles}
+\begin{tabular}{|p{2.8cm}|p{5cm}|}
+\hline
+\textbf{Principle} & \textbf{Motivating Literature} \\ \hline
+Realism over artificiality &
+Fuzyll~\cite{Fuzyll2015}: learning as the path to the flag;
+Vykopal et al.~\cite{Vykopal}: graded CTFs risk
+``flag hunting'' when scenarios lack authenticity \\ \hline
+Progressive within-domain scaffolding &
+Cs\'{i}kszentmih\'{a}lyi~\cite{Csikszentmihalyi}: Flow Theory
+(challenge--skill balance);
+Balaji et al.~\cite{Balaji2025}: sequential gating in multi-level CTFs \\ \hline
+Broad OWASP coverage including under-represented classes &
+Sasiwanit et al.~\cite{Sasiwanit}: existing platforms limited
+to classical vulnerabilities;
+OWASP Top~10~\cite{OWASP2025} as the coverage framework \\ \hline
+Per-user personalisation for academic integrity &
+Chothia \& Novakovic (SecGen)~\cite{chothia2023}: personalised
+lab environments;
+Vykopal et al.~\cite{Vykopal}: plagiarism as a structural risk \\ \hline
+Technology stack diversity &
+Novel contribution (no single surveyed platform varies its
+implementation stack per challenge). \\ \hline
+\end{tabular}
+\end{table}
 
 
 
-\begin{itemize}
-\item \textbf{Design Philosophy}: Transition from monolithic VMs to containerized microservices to solve root-access bypasses and AI-assisted cheating. (\textbf{Advanced deliverables}).
-\item \textbf{Requirement Specification}: Implementing "Jeopardy-style" CTFs featuring per-user randomized flags, multi-stage exploit chains, and Docker isolation.
-\item \textbf{Scaffolding Framework}: Three-tier difficulty taxonomy (Basic, Intermediate, Advanced) mapped to OWASP Top 10 categories to maintain cognitive "flow".
-\end{itemize}
+\subsection{Challenge Architecture Overview}
+\label{sec:challenge-architecture}
 
-\subsection{Technical System Design \& Tools}
-\begin{itemize}
-\item \textbf{Infrastructure}: Deployment of Node.js/Express (CTF1), React/Vite (CTF2, 4), and Laravel (CTF3) using Docker Compose for environmental reproducibility.
-\item \textbf{Bot Simulation}: Implementing a Playwright and BullMQ-driven "Admin Bot" in CTF4 to model authentic XSS-to-CSRF threat vectors.
-\end{itemize}
 
-\subsection{Algorithms \& Logical Design}
-\begin{itemize}
-\item \textbf{Flag Generation}
-\item \textbf{Proof-of-Work (PoW)}: SHA-256 prefix-matching algorithm used in CTF2 to gate JWT secrets and prevent brute-force exploitation - This is just a "mini game".
-\end{itemize}
 
-\subsection{Verification, Validation, and Evaluation (VV\&E)}
-\begin{itemize}
-\item \textbf{Verification}: Two-layer testing using Jest/Supertest for access control smoke tests and standalone exploit scripts to confirm solvability.
-\item \textbf{Validation}: Systematic "Intentional Vulnerability Audits" (e.g., CTF4 \texttt{workflow.md}) to identify and document unintended solve paths.
-\item \textbf{Evaluation Metrics}: Quantitative measurement via Normalized Gain ⟨g⟩ and Time-to-Flag (T2F), plus qualitative player surveys.
-\end{itemize}
+\subsection{Per-User Flag Personalisation and Academic Integrity Mechanisms}
+\label{sec:flag-personalisation}
 
-\section{Results and Evaluation}
-\subsection{Evaluation of Method and Results}
-\begin{itemize}
-\item \textbf{Evaluation Method Appraisal}: Critique of the mixed-methods approach (quantitative logs vs. qualitative feedback) and the utility of automated "Exploit-as-a-Test" verification.
-\item \textbf{Clarity of Results}: Summary tables of functional verification success, automated test outcomes, and (if applicable) student solve-time distributions.
-\item \textbf{Approach Suitability}: Evaluating if the modern stack choices and "bread-crumbing" design effectively met pedagogical goals and realism requirements.
-\end{itemize}
+\subsection{Challenge Design and Implementation}
+\label{sec:challenge-design}
 
-\subsection{Implementation Issues and Discussion}
-\begin{itemize}
-\item \textbf{Implementation Issues}: Analysis of challenges such as CTF3 non-determinism, Docker resource overhead, and specific logic hurdles like URL encoding in XSS payloads.
-\item \textbf{Strengths and Limitations}
-\end{itemize}
+\subsection{CTF1 [INSERT subsection for each CTF]}
+% \label{sec:}
 
-\subsection{Process and Organizational Appraisal}
-\begin{itemize}
-\item \textbf{SE Process Evaluation}: Effectiveness of the Build-Audit-Fix workflow and the alignment of the final system with the initial GANTT chart.
-\item \textbf{Project Organisation}: Appraising the efficiency of shared generation modules and the strategic mapping of challenges to the OWASP Top 10.
-\end{itemize}
+\subsection{Containerisation and Distributable Packaging}
+\label{sec:containerisation}
+
+\subsection{Verification, Validation, and Testing Methodology}
+\label{sec:vvt}
+
+\subsection{Development Process and Tools}
+\label{sec:development-process}
+
+
+
+\newpage
+[DELETE LATER]
+\newpage
