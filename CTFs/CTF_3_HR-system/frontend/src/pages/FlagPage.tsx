@@ -1,13 +1,29 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { flagApi } from '../api/client'
 
 export function FlagPage() {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
+  const [flag, setFlag] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!token) {
+      setLoading(false)
+      setError('You must be logged in to view the flag.')
+      return
+    }
+    flagApi.get(token)
+      .then((data) => setFlag(data.flag))
+      .catch((err) => setError(err.message || 'Failed to load flag'))
+      .finally(() => setLoading(false))
+  }, [token])
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>🏁 Flag Challenge</h1>
+        <h1 style={styles.title}>Flag Challenge</h1>
         <p style={styles.subtitle}>Congratulations on accessing the flag page!</p>
       </div>
 
@@ -19,15 +35,17 @@ export function FlagPage() {
           <p style={styles.description}>
             Welcome to the HR System CTF, {user?.first_name}! You've successfully logged in and found the first flag.
           </p>
-          
+
           <div style={styles.flagContainer}>
             <div style={styles.flagLabel}>FLAG 1:</div>
-            <div style={styles.flagValue}>durham-hr{'{'}w3lc0m3_t0_hr_syst3m{'}'}</div>
+            <div style={styles.flagValue}>
+              {loading ? 'Loading...' : error ? error : flag}
+            </div>
           </div>
 
           <div style={styles.hint}>
-            <strong>💡 Next steps:</strong> Try SQL injection in the Employees search page. 
-            Look for usernames like 'flag12', then use curl to query the /api/debug/config endpoint.
+            <strong>Next steps:</strong> Try SQL injection in the Employees search page.
+            Look for hidden employee accounts, then use curl to query the /api/debug/config endpoint.
             Remember to include your authentication token in the request header!
           </div>
         </div>
@@ -36,14 +54,12 @@ export function FlagPage() {
       <div style={styles.infoCard}>
         <h3 style={styles.infoTitle}>Challenge Overview</h3>
         <p style={styles.infoText}>
-          This CTF contains 4 flags total. Each flag builds upon the previous one. Here are some slight clues:
+          This CTF contains 3 flags total. Each flag builds upon the previous one. Here are some slight clues:
         </p>
         <ul style={styles.list}>
-          <li><strong>Flag 1:</strong> Path traversal ✅</li>
-          <li><strong>Flag 2:</strong> Encryption key discovery </li>
-          <li><strong>Flag 3.1:</strong> Find hidden employee username (username@email.com).</li>
-          <li><strong>Flag 3.2:</strong> Find hidden employee details. HINT: Use curl to query the /api/debug/config endpoint. Include your authentication token in the request header</li>
-          <li><strong>Flag 4:</strong> Decrypt</li>
+          <li><strong>Flag 1:</strong> Find the flag page</li>
+          <li><strong>Flag 2:</strong> Find hidden employees and decrypt their secrets. HINT: Check the legacy source code for an encryption key, then use the /api/debug/config endpoint</li>
+          <li><strong>Flag 3:</strong> Access the API flag endpoint directly</li>
         </ul>
       </div>
     </div>

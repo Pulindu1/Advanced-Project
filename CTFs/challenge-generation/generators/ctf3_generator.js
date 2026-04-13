@@ -1,47 +1,72 @@
 /**
  * CTF3 Flag Generator
- * Generates unique flags for each player in the HR System CTF
+ * Generates unique per-user flags for the HR System CTF.
+ *
+ * Each user gets two flags:
+ *   - flag_api:     returned by the /api/flag endpoint (and shown on /flag page)
+ *   - flag_decrypt: encrypted with AES-256-CBC, placed in the user's bot employee notes
  */
 
 const crypto = require('crypto')
 
 const FLAG_PREFIX = 'durham-hr'
+const HMAC_SALT_API = 'ctf3-api-flag-salt-2026'
+const HMAC_SALT_DECRYPT = 'ctf3-decrypt-flag-salt-2026'
+const ENCRYPTION_KEY_PASSPHRASE = 'CTF_2026_SECRET_KEY_XJ9K2L'
+const TOKEN_LENGTH = 20
 
 /**
- * Generate a unique flag for a given username
- * @param {string} username - The player's username
- * @returns {string} The generated flag
+ * Deterministic HMAC-based flag token (consistent across runs for the same salt+username).
  */
-function generateFlag(username) {
-  const normalizedUsername = String(username).toLowerCase().trim()
-  const timestamp = Date.now().toString(36)
-  const randomPart = crypto.randomBytes(8).toString('hex')
-  const hash = crypto.createHash('sha256')
-    .update(`${normalizedUsername}:${timestamp}:${randomPart}`)
+function hmacToken(username, salt) {
+  return crypto.createHmac('sha256', salt)
+    .update(String(username))
     .digest('hex')
-    .substring(0, 20)
-  
-  return `${FLAG_PREFIX}{${hash}_${normalizedUsername}}`
+    .slice(0, TOKEN_LENGTH)
 }
 
 /**
- * Generate flags for multiple usernames
- * @param {string[]} usernames - Array of usernames
- * @returns {Object} Map of username -> flag
+ * Encrypt plaintext with AES-256-CBC using the shared CTF key.
+ * Returns "iv_base64:ciphertext_base64".
+ */
+function encryptFlag(plaintext) {
+  const key = crypto.createHash('sha256').update(ENCRYPTION_KEY_PASSPHRASE).digest()
+  const iv = crypto.randomBytes(16)
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv)
+  let encrypted = cipher.update(plaintext, 'utf8')
+  encrypted = Buffer.concat([encrypted, cipher.final()])
+  return `${iv.toString('base64')}:${encrypted.toString('base64')}`
+}
+
+/**
+ * Generate flags for a single username.
+ */
+function generateUserFlags(username) {
+  const norm = String(username).toLowerCase().trim()
+  const flagApi = `${FLAG_PREFIX}{${hmacToken(norm, HMAC_SALT_API)}_${norm}}`
+  const flagDecrypt = `${FLAG_PREFIX}{${hmacToken(norm, HMAC_SALT_DECRYPT)}_${norm}}`
+  return { flag_api: flagApi, flag_decrypt: flagDecrypt }
+}
+
+/**
+ * Generate flags for multiple usernames.
+ * @param {string[]} usernames
+ * @returns {Object} { username: { flag_api, flag_decrypt } }
  */
 function generateFlags(usernames) {
   const flags = {}
   for (const username of usernames) {
-    const normalized = String(username).toLowerCase().trim()
-    if (normalized) {
-      flags[normalized] = generateFlag(normalized)
+    const norm = String(username).toLowerCase().trim()
+    if (norm) {
+      flags[norm] = generateUserFlags(norm)
     }
   }
   return flags
 }
 
 module.exports = {
-  generateFlag,
   generateFlags,
+  generateUserFlags,
+  encryptFlag,
   FLAG_PREFIX,
 }

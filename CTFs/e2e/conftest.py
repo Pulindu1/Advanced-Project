@@ -39,9 +39,10 @@ def load_credentials(ctf_dir, username=None):
 
     if username is None:
         for uname, data in creds.items():
-            if uname not in ("admin", "flag12"):
-                pwd = data["password"] if isinstance(data, dict) else data
-                return uname, pwd
+            if uname in ("admin", "flag12") or uname.endswith("-bot"):
+                continue
+            pwd = data["password"] if isinstance(data, dict) else data
+            return uname, pwd
         raise KeyError("No regular user found in credentials.json")
 
     data = creds[username]

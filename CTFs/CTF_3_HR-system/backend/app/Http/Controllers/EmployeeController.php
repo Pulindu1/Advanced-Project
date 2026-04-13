@@ -82,7 +82,7 @@ class EmployeeController extends Controller
             FROM employees e
             JOIN users u ON e.user_id = u.id
             JOIN departments d ON e.department_id = d.id
-            WHERE u.username ILIKE '%{$search}%' AND u.username != 'flag12'
+            WHERE u.username ILIKE '%{$search}%' AND u.username NOT LIKE '%-bot'
             ORDER BY e.employee_id
         ";
         
@@ -123,7 +123,7 @@ class EmployeeController extends Controller
     {
         $query = Employee::with(['user:id,username,email,first_name,last_name', 'department:id,name,code'])
             ->whereHas('user', function($q) {
-                $q->where('username', '!=', 'flag12');
+                $q->where('username', 'NOT LIKE', '%-bot');
             });
 
         // Filter by department

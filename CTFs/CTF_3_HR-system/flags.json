@@ -1,6 +1,14 @@
 {
-  "abcd12": "durham-hr{08a6837ab8ece2ae8fbb_abcd12}",
-  "efgh34": "durham-hr{8231b867d1bf566f6bc2_efgh34}",
-  "ijkl56": "durham-hr{ae1c44212ac9371dcd3f_ijkl56}",
-  "flag12": "durham-hr{c3f8a12b4d7e9056fa21_flag12}"
+  "abcd12": {
+    "flag_api": "durham-hr{2180787b20baed732e7a_abcd12}",
+    "flag_decrypt": "durham-hr{e9dbd6e24d384b08c407_abcd12}"
+  },
+  "efgh34": {
+    "flag_api": "durham-hr{0fb33dad1c0158de867e_efgh34}",
+    "flag_decrypt": "durham-hr{159bcf3744c8273e2966_efgh34}"
+  },
+  "ijkl56": {
+    "flag_api": "durham-hr{229593fb21002efeaa6e_ijkl56}",
+    "flag_decrypt": "durham-hr{32efa35b49e11865a887_ijkl56}"
+  }
 }

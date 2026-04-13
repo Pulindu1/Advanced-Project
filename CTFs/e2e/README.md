@@ -8,11 +8,11 @@ Automated scripts that walk through every CTF's full exploit chain and confirm e
 |--------|-----|-------|-------|-------------------|
 | `ctf1_exploit.py` | Basic_1_Nodejs | 1 | 2 | Base64 cookie tampering -> admin privilege escalation |
 | `ctf2_exploit.py` | CTF_2_pswd_manager | 1 | 2 | PoW solve -> JWT secret disclosure -> JWT forgery -> vault IDOR |
-| `ctf3_exploit.py` | CTF_3_HR-system | 4 | 6 | Path traversal + JS bundle key + SQLi + AES-256-CBC decrypt |
+| `ctf3_exploit.py` | CTF_3_HR-system | 3 | 9 | Path traversal + SQLi + debug API leak + AES-256-CBC decrypt |
 | `ctf4_exploit.py` | CTF_4_corporate_helpdesk | 1 | 3 | DOM XSS -> admin bot exfiltration -> flag capture |
 | `ctf5_exploit.py` | CTF_5_internal_blog | 4 | 8 | Info disclosure -> SSTI -> WAF bypass -> RCE |
 | `ctf6_exploit.py` | CTF_6_veridian | 4 | 10 | SSRF -> cloud metadata -> dict:// Redis pivot -> session replay |
-| **Total** | | **15 flags** | **31 tests** | |
+| **Total** | | **14 flags** | **34 tests** | |
 
 ## Prerequisites
 
@@ -66,7 +66,7 @@ python3 -m pytest ctf6_exploit.py -v    # requires port 5180
 
 ## Credential Handling
 
-Scripts auto-detect the first available user from each CTF's `credentials.json`. No hardcoded passwords for CTFs 3-5 (they use generated credentials). CTF1 and CTF2 use the default `abcd12` / `password`.
+Scripts auto-detect the first available user from each CTF's `credentials.json`. All CTFs use generated credentials (no hardcoded passwords).
 
 ## Startup Wait Times
 

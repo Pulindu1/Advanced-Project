@@ -9,7 +9,8 @@ files changed (optional)
 # Logs:
 
 
-
+### Flag individualisation - 13/04/26 - CTF3
+- Introduced flag individualisation for the flags.
 
 ### Minor bug fixes CTF3 - 13/04/26 - CTF3
 - Fixed bug that didn't let you login.
