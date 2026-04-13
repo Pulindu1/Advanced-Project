@@ -1,123 +1,123 @@
 #!/usr/bin/env node
+/**
+ * chgen_basic1.js - Challenge Generator for CTF1 Basic_1_Nodejs (Cookie Tampering)
+ *
+ * Generates per-player flags and credentials, writes them to:
+ *   - CTFs/Basic_1_Nodejs/flags.json
+ *   - CTFs/Basic_1_Nodejs/credentials.json
+ *
+ * Usage:
+ *   node chgen_basic1.js abcd12 efgh34 ijkl56    # Specify player usernames
+ *   node chgen_basic1.js --count 10               # Generate 10 random player usernames
+ */
 
-// Flags-only generator for Basic_1_Nodejs
-// Usage:
-//   node chgen_basic1.js [<path-to-users-or-config.json>]
-//
-// If no path is provided, the script reads usernames from
-// ../Basic_1_Nodejs/src/data/users.json. If the JSON contains a top-level
-// `players` array (legacy), it will be used. If the JSON is an array of user
-// objects (users.json), the usernames will be used to synthesize tokens.
+const fs = require('fs')
+const path = require('path')
+const crypto = require('crypto')
+const basic1Generator = require('./generators/basic1_generator')
 
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+const CTF_DIR = path.resolve(__dirname, '..', 'Basic_1_Nodejs')
+const FLAGS_OUTPUT = path.join(CTF_DIR, 'flags.json')
+const CREDS_OUTPUT = path.join(CTF_DIR, 'credentials.json')
 
-function validateUsername(username) {
-  const re = /^[A-Za-z]{4}[0-9]{2}$/;
-  return re.test(username);
+const USERNAME_PATTERN = /^[a-z]{4}[0-9]{2}$/
+
+function generateRandomUsername() {
+  const letters = 'abcdefghijklmnopqrstuvwxyz'
+  const digits = '0123456789'
+  let username = ''
+  for (let i = 0; i < 4; i++) {
+    username += letters[Math.floor(Math.random() * letters.length)]
+  }
+  for (let i = 0; i < 2; i++) {
+    username += digits[Math.floor(Math.random() * digits.length)]
+  }
+  return username
 }
 
-function generateFlag(username, token) {
-  return `durham{${token}_${username}}`;
+function isValidUsername(username) {
+  return USERNAME_PATTERN.test(username)
+}
+
+function generateFlag(username) {
+  const token = basic1Generator(username)
+  return `durham{${token}_${username}}`
+}
+
+function generateCredentials(usernames) {
+  const creds = {}
+  for (const username of usernames) {
+    const normalized = String(username).toLowerCase().trim()
+    if (normalized) {
+      const passLen = 8 + Math.floor(Math.random() * 5)
+      const password = crypto.randomBytes(passLen).toString('hex').slice(0, passLen)
+      creds[normalized] = {
+        password,
+        role: 'user',
+      }
+    }
+  }
+  return creds
 }
 
 function main() {
-  const [, , inputPath] = process.argv;
+  let usernames = []
+  const args = process.argv.slice(2)
 
-  let players = null;
-  let generatorName = process.env.GENERATOR_NAME || 'basic1';
-  const generatorOptions = {
-    salt: process.env.GENERATOR_SALT,
-    tokenLength: process.env.GENERATOR_TOKEN_LENGTH ? Number(process.env.GENERATOR_TOKEN_LENGTH) : undefined
-  };
-
-  try {
-    let dataPath = inputPath;
-    if (!dataPath) {
-      dataPath = path.resolve(__dirname, '..', 'Basic_1_Nodejs', 'src', 'data', 'users.json');
-      console.log(`No input provided — using users file: ${dataPath}`);
+  const countIndex = args.indexOf('--count')
+  if (countIndex !== -1 && args[countIndex + 1]) {
+    const count = parseInt(args[countIndex + 1], 10)
+    if (isNaN(count) || count < 1) {
+      console.error('Error: --count must be a positive number')
+      process.exit(1)
     }
-
-    const raw = fs.readFileSync(path.resolve(dataPath), 'utf8');
-    const json = JSON.parse(raw);
-
-    if (json && Array.isArray(json.players)) {
-      players = json.players;
-      if (json.generator) generatorName = json.generator;
-      if (json.generatorOptions) Object.assign(generatorOptions, json.generatorOptions);
-    } else if (Array.isArray(json)) {
-      // likely users.json — map to players structure
-      players = json.map(u => ({ username: u.username, token: u.token }));
-    } else if (json && Array.isArray(json.users)) {
-      players = json.users.map(u => ({ username: u.username, token: u.token }));
-    } else {
-      throw new Error('Unrecognized input JSON structure — expected players array or users array');
+    console.log(`Generating ${count} random player usernames...`)
+    const generated = new Set()
+    while (generated.size < count) {
+      generated.add(generateRandomUsername())
     }
-  } catch (err) {
-    console.error('Failed to load input file:', err.message);
-    process.exit(1);
-  }
-
-  // Try to load a generator module from ./generators/<generatorName>_generator.js
-  let tokenGenerator = null;
-  try {
-    const genPath = path.resolve(__dirname, 'generators', `${generatorName}_generator.js`);
-    if (fs.existsSync(genPath)) {
-      tokenGenerator = require(genPath);
-      console.log(`Using token generator: ${genPath}`);
-    } else {
-      console.log(`No generator module found at ${genPath}; falling back to default deterministic HMAC`);
-    }
-  } catch (err) {
-    console.warn('Failed to load generator module, falling back to default:', err.message);
-    tokenGenerator = null;
-  }
-
-  const flagsByUser = {};
-
-  for (const p of players) {
-    const username = p && (p.username || p.user || p.id);
-    let token = p && p.token;
-
-    if (!username) {
-      console.warn('Skipping player with missing username or unexpected entry:', p);
-      continue;
-    }
-
-    if (!validateUsername(username)) {
-      console.warn(`Skipping player with invalid username '${username}' (expected 4 letters + 2 digits)`);
-      continue;
-    }
-
-    // If token missing, synthesize deterministically using generator module or default HMAC
-    if (!token) {
-      if (tokenGenerator && typeof tokenGenerator === 'function') {
-        token = tokenGenerator(username, generatorOptions);
-      } else {
-        const salt = generatorOptions.salt || 'basic1-default-salt';
-        const tokenLen = generatorOptions.tokenLength || 16; // hex chars
-        token = crypto.createHmac('sha256', String(salt)).update(String(username)).digest('hex').slice(0, tokenLen);
+    usernames = Array.from(generated)
+  } else if (args.length > 0) {
+    for (const arg of args) {
+      const normalized = arg.toLowerCase().trim()
+      if (!isValidUsername(normalized)) {
+        console.error(`Error: Invalid username format "${arg}". Must be 4 letters + 2 numbers (e.g., abcd12)`)
+        process.exit(1)
       }
+      usernames.push(normalized)
     }
-
-    flagsByUser[String(username).toLowerCase()] = generateFlag(String(username).toLowerCase(), token);
+  } else {
+    console.error('Usage:')
+    console.error('  node chgen_basic1.js abcd12 efgh34 ijkl56    # Specify player usernames')
+    console.error('  node chgen_basic1.js --count 10               # Generate 10 random players')
+    process.exit(1)
   }
 
-  const outputPath = path.resolve(__dirname, '..', 'Basic_1_Nodejs', 'src', 'data', 'flags.json');
+  console.log(`Generating flags and credentials for ${usernames.length} users...`)
 
-  try {
-    const outputDir = path.dirname(outputPath);
-    fs.mkdirSync(outputDir, { recursive: true });
-    fs.writeFileSync(outputPath, JSON.stringify(flagsByUser, null, 2));
-  } catch (err) {
-    console.error('Failed to write flags.json:', err.message);
-    process.exit(1);
+  const flags = {}
+  for (const username of usernames) {
+    flags[username] = generateFlag(username)
   }
 
-  console.log(`Wrote ${Object.keys(flagsByUser).length} flags to`, outputPath);
+  const credentials = generateCredentials(usernames)
+
+  fs.mkdirSync(path.dirname(FLAGS_OUTPUT), { recursive: true })
+  fs.writeFileSync(FLAGS_OUTPUT, JSON.stringify(flags, null, 2))
+  console.log(`Wrote flags to ${FLAGS_OUTPUT}`)
+
+  fs.writeFileSync(CREDS_OUTPUT, JSON.stringify(credentials, null, 2))
+  console.log(`Wrote credentials to ${CREDS_OUTPUT}`)
+
+  console.log('\nGenerated flags:')
+  for (const [user, flag] of Object.entries(flags)) {
+    console.log(`  ${user}: ${flag}`)
+  }
+
+  console.log('\nGenerated credentials:')
+  for (const [user, cred] of Object.entries(credentials)) {
+    console.log(`  ${user}: password=${cred.password}, role=${cred.role}`)
+  }
 }
 
-if (require.main === module) {
-  main();
-}
+main()

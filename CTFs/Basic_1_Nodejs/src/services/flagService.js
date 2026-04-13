@@ -2,8 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Load per-user flags from JSON file if present; fall back to global FLAG env var
-const flagsPath = path.join(__dirname, '..', 'data', 'flags.json');
+// Load per-user flags from mounted file or fall back to local data directory
+const flagsPath = process.env.FLAGS_PATH || path.join(__dirname, '..', 'data', 'flags.json');
 let flagsByUser = {};
 
 try {

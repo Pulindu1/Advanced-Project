@@ -58,6 +58,11 @@ export const ChallengePage: React.FC = () => {
 
       {message && <div style={{ marginTop: 12, padding: 10, background: '#fff3cd', borderRadius: 6 }}>{message}</div>}
 
+      <h3>What next?</h3>
+      <p style={{ marginBottom: 8, color: '#6c757d' }}>
+        <em>Hint: Check the Team Members page. Some users might have interesting vaults. Can you access them?</em>
+      </p>
+
       <h3>Console helper</h3>
       <p>Open your browser console and run the snippet below (replace <code>NONCE</code> and <code>DIFFICULTY</code>), it will try suffixes until it finds a match.</p>
 

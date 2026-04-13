@@ -8,4 +8,7 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    volumes:
+      - ./flags.json:/app/flags.json:ro
+      - ./credentials.json:/app/credentials.json:ro
     restart: unless-stopped

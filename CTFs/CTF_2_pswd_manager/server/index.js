@@ -10,18 +10,19 @@ const crypto = require('crypto')
 const PORT = process.env.PORT || 4000
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me'
 const IS_DEV = process.env.NODE_ENV !== 'production' || process.env.CTF_DEV === 'true'
+const FLAGS_PATH = process.env.FLAGS_PATH || '/app/flags.json'
+const CREDS_PATH = process.env.CREDS_PATH || '/app/credentials.json'
 const app = express()
 
 app.use(express.json())
 app.use(cookieParser())
-app.use(cors({ 
+app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://www.localhost.com:5173'],
-  credentials: true 
+  credentials: true
 }))
 
 const DATA_DIR = path.resolve(__dirname, 'data')
 const USERS_FILE = path.join(DATA_DIR, 'users.json')
-const FLAGS_FILE = path.join(DATA_DIR, 'flags.json')
 const VAULTS_FILE = path.join(DATA_DIR, 'vaults.json')
 const DELETED_FLAGS_FILE = path.join(DATA_DIR, 'deleted_flags.json')
 const LOGIN_ATTEMPTS_FILE = path.join(DATA_DIR, 'login_attempts.json')
@@ -42,7 +43,7 @@ function writeUsers(users) {
 
 function readFlags() {
   try {
-    const raw = fs.readFileSync(FLAGS_FILE, 'utf8')
+    const raw = fs.readFileSync(FLAGS_PATH, 'utf8')
     return JSON.parse(raw)
   } catch (err) {
     return {}
@@ -98,34 +99,124 @@ function cleanupChallenges() {
   }
 }
 
+// Seed users, bot users, and flag vault entries from mounted flags.json and credentials.json.
+// Called once at startup.
+async function seedFromFiles() {
+  let credentials = {}
+  let flags = {}
+
+  try {
+    const raw = fs.readFileSync(CREDS_PATH, 'utf8')
+    credentials = JSON.parse(raw)
+  } catch (err) {
+    console.log('[seed] No credentials.json found at', CREDS_PATH, '-- skipping seed')
+    return
+  }
+
+  try {
+    flags = readFlags()
+  } catch (err) {
+    console.log('[seed] No flags.json found at', FLAGS_PATH)
+  }
+
+  const users = readUsers()
+  const existingUsernames = new Set(users.map(u => u.username.toLowerCase()))
+  let usersAdded = 0
+  let botsAdded = 0
+
+  // Seed real users from credentials.json
+  for (const [username, data] of Object.entries(credentials)) {
+    const normalized = username.toLowerCase()
+    if (existingUsernames.has(normalized)) continue
+
+    const password = typeof data === 'object' ? data.password : data
+    const hash = await bcrypt.hash(password, 12)
+    users.push({ id: 'u-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5), username: normalized, passwordHash: hash })
+    existingUsernames.add(normalized)
+    usersAdded++
+  }
+
+  // Seed bot users (<username>-vault) with unguessable passwords
+  for (const username of Object.keys(credentials)) {
+    const normalized = username.toLowerCase()
+    const botName = normalized + '-vault'
+    if (existingUsernames.has(botName)) continue
+
+    const botPassword = crypto.randomBytes(32).toString('hex')
+    const hash = await bcrypt.hash(botPassword, 12)
+    users.push({ id: 'u-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5), username: botName, passwordHash: hash })
+    existingUsernames.add(botName)
+    botsAdded++
+  }
+
+  writeUsers(users)
+
+  // Place each user's flag in their bot's vault
+  const vaults = readVaults()
+  const deleted = readDeletedFlags()
+  let flagsPlaced = 0
+
+  for (const [username, flagValue] of Object.entries(flags)) {
+    const normalized = username.toLowerCase()
+    const botName = normalized + '-vault'
+    if (!vaults[botName]) vaults[botName] = []
+
+    const flagId = `flag-${normalized}`
+    const isDeleted = deleted[botName] && Array.isArray(deleted[botName]) && deleted[botName].includes(flagId)
+    if (isDeleted) continue
+
+    const existing = vaults[botName].find(e => e.id === flagId)
+    if (!existing) {
+      vaults[botName].push({
+        id: flagId,
+        site: 'CTF Flag',
+        username: 'flag',
+        password: flagValue,
+        notes: 'Automatically inserted flag entry',
+        createdAt: new Date().toISOString()
+      })
+      flagsPlaced++
+    } else if (existing.password !== flagValue) {
+      existing.password = flagValue
+      existing.createdAt = new Date().toISOString()
+      flagsPlaced++
+    }
+  }
+
+  writeVaults(vaults)
+  console.log(`[seed] Seeded ${usersAdded} users, ${botsAdded} bot users, ${flagsPlaced} flag entries`)
+}
+
 // Ensure flags.json entries are mirrored into vaults.json as special flag entries
+// Flags are placed in the bot user's vault (<username>-vault), not the player's own vault
 function syncFlagsToVaults() {
   try {
     const flags = readFlags()
     const vaults = readVaults()
     const deleted = readDeletedFlags()
     let changed = false
-    for (const username of Object.keys(flags)) {
-      if (!vaults[username]) vaults[username] = []
-      const flagId = `flag-${username}`
-      // If the user has explicitly deleted this auto-flag, do not re-add it.
-      if (deleted[username] && Array.isArray(deleted[username]) && deleted[username].includes(flagId)) {
+    for (const [username, flagValue] of Object.entries(flags)) {
+      const normalized = username.toLowerCase()
+      const botName = normalized + '-vault'
+      if (!vaults[botName]) vaults[botName] = []
+      const flagId = `flag-${normalized}`
+      if (deleted[botName] && Array.isArray(deleted[botName]) && deleted[botName].includes(flagId)) {
         continue
       }
 
-      const existing = vaults[username].find(e => e.id === flagId)
+      const existing = vaults[botName].find(e => e.id === flagId)
       if (!existing) {
-        vaults[username].push({
+        vaults[botName].push({
           id: flagId,
           site: 'CTF Flag',
           username: 'flag',
-          password: flags[username],
-          notes: 'Auto-added from flags.json',
+          password: flagValue,
+          notes: 'Automatically inserted flag entry',
           createdAt: new Date().toISOString()
         })
         changed = true
-      } else if (existing.password !== flags[username]) {
-        existing.password = flags[username]
+      } else if (existing.password !== flagValue) {
+        existing.password = flagValue
         existing.createdAt = new Date().toISOString()
         changed = true
       }
@@ -234,7 +325,6 @@ app.post('/api/auth/login', async (req, res) => {
 })
 
 app.get('/api/auth/whoami', (req, res) => {
-  // NOTE: server will receive cookies if the browser sends them. Use /api/debug-cookies to inspect.
   const token = req.cookies.session
   if (!token) return res.status(401).json({ error: 'not authenticated' })
   try {
@@ -246,7 +336,6 @@ app.get('/api/auth/whoami', (req, res) => {
 })
 
 // Protected per-user flag endpoint.
-// Relies on flags.json generated by CTFs/challenge-generation/chgen_ctf2.js
 app.get('/api/flag', (req, res) => {
   const token = req.cookies.session
   if (!token) return res.status(401).json({ error: 'not authenticated' })
@@ -327,26 +416,6 @@ app.get('/api/vault', (req, res) => {
     const vaults = readVaults()
     const userVault = (vaults[username] || []).slice()
 
-    // If there is a flag for this user in flags.json, include it dynamically
-    const flags = readFlags()
-    const flagForUser = flags[username]
-    if (flagForUser) {
-      const flagId = `flag-${username}`
-      const deleted = readDeletedFlags()
-      const isDeleted = deleted[username] && Array.isArray(deleted[username]) && deleted[username].includes(flagId)
-      if (!isDeleted) {
-        const flagEntry = {
-          id: flagId,
-          site: 'CTF Flag',
-          username: 'flag',
-          password: flagForUser,
-          notes: 'Automatically inserted flag entry',
-          createdAt: new Date().toISOString()
-        }
-        userVault.push(flagEntry)
-      }
-    }
-
     return res.json({ entries: userVault })
   } catch (err) {
     return res.status(401).json({ error: 'invalid token' })
@@ -361,7 +430,7 @@ app.post('/api/vault', (req, res) => {
     const decoded = jwt.verify(token, JWT_SECRET)
     const username = String(decoded.sub || '').toLowerCase()
     const { site, username: entryUsername, password, notes } = req.body || {}
-    
+
     if (!site || !entryUsername || !password) {
       return res.status(400).json({ error: 'site, username, and password are required' })
     }
@@ -443,6 +512,12 @@ app.get('/api/teams/users', (req, res) => {
   }
 })
 
-app.listen(PORT, () => {
-  console.log(`Auth server listening on http://localhost:${PORT}`)
+// Seed from mounted files, then start server
+seedFromFiles().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Auth server listening on http://localhost:${PORT}`)
+  })
+}).catch(err => {
+  console.error('[seed] Fatal error during seeding:', err)
+  process.exit(1)
 })

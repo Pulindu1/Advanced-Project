@@ -1,39 +1,35 @@
-# CTF 2 — Solutions & Test Credentials
+# CTF 2 -- Solutions
 
 > **Instructors/markers only.** Do not distribute to participants.
 
 ---
 
-## Test Credentials
+## Credentials
 
-These accounts are seeded into `server/data/users.json` and available immediately after startup.
-
-| Username | Password | Notes |
-|----------|----------|-------|
-| `abcd12` | `password` | Regular user with demo vault entries |
-| `test12` | `password` | Regular user |
-| `flag12` | `password` | Target user — vault contains the flag |
-
-Log in at `http://localhost:5173` with any of the above to verify the app is working.
+- See `credentials.json` for generated per-user passwords.
+- Usernames follow the `abcd12` format (4 letters + 2 digits).
+- Generate credentials with: `cd CTFs/challenge-generation && node chgen_ctf2.js abcd12 efgh34`
 
 ---
 
 ## Flag Location
 
-The flag is stored in `server/data/flags.json` under the key `flag12` and auto-inserted into `flag12`'s vault as a vault entry. It is visible at `/app/vault` when logged in as `flag12`.
+Each user's flag is stored in the vault of a **bot user** named `<username>-vault`. For example, the flag for `abcd12` is in the vault of `abcd12-vault`. The bot user has an unguessable password and cannot be logged into directly. The flag is only accessible by forging a JWT for the bot user.
+
+Flag format: `durham-pm{<token>_<username>}`
 
 ---
 
 ## Solution Walkthrough
 
-### Stage 1 — Obtain the JWT secret via Proof-of-Work
+### Stage 1 -- Obtain the JWT secret via Proof-of-Work
 
-1. Log in as `abcd12` / `password`.
+1. Log in as your user (e.g., `abcd12` with the password from `credentials.json`).
 2. Navigate to `/app/challenge`.
 
-**Option A — fully automatic (console only, no typing required)**
+**Option A -- fully automatic (console only)**
 
-Open DevTools console (F12) and paste this. It fetches the nonce, finds the suffix, submits it, and prints the secret all in one go:
+Open DevTools console (F12) and paste this. It fetches the nonce, finds the suffix, submits it, and prints the secret:
 
 ```js
 (async()=>{
@@ -57,13 +53,10 @@ Open DevTools console (F12) and paste this. It fetches the nonce, finds the suff
 
 The secret prints as **`JWT SECRET: dev-secret-change-me`**. Copy it for Stage 2.
 
-**Option B — use the challenge page submit box**
+**Option B -- use the challenge page submit box**
 
-The suffix to type in is a short string (e.g. `1lme`) that makes `sha256(nonce + suffix)` start with `0000`. Since the nonce is random per page load, you must solve it for the specific nonce currently shown.
-
-Steps:
-1. On `/app/challenge`, **copy the nonce** shown under "Nonce:".
-2. Open DevTools console (F12). Paste the **entire block** below — replace `PASTE_NONCE_HERE` with your copied nonce (keep the quotes):
+1. On `/app/challenge`, copy the nonce shown under "Nonce:".
+2. Open DevTools console (F12). Paste the block below, replacing `PASTE_NONCE_HERE` with your nonce:
 
 ```js
 (async()=>{
@@ -74,28 +67,32 @@ Steps:
 })();
 ```
 
-> **Must paste the whole block at once.** Running `sha256(...)` alone will fail — the function only exists inside this script.
+3. The console outputs a short string (e.g., `f5p`). Type only that suffix into the input field.
+4. Click **Submit** -- the page shows `Solved! Secret: dev-secret-change-me`.
 
-3. The console outputs one short word, e.g. `TYPE THIS INTO THE BOX: f5p`. That short string (`f5p`) is the suffix — **not** the long hex hash that follows it. Type only the short suffix into the input field.
-4. Click **Submit** — the page shows `Solved! Secret: dev-secret-change-me`.
+### Stage 2 -- Discover the target user
 
-> Do not refresh the page between steps — each refresh fetches a new nonce and your suffix becomes invalid.
+1. Navigate to `/app/teams` or call `GET /api/teams/users`.
+2. The user list includes bot users with the `-vault` suffix (e.g., `abcd12-vault`).
+3. Your flag is stored in your corresponding bot user's vault.
 
-### Stage 2 — Forge a JWT and steal the flag
+### Stage 3 -- Forge a JWT and steal the flag
 
-1. Using the secret from Stage 1, forge a JWT signed for `flag12`:
+1. Using the secret from Stage 1, forge a JWT for your bot user:
 
 ```js
 // Node.js
 const jwt = require('jsonwebtoken')
-const token = jwt.sign({ sub: 'flag12' }, '<SECRET_FROM_STAGE_1>', { expiresIn: '7d' })
+const token = jwt.sign({ sub: 'abcd12-vault' }, 'dev-secret-change-me', { expiresIn: '7d' })
 console.log(token)
 ```
 
-Or use [jwt.io](https://jwt.io) — paste the secret, set payload `{ "sub": "flag12" }`.
+Or use [jwt.io](https://jwt.io) -- paste the secret, set payload `{ "sub": "abcd12-vault" }`.
 
-2. In your browser DevTools → Application → Cookies → `localhost` — replace the `session` cookie value with the forged token.
-3. Navigate to `/app/vault` — the `flag12` vault entry contains the flag.
+2. In your browser DevTools, go to Application > Cookies > `localhost` -- replace the `session` cookie value with the forged token.
+3. Navigate to `/app/vault` -- the bot user's vault contains the flag entry.
+
+**Flag:** `durham-pm{..._abcd12}` *(per-user, see flags.json)*
 
 ---
 
@@ -103,9 +100,9 @@ Or use [jwt.io](https://jwt.io) — paste the secret, set payload `{ "sub": "fla
 
 | Vulnerability | Location | Description |
 |---------------|----------|-------------|
-| JWT secret disclosure | `GET /api/challenge/solve` | Server returns `JWT_SECRET` as the PoW reward |
-| Weak JWT secret | `server/index.js` | Secret is short and predictable (`dev-secret-change-me`) |
-| IDOR | `GET /api/vault` | Vault is scoped to the JWT `sub` claim — forging it allows accessing any user's vault |
+| JWT secret disclosure | `POST /api/challenge/solve` | Server returns `JWT_SECRET` as the PoW reward |
+| Weak JWT secret | `.env` / `server/index.js` | Secret is short and predictable (`dev-secret-change-me`) |
+| IDOR | `GET /api/vault` | Vault is scoped to the JWT `sub` claim -- forging it allows accessing any user's vault |
 
 ---
 
@@ -115,4 +112,4 @@ Or use [jwt.io](https://jwt.io) — paste the secret, set payload `{ "sub": "fla
 docker compose down -v && docker compose up --build
 ```
 
-This wipes `server/data/` (users, vaults, flags) and reseeds from the baked-in data files.
+This wipes `server/data/` and reseeds from the mounted `flags.json` and `credentials.json`.

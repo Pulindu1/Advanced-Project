@@ -4,10 +4,18 @@ const path = require('path');
 
 const usersPath = path.join(__dirname, '..', 'data', 'users.json');
 
-// Synchronously load users from JSON (fine for a small CTF app)
-const users = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
+// Read users from disk on each call so that the seeded data from server.js is picked up.
+// Fine for a small CTF app with few users.
+function readUsers() {
+  try {
+    return JSON.parse(fs.readFileSync(usersPath, 'utf8'));
+  } catch (err) {
+    return [];
+  }
+}
 
 function findUserByUsername(username) {
+  const users = readUsers();
   return users.find((u) => u.username === username);
 }
 

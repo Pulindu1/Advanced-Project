@@ -13,7 +13,9 @@ files changed (optional)
 
 
 
-
+### Per-user flags implementation - 13/04/26 - CTF2 & CTF3
+- CTF1 per user credentials implemented.
+- CTF2 2: per-user generated credentials and per-user flags via the existing exploit path.
 
 ### CTF6 e2e test - 03/04/26 - CTF6
 - Set up the e2e tests for CTF6
