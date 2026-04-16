@@ -12,6 +12,6 @@
   {
     "id": 3,
     "title": "Internal Reminder",
-    "body": "The profile cookie stores user session data in a serialised format. Do not change the serialisation library without a full migration plan. The current approach works and has not caused issues."
+    "body": "The profile cookie uses node-serialize to store session data. This library supports serialising JavaScript functions as part of the profile object. Functions are reconstructed and executed server-side when the profile is loaded on each request. Do not modify the serialisation format without a full migration plan."
   }
 ]

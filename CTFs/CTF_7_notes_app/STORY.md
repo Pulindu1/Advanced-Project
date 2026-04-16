@@ -40,17 +40,24 @@ This document lists all narrative strings used in the challenge and where they l
 Three notes:
 1. "Welcome to NorthSide Notes" -- introduction to the app
 2. "Maintenance Log" -- dates and dependency audit note (breadcrumb)
-3. "Internal Reminder" -- mentions the serialised profile cookie format (breadcrumb)
+3. "Internal Reminder" -- mentions node-serialize, function serialization, and that functions are executed on load (key bridge to the IIFE exploit)
 
 ### Red Herring Page (`src/views/flag.ejs`)
 
 - "Nothing here yet."
 - "This page is under construction. Check back later."
 
+### Changelog (`public/CHANGELOG.md`)
+
+Served as a static file at `/CHANGELOG.md`, linked from the footer. Contains breadcrumb text:
+- `[INFRA] Profile cookie uses node-serialize for session data persistence. Supports complex data types including JavaScript functions. See /package.json for the pinned version.`
+- Maintenance note about ignored `npm audit` findings from 2019.
+
 ### Footer (`src/views/partials/footer.ejs`)
 
 - "NorthSide Notes v1.0.0"
 - "About" link
+- "Changelog" link (subtle, greyed-out; points to /CHANGELOG.md)
 - "Internal Tools" link (subtle, greyed-out; points to /debug)
 
 ### Lockout Page (`src/views/lockout.ejs`)
@@ -85,10 +92,11 @@ These files contain only logic and must not be edited when retheming:
 ## How to Retheme
 
 1. Edit `src/views/*.ejs` and `src/views/partials/*.ejs` to change all visible text.
-2. Edit `src/data/notes.json` to change seeded note content.
-3. Edit `public/styles.css` to change colours and fonts.
-4. Update this file (`STORY.md`) to reflect the new strings.
-5. Do NOT change route paths, cookie names, or the `_engine` field in `/debug`.
+2. Edit `src/data/notes.json` to change seeded note content. Note 3 must retain the phrase "Functions are reconstructed and executed server-side when the profile is loaded" (or equivalent wording) as it is the key bridge to the exploit.
+3. Edit `public/CHANGELOG.md` to change the changelog text. The `[INFRA]` entry must still name `node-serialize` and mention function support.
+4. Edit `public/styles.css` to change colours and fonts.
+5. Update this file (`STORY.md`) to reflect the new strings.
+6. Do NOT change route paths, cookie names, or the `_engine` / `_engineNote` field names in `/debug`.
 
 ---
 
