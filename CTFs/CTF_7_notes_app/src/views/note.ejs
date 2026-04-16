@@ -1,0 +1,11 @@
+<%- include('partials/header', { userProfile }) %>
+
+<div class="note-detail">
+  <h1><%= note.title %></h1>
+  <div class="note-body">
+    <p><%= note.body %></p>
+  </div>
+  <a href="/home" class="btn">Back to Notes</a>
+</div>
+
+<%- include('partials/footer') %>

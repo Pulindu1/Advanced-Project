@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "title": "Welcome to NorthSide Notes",
+    "body": "This is your personal note-taking space. Create, read, and organise your thoughts. This app has been running since 2017 and we have no plans to change anything."
+  },
+  {
+    "id": 2,
+    "title": "Maintenance Log",
+    "body": "2017-06-15: Initial deployment. All dependencies pinned. 2018-01-02: Server migrated to new box. No code changes. 2019-04-20: 'npm audit' reports 3 vulnerabilities. Ignoring for now; everything still works."
+  },
+  {
+    "id": 3,
+    "title": "Internal Reminder",
+    "body": "The profile cookie stores user session data in a serialised format. Do not change the serialisation library without a full migration plan. The current approach works and has not caused issues."
+  }
+]

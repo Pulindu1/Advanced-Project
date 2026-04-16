@@ -1,0 +1,7 @@
+<%- include('partials/header', { userProfile: null }) %>
+
+<h1>Too Many Attempts</h1>
+<p>You have been temporarily locked out due to too many failed login attempts.</p>
+<p>Please try again in <%= retrySec %> seconds.</p>
+
+<%- include('partials/footer') %>

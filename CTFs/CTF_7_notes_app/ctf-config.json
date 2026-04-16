@@ -1,0 +1,24 @@
+{
+  "id": "ctf7-insecure-deserialization",
+  "title": "NorthSide Notes - Insecure Deserialization",
+  "category": "web",
+  "difficulty": "basic",
+  "flagFormat": "durham-ds{.*}",
+  "flagCount": 1,
+  "points": 100,
+  "owasp": ["A08:2021", "A06:2021"],
+  "cve": "CVE-2017-5941",
+  "description": "A nostalgic self-hosted note-taking app built in 2017 uses node-serialize to parse profile cookies. Players discover the vulnerable dependency via breadcrumbs and craft an IIFE deserialization payload to achieve RCE and read their per-user flag.",
+  "learningObjectives": [
+    "Understanding insecure deserialization and its impact",
+    "Identifying vulnerable dependencies via exposed package metadata",
+    "Researching known CVEs and translating them into working exploits",
+    "Crafting IIFE payloads for the node-serialize vulnerability"
+  ],
+  "techStack": ["Node.js 18", "Express 4", "EJS", "node-serialize@0.0.4"],
+  "deployment": {
+    "port": 3001,
+    "command": "docker compose up --build",
+    "containers": 1
+  }
+}

@@ -16,7 +16,7 @@ FAILED=0
 SKIPPED=0
 RESULTS=()
 
-for ctf in ctf1 ctf2 ctf3 ctf4 ctf5 ctf6; do
+for ctf in ctf1 ctf2 ctf3 ctf4 ctf5 ctf6 ctf7; do
     script="${ctf}_exploit.py"
     echo ""
     echo "--- ${ctf^^} ---"

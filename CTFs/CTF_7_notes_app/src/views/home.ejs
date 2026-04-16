@@ -1,0 +1,15 @@
+<%- include('partials/header', { userProfile }) %>
+
+<h1>Welcome back, <%= userProfile.username %></h1>
+
+<h2>Your Notes</h2>
+<div class="notes-list">
+  <% notes.forEach(function(note) { %>
+    <div class="note-card">
+      <h3><a href="/note/<%= note.id %>"><%= note.title %></a></h3>
+      <p><%= note.body.substring(0, 120) %><% if (note.body.length > 120) { %>...<% } %></p>
+    </div>
+  <% }) %>
+</div>
+
+<%- include('partials/footer') %>

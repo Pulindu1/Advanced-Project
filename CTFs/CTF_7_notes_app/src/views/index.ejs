@@ -1,0 +1,26 @@
+<%- include('partials/header', { userProfile: null }) %>
+<!-- legacy profile format: handled by node-serialize, see /package.json -->
+
+<div class="login-container">
+  <h1>NorthSide Notes</h1>
+  <p class="tagline">A nostalgic self-hosted note-taking app, built in 2017, still going strong.</p>
+  <p>Log in to access your notes.</p>
+
+  <% if (error) { %>
+    <div class="error-message"><%= error %></div>
+  <% } %>
+
+  <form method="POST" action="/login">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required autofocus>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+    <button type="submit" class="btn">Log In</button>
+  </form>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    container_name: ctf7-notes-app
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./src/data/flags.json:/app/src/data/flags.json:ro
+      - ./src/data/users.json:/app/src/data/users.json:ro
+      - ./src/data/notes.json:/app/src/data/notes.json:ro
+      - flag-files:/app/src/data/flag-files
+    restart: unless-stopped
+
+volumes:
+  flag-files:

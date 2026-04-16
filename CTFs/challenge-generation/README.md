@@ -42,6 +42,24 @@ Pluggable generators
 - Add a module `generators/<name>_generator.js` that exports a function `(username, options) => token`.
 - Example: `generators/basic1_generator.js` implements a deterministic HMAC-SHA256-based token generator.
 
+Per-CTF generators
+
+| CTF | Script | Generator | Flag prefix | Output directory |
+|-----|--------|-----------|-------------|------------------|
+| Basic_1_Nodejs | `chgen_basic1.js` | `basic1_generator.js` | `durham` | `CTFs/Basic_1_Nodejs/` |
+| CTF_2_pswd_manager | `chgen_ctf2.js` | `ctf2_generator.js` | `durham-pm` | `CTFs/CTF_2_pswd_manager/` |
+| CTF_3_HR-system | `chgen_ctf3.js` | `ctf3_generator.js` | `durham-hr` | `CTFs/CTF_3_HR-system/` |
+| CTF_5_internal_blog | `chgen_ctf5.js` | `ctf5_generator.js` | `durham-cms` | `CTFs/CTF_5_internal_blog/` |
+| CTF_6_veridian | `chgen_ctf6.js` | `ctf6_generator.js` | `durham-vsec` | `CTFs/CTF_6_veridian/` |
+| CTF_7_notes_app | `chgen_ctf7.js` | `ctf7_generator.js` | `durham-ds` | `CTFs/CTF_7_notes_app/` |
+
+CTF7 (NorthSide Notes) generates:
+- `src/data/flags.json` (username to flag mapping)
+- `src/data/users.json` (username to credentials mapping)
+- `src/data/flag-files/<username>.txt` (per-user flag files read by the exploit payload)
+
+Usage: `node chgen_ctf7.js abcd12 efgh34 ijkl56` or `node chgen_ctf7.js --count 10`
+
 Automation notes
 
 - The generator does not (and should not) modify the running server process. After regenerating `CTFs/Basic_1_Nodejs/src/data/flags.json`, restart the Basic_1_Nodejs server so it loads the new file.

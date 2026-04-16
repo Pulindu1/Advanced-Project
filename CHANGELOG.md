@@ -9,6 +9,12 @@ files changed (optional)
 # Logs:
 
 
+### CTF7 NorthSide Notes - 16/04/26 - CTF7
+- Set up the basics. Some work still to be done.
+- New basic-tier CTF covering OWASP A08 (Insecure Deserialization) via node-serialize@0.0.4 (CVE-2017-5941).
+- Single flag per user, format: durham-ds{<token>_<username>}.
+- Includes challenge generator (chgen_ctf7.js), Docker support, Jest tests, and E2E exploit script.
+
 ### Flag individualisation - 13/04/26 - CTF3
 - Introduced flag individualisation for the flags.
 

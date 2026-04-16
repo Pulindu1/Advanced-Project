@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NorthSide Notes</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/home" class="nav-brand">NorthSide Notes</a>
+    <div class="nav-links">
+      <% if (typeof userProfile !== 'undefined' && userProfile && userProfile.username) { %>
+        <a href="/home">Home</a>
+        <a href="/about">About</a>
+        <a href="/logout">Logout</a>
+      <% } else { %>
+        <a href="/">Login</a>
+        <a href="/about">About</a>
+      <% } %>
+    </div>
+  </nav>
+  <main class="container">
