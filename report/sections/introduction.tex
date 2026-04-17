@@ -6,13 +6,40 @@
 \label{sec:introduction}
 \fi
 
+\subsection{Background and motivation}
+\IEEEPARstart{C}{apture-the-Flag} (CTF) challenges have become one of the
+primary experiential instruments used to teach offensive and
+defensive cybersecurity skills at both undergraduate and postgraduate
+level~\cite{KeesPetrelli,Vykopal}. They reward the hands-on application
+of theoretical knowledge in the form of a concrete, gated artefact
+(the flag), and in so doing they address a long-standing concern in
+engineering education that purely lecture-based instruction fails to
+transfer to authentic practice~\cite{Dewey1938,kolb1984}. Durham
+University's own COMP2211 Networks and Systems module distributes a
+single virtual machine image containing a fixed catalogue of
+Jeopardy-style challenges; while the exercise exposes students to a
+breadth of problem types, the shared image introduces three pedagogical
+and integrity weaknesses that this project addresses directly.
 
-
-
-
-\subsection{Brief intro/overview}
-\IEEEPARstart{T}{his} should include context of the topic and diss as well as importance. Brief.
-
+First, the vulnerability surface is fixed across the cohort, so the
+working solution for one student can be shared verbatim with every
+other student without adaptation. Second, where the challenges do
+personalise a flag, randomisation occurs once at build time and is
+baked into the VM image; students who obtain another student's
+ciphertext through observation, messaging, or social channels can
+simply resubmit it. Third, the challenges predate the widespread
+availability of capable large language models; uniform problem
+structures that closely resemble the public exploit write-ups on
+which those models are trained are readily solvable by prompting
+alone~\cite{ji2025}. Beyond integrity, the existing module also skews
+toward classical vulnerability classes (SQL injection, path
+traversal, weak authentication) and toward legacy stacks (PHP with
+raw \texttt{mysqli}), which under-represent both the vulnerability
+landscape that graduates will encounter in industry and the modern
+framework ecosystem (TypeScript single-page applications, queue-driven
+microservices, templated server-side rendering, compiled-language web
+servers) in which those vulnerabilities manifest in subtly different
+ways.
 
 \subsection{Research question and aims}
 
@@ -22,23 +49,39 @@ The research question guiding this project is:
 modelled and pedagogically structured within Capture-the-Flag
 environments to enhance learning outcomes in cybersecurity education?}''}
 \end{quote}
-[BRIEFLY DISCUSS]
+
+Concretely, the project pursues three co-dependent aims. The first is
+\textit{coverage}: to design a suite of web exploitation challenges
+that spans both the established vulnerability classes students must
+know (broken access control, cryptographic failures, injection,
+authentication failures) and the under-represented modern classes
+(server-side template injection, server-side request forgery against
+cloud metadata, insecure deserialisation) that existing educational
+platforms largely omit~\cite{Sasiwanit}. The second is
+\textit{integrity}: to construct a shared personalisation layer that
+makes flag sharing attributable and makes LLM-generated flags
+structurally invalid, without resorting to the full infrastructural
+cost of per-student environment randomisation~\cite{chothia2023}.
+The third is \textit{engineering rigour}: to package each challenge
+as a portable, self-contained artefact whose intended exploit path
+is verified by automated end-to-end tests rather than by instructor
+inspection alone.
 
 \subsubsection{Deliverables}
 The project deliverables are organised into three tiers of increasing
 scope and complexity, summarised in Table~\ref{tab:deliverables}.
-These tiers also relate to increasing difficulty, where \textit{Basic}
-deliverables include fairly accessible single-step CTFs, while
-\textit{Intermediate} and \textit{Advanced} tiers ramp up in both
-exploit complexity and engineering rigour. Collectively, the
+These tiers also relate to increasing challenge difficulty, where
+\textit{Basic} deliverables include fairly accessible single-step
+CTFs, while \textit{Intermediate} and \textit{Advanced} tiers ramp up
+in both exploit complexity and engineering rigour. Collectively, the
 deliverables address a gap identified in the literature: existing
 educational CTF platforms typically offer narrow vulnerability coverage
-limited to classical flaws such as SQL injection and XSS
-\cite{Sasiwanit}, lack per-user flag personalisation beyond simple
-randomisation, and do not account for the ease with
-which LLMs can solve uniform, well-documented challenges
-\cite{ji2025}. This project targets all three shortcomings within a
-single web-specific, graded coursework context.
+limited to classical flaws such as SQL injection and
+XSS~\cite{Sasiwanit}, lack per-user flag personalisation beyond simple
+randomisation, and do not account for the ease with which LLMs can
+solve uniform, well-documented challenges~\cite{ji2025}. This project
+targets all three shortcomings within a single web-specific, graded
+coursework context.
 
 
 \begin{table}[h]
@@ -51,14 +94,14 @@ single web-specific, graded coursework context.
 Basic &
 Design and implement introductory CTF challenges targeting
 foundational web vulnerabilities (e.g.\ insecure session handling,
-weak authentication mechanisms). Each challenge is a standalone
-web application with a single intended exploit path and per-user
-flag personalisation. \\ \hline
+weak authentication mechanisms, insecure deserialisation). Each
+challenge is a standalone web application with a single intended
+exploit path and per-user flag personalisation. \\ \hline
 Intermediate &
 Design and implement medium-to-hard CTF challenges featuring
 multi-stage exploit chains, where solving one stage reveals the
-information required for the next. These challenges will also target more
-complex vulnerability classes (e.g.\ SQL injection with filter
+information required for the next. These challenges also target
+more complex vulnerability classes (SQL injection with filter
 bypass, DOM XSS with bot-based privilege escalation, SSTI with
 WAF evasion, SSRF with internal service pivoting) and require
 players to synthesise knowledge across multiple techniques within
@@ -66,37 +109,96 @@ a single challenge. \\ \hline
 Advanced &
 End-to-end and unit testing for each challenge to verify that
 intended exploit paths function correctly and that unintended
-solutions are mitigated.
-Full Dockerisation of each challenge as a self-contained
-Docker Compose stack for portable distribution.
-Per-user flag generation and credential management via the
-shared challenge-generation system.
-LLM-based difficulty validation using multiple models to assess
-challenge resistance to automated solving.
-Human participant evaluation with feedback collection. \\ \hline
+solutions are mitigated. Full Dockerisation of each challenge as a
+self-contained Docker Compose stack for portable distribution.
+Per-user flag generation and credential management via the shared
+challenge-generation system. LLM-based difficulty validation using
+multiple models to assess challenge resistance to automated solving.
+Human participant walkthrough with structured feedback
+collection. \\ \hline
 \end{tabular}
 \end{table}
 
 \subsubsection{Measures of success}
 
-\paragraph{\textbf{Basic}} Each challenge functions correctly when deployed, the
-intended exploit path leads to a valid per-user flag, and the
-application behaves realistically (i.e.\ non-exploitable features
-function as expected alongside the deliberate vulnerability).
-\paragraph{\textbf{Intermediate}} Multi-stage challenges are solvable through
-their intended exploit chains without requiring knowledge external
-to the challenge environment. Each stage teaches a discrete skill,
-and exhibits a bread-crumbing mechanism (where one exploit reveals information
-for the next or increases in difficulty). Post-design vulnerability auditing
-confirms that no trivial unintended solution bypasses the intended
-chain.
-\paragraph{\textbf{Advanced}} Automated tests pass for each challenge, confirming that exploit paths remain functional after code changes. Docker
-Compose stacks build and run successfully on a clean machine without
-manual configuration beyond providing a student identifier. Human
-testers of varying skill levels can engage with the challenges and
-provide structured feedback. LLM evaluation produces documented
-transcripts showing each model's approach, with results analysed
-for patterns in where automated solvers succeed or fail.
+\paragraph{\textbf{Basic}} Each challenge functions correctly when
+deployed, the intended exploit path yields a valid per-user flag,
+and the application behaves realistically (non-exploitable features
+behave as expected alongside the deliberate vulnerability).
 
-\subsection{Achievements - What did I achieve?}
+\paragraph{\textbf{Intermediate}} Multi-stage challenges are solvable
+through their intended exploit chains without requiring knowledge
+external to the challenge environment. Each stage teaches a discrete
+skill and exhibits a breadcrumbing mechanism, where the output of one
+stage reveals information needed for the next or raises the
+difficulty. Post-design vulnerability auditing confirms that no
+trivial unintended solution bypasses the intended chain.
 
+\paragraph{\textbf{Advanced}} Automated exploit scripts pass for each
+challenge, confirming that the intended exploit paths remain
+functional after code changes. Docker Compose stacks build and run on
+a clean machine without manual configuration beyond providing a
+student identifier. Human testers of varying skill levels engage
+with the challenges and provide structured feedback. LLM evaluation
+produces documented transcripts showing each model's approach, with
+results analysed for patterns in where automated solvers succeed or
+fail.
+
+\subsection{Achievements}
+
+The principal outcomes of the project are as follows.
+
+\textbf{A seven-challenge suite.} Seven CTFs were designed,
+implemented, and deployed, spanning insecure session handling
+(CTF1), weak JWT secret disclosure via proof-of-work (CTF2),
+multi-stage SQL injection and AES-CBC decryption in an HR system
+(CTF3), DOM-based XSS escalated through an automated admin bot
+(CTF4), server-side template injection with WAF bypass in a Flask
+CMS (CTF5), server-side request forgery traversing simulated cloud
+metadata and internal Redis (CTF6), and insecure deserialisation via
+\texttt{node-serialize@0.0.4} (CTF7). The suite covers six of the
+ten 2021 OWASP categories and implements three distinct injection
+sub-types. No two challenges share the same primary technology stack.
+
+\textbf{A shared personalisation layer.} A reusable generation
+framework produces per-user credentials and flags for each challenge
+from a single cohort roster. Flags are derived deterministically via
+HMAC-SHA256 over a per-deployment, per-challenge, per-flag-slot salt,
+embed the recipient's username into the flag string, and cannot be
+reconstructed by an LLM that does not hold the secret salt. The
+resulting flag space changes between deployments, invalidating any
+prior write-ups without modifying the challenge code.
+
+\textbf{Portable, reproducible containerisation.} Every challenge is
+packaged as a Docker Compose stack with no student data or flag
+content baked into the images. Flags and credentials are mounted as
+read-only volumes at startup, so a new cohort can be onboarded by
+re-running the generator and restarting the stacks, with no
+modification of challenge source code.
+
+\textbf{Objective ground-truth testing.} A Python end-to-end exploit
+script was written for each challenge that drives the full intended
+attack chain against a running stack and asserts the presence of the
+student's personalised flag in the application's response. These
+scripts serve both as regression tests during development and as an
+objective baseline for the evaluation of automated solvers.
+
+\textbf{Dual evaluation.} The suite is evaluated through a
+triangulation of sources: the automated exploit scripts provide
+solvability ground truth, an LLM-assisted solvability trial assesses
+resistance to automated solving, and a structured human walkthrough
+elicits qualitative feedback from participants across a range of
+skill levels. Section~\ref{sec:results} presents the results of each
+track and discusses the implications for the pedagogical and
+integrity claims made in the design.
+
+The remainder of the paper is organised as follows.
+Section~\ref{sec:relatedwork} surveys the CTF pedagogy, multi-stage
+exploit, OWASP, containerisation, and LLM-evaluation literatures and
+identifies the gaps that the project addresses.
+Section~\ref{sec:methodology} presents the methodology, beginning
+with the design philosophy and proceeding through challenge
+architecture, personalisation, individual challenge implementations,
+containerisation, and verification.
+Section~\ref{sec:results} presents the results and evaluation.
+Section~\ref{sec:conclusion} concludes and outlines further work.

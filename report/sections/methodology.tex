@@ -1,612 +1,450 @@
-\newpage
-[DELETE LATER]
-\newpage
-
-
 \section{Methodology}
 \label{sec:methodology}
- 
-\subsection{Design Philosophy and Guiding Principles}
+
+This section describes how the gaps identified in
+Section~\ref{sec:relatedwork} are translated into a concrete
+artefact: a seven-challenge web-exploitation suite with a
+shared personalisation layer, reproducible containerisation,
+and an end-to-end testing regime whose outputs form the
+evidence base for Section~\ref{sec:results}.
+
+\subsection{Design Philosophy}
 \label{sec:design-philosophy}
- 
-The Related Work identified several gaps in the current landscape of
-CTF-based cybersecurity education: a narrow focus on classical
-vulnerability classes with modern exploit categories rarely
-represented~\cite{Sasiwanit}, limited empirical evidence for
-measurable learning gain within graded web-specific
-coursework~\cite{Meinsma2022}, unresolved challenges around secure
-distribution of containerised challenges with embedded
-secrets~\cite{raj2016}, and a nascent understanding of how LLM-based
-solvers interact with multi-stage exploitation
-tasks~\cite{ji2025}. This section describes the methodology by which
-these gaps were translated into a concrete suite of web
-exploitation CTF challenges, beginning with the design philosophy that
-governed every subsequent architectural and pedagogical decision. The
-remainder of the Methodology then details the challenge
-implementations (Section~\ref{sec:challenge-design}), the
-academic integrity infrastructure
-(Section~\ref{sec:flag-personalisation}), the containerisation
-strategy (Section~\ref{sec:containerisation}), and the
-verification, validation, and testing methodology
-(Section~\ref{sec:vvt}) whose results are presented in
-Section~\ref{sec:results}.
- 
-Five core principles were established at the outset of the project and
-applied consistently across all challenges. Each principle
-addresses a specific finding from the literature and imposes a
-measurable constraint on the design. Table~\ref{tab:design-principles}
-summarises the mapping between principles and their motivating sources;
-the paragraphs that follow elaborate on each in turn.
- 
-\begin{table}[h]
-\centering
-\caption{Design Principles and Their Literature Foundations}
-\label{tab:design-principles}
-\begin{tabular}{|p{2.8cm}|p{5cm}|}
-\hline
-\textbf{Principle} & \textbf{Motivating Literature} \\ \hline
-Realism over artificiality &
-Fuzyll~\cite{Fuzyll2015}: learning as the path to the flag;
-Vykopal et al.~\cite{Vykopal}: graded CTFs risk
-``flag hunting'' when scenarios lack authenticity \\ \hline
-Progressive within-domain scaffolding &
-Cs\'{i}kszentmih\'{a}lyi~\cite{Csikszentmihalyi}: Flow Theory
-(challenge--skill balance);
-Balaji et al.~\cite{Balaji2025}: sequential gating in multi-level CTFs \\ \hline
-Broad OWASP coverage including under-represented classes &
-Sasiwanit et al.~\cite{Sasiwanit}: existing platforms limited
-to classical vulnerabilities;
-OWASP Top~10~\cite{OWASP2025} as the coverage framework \\ \hline
-Per-user personalisation for academic integrity &
-Chothia \& Novakovic (SecGen)~\cite{chothia2023}: personalised
-lab environments;
-Vykopal et al.~\cite{Vykopal}: plagiarism as a structural risk \\ \hline
-Technology stack diversity &
-Novel contribution (no single surveyed platform varies its
-implementation stack per challenge). \\ \hline
-\end{tabular}
-\end{table}
 
+Five principles were established at the outset and applied
+uniformly across the suite. \textit{Realism over
+artificiality}: every challenge is scenario-wrapped as an
+application a student could plausibly encounter (a module
+portal, a password manager, an HR system), so that
+exploitation exercises the path to the flag rather than a
+synthetic puzzle~\cite{Fuzyll2015,Vykopal}.
+\textit{Within-domain scaffolding}: stages inside a challenge
+gate each other through in-application breadcrumbs
+(\texttt{CHANGELOG} entries, \texttt{/health} metadata, the
+visible source of a WAF) rather than through external hints,
+maintaining challenge--skill balance across the cohort's
+skill distribution~\cite{Csikszentmihalyi,Balaji2025}.
+\textit{Broad OWASP coverage}: the suite deliberately includes
+modern classes---SSTI, SSRF, and insecure deserialisation---that
+Sasiwanit et al.~\cite{Sasiwanit} identify as under-represented
+in existing platforms. \textit{Per-user integrity}: flags are
+derived deterministically from a per-deployment secret salt
+and embed the recipient's username, making sharing both
+attributable and invariant across cohorts
+(Section~\ref{sec:flag-personalisation}). \textit{Stack
+diversity}: no two challenges share the same primary
+technology stack, forcing the player to adapt to different
+framework idioms rather than pattern-matching a single stack.
 
-
-\subsection{Challenge Architecture Overview}
+\subsection{Suite Architecture}
 \label{sec:challenge-architecture}
 
-Before examining each challenge in detail, this section presents the
-full suite as a single system, mapping the challenges against
-the OWASP Top~10 taxonomy, the three-tier deliverable structure
-defined in Section~\ref{sec:introduction}, and the shared
-infrastructure that underpins per-user personalisation and portable
-deployment.
- 
-\subsubsection{Suite Summary}
- 
-Table~\ref{tab:suite-summary} lists every challenge in the suite with
-its scenario context, primary vulnerability classes, OWASP category
-coverage, implementation stack, number of flags, and assigned
-difficulty tier. Reading the table from top to bottom traces the
-project's intended learning path: a student begins with a single-step
-cookie manipulation in a minimal Node.js application and concludes
-with a four-stage SSRF chain traversing simulated cloud infrastructure
-in a compiled Rust service.
- 
+Table~\ref{tab:suite-summary} summarises the seven challenges
+and their OWASP coverage. Reading the table top to bottom
+traces the intended learning path: a student begins with a
+single-step cookie manipulation in Node.js and concludes with
+a four-stage SSRF chain traversing simulated cloud
+infrastructure in a Rust service. Six of the ten 2021 OWASP
+categories are represented, and the injection category (A03)
+is further decomposed into SQL injection (CTF3), DOM-based XSS
+(CTF4), and server-side template injection (CTF5). The four
+omitted categories either resist flag-ification (A04 Insecure
+Design, A09 Logging and Monitoring Failures), would require
+shipping genuinely vulnerable dependencies into the
+distributable (A06), or concern CI/CD rather than the web
+layer (A08).
+
 \begin{table*}[t]
 \centering
 \caption{Challenge Suite Summary}
 \label{tab:suite-summary}
-\begin{tabular}{|c|p{2.4cm}|p{3.5cm}|p{1.4cm}|p{2.8cm}|c|c|}
+\begin{tabular}{|c|p{2.4cm}|p{3.6cm}|p{1.4cm}|p{3.0cm}|c|c|}
 \hline
-\textbf{CTF} & \textbf{Scenario} & \textbf{Vulnerability Classes} & \textbf{OWASP} & \textbf{Tech Stack} & \textbf{Flags} & \textbf{Tier} \\ \hline
-1 & University module portal &
+\textbf{CTF} & \textbf{Scenario} & \textbf{Vulnerability Classes} & \textbf{OWASP} & \textbf{Stack} & \textbf{Flags} & \textbf{Tier} \\ \hline
+1 & Module portal &
 Unsigned session cookie; privilege escalation &
 A01, A02 &
-Node.js, Express, EJS &
-1 & Basic \\ \hline
-2 & Password manager (SaaS) &
-Weak JWT secret leaked via PoW; JWT forgery; account takeover &
+Node.js, Express, EJS & 1 & Basic \\ \hline
+2 & Password manager &
+Weak JWT secret via PoW; JWT forgery &
 A02, A07 &
-Node.js, React/Vite, JWT &
-1 & Basic \\ \hline
+Node.js, React/Vite, JWT & 1 & Basic \\ \hline
 3 & Corporate HR system &
-Info disclosure; SQL injection (filter bypass); AES-CBC decryption &
-A02, A03, A05, A07 &
-PHP/Laravel, React, PostgreSQL &
-4 & Intermediate \\ \hline
+SQL injection (filter bypass); AES-CBC decryption; info disclosure &
+A02, A03, A05 &
+PHP/Laravel, React, PostgreSQL & 4 & Intermediate \\ \hline
 4 & Corporate helpdesk &
-DOM XSS (\texttt{eval} injection); bot-based privilege escalation; session exfiltration &
+DOM XSS (\texttt{eval}); bot-based escalation &
 A03, A07 &
-Node.js, React, PostgreSQL, Redis, BullMQ, Playwright &
-1 & Intermediate \\ \hline
-5 & NovaCMS (blog/CMS) &
-SSTI (Jinja2); config leak; WAF bypass (hex encoding); RCE via MRO chain &
-A01, A02, A03, A05 &
-Python/Flask, Jinja2 &
-4 & Advanced \\ \hline
-6 & Veridian Secure (security firm) &
-SSRF; cloud metadata enumeration (IMDSv1); Redis pivoting (\texttt{dict://}); session replay &
+Node.js, React, PostgreSQL, Redis, BullMQ, Playwright & 1 & Intermediate \\ \hline
+5 & NovaCMS blog/CMS &
+SSTI (Jinja2); WAF bypass; RCE via MRO chain &
+A01, A03, A05 &
+Python/Flask, Jinja2 & 4 & Advanced \\ \hline
+6 & Veridian Secure &
+SSRF; IMDSv1 enumeration; Redis pivot (\texttt{dict://}) &
 A10, A05, A01 &
-Rust/Actix-web, Redis, simulated IMDS &
-4 & Advanced \\ \hline
+Rust/Actix-web, Redis, simulated IMDS & 4 & Advanced \\ \hline
+7 & NorthSide Notes &
+Insecure deserialisation (CVE-2017-5941) &
+A08 &
+Node.js, Express, EJS, \texttt{node-serialize} & 1 & Basic \\ \hline
 \end{tabular}
 \end{table*}
- 
-Several design properties are visible from the table. First, no two
-challenges share the same primary technology stack: the suite spans
-Node.js, PHP/Laravel, Python/Flask, and Rust/Actix-web on the backend,
-with EJS server-side rendering, React single-page applications, and
-Jinja2 templating on the frontend. As discussed in
-Section~\ref{sec:design-philosophy}, this diversity is a deliberate
-pedagogical constraint. Second, the number of flags per challenge
-increases with tier: the Basic challenges each contain a single flag
-obtained through a short exploit chain, while the Advanced challenges
-each contain four flags arranged in a progressive chain where each
-flag teaches a discrete skill and reveals information required for the
-next. Third, the OWASP coverage is distributed across the suite rather
-than concentrated in a single challenge, ensuring that a student who
-completes the full suite has engaged with a broad cross-section of the
-taxonomy.
- 
-\subsubsection{OWASP Top~10 Coverage}
- 
-Table~\ref{tab:owasp-matrix} presents the OWASP coverage as a
-matrix. Each cell indicates whether a given challenge exercises a
-given OWASP category, and if so, through which specific vulnerability
-mechanism. The matrix demonstrates that six of the ten OWASP
-categories are substantively covered, with the Injection category
-(A03) represented through three fundamentally different injection
-types: SQL injection targeting the database layer, DOM-based XSS
-targeting the browser rendering engine, and server-side template
-injection targeting the application's view layer. This breadth is
-evaluated against existing platforms in
-Section~\ref{sec:results}.
- 
-\begin{table*}[t]
-\centering
-\caption{OWASP Top 10 (2021) Coverage Matrix}
-\label{tab:owasp-matrix}
-\begin{tabular}{|p{3.8cm}|c|c|c|c|c|c|}
-\hline
-\textbf{OWASP Category} & \textbf{CTF1} & \textbf{CTF2} & \textbf{CTF3} & \textbf{CTF4} & \textbf{CTF5} & \textbf{CTF6} \\ \hline
-A01: Broken Access Control & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\ \hline
-A02: Cryptographic Failures & \checkmark & \checkmark & \checkmark & & \checkmark & \checkmark \\ \hline
-A03: Injection & & & SQLi & DOM XSS & SSTI & \\ \hline
-A04: Insecure Design & & \checkmark & & \checkmark & & \\ \hline
-A05: Security Misconfiguration & & & \checkmark & \checkmark & \checkmark & \checkmark \\ \hline
-A06: Vulnerable Components & & & & & & \\ \hline
-A07: Identification \& Auth Failures & \checkmark & \checkmark &  & & & \checkmark \\ \hline
-A08: Software \& Data Integrity & & & & & & \\ \hline
-A09: Logging \& Monitoring Failures & & & & & & \\ \hline
-A10: Server-Side Request Forgery & & & & & & \checkmark \\ \hline
-\end{tabular}
-\end{table*}
- 
-Four categories (A04, A06, A08, A09) are not covered by the suite.
-This is a conscious scope decision rather than an oversight. A04
-(Insecure Design) and A09 (Logging and Monitoring Failures) describe
-systemic weaknesses that are difficult to model as discrete,
-flag-bearing CTF challenges without artificially contriving the
-scenario. A06 (Vulnerable and Outdated Components) would require
-shipping genuinely vulnerable library versions, introducing supply
-chain risk into the distributable packages. A08 (Software and Data
-Integrity Failures) primarily concerns CI/CD pipeline security, which
-falls outside the web exploitation domain targeted by this suite. The
-six covered categories collectively account for the majority of
-real-world web application vulnerabilities reported in OWASP's
-incidence data~\cite{OWASP2025}, and the three distinct injection
-sub-types provide depth within the highest-impact category.
- 
-\subsubsection{Tiered Structure and Deliverable Mapping}
- 
-The three difficulty tiers correspond directly to the deliverable
-structure defined in Section~\ref{sec:introduction}, but with an
-important clarification of terminology. The terms \textit{Basic},
-\textit{Intermediate}, and \textit{Advanced} describe the
-\textit{challenge difficulty}, not the project deliverable complexity.
-At the deliverable level, the project's Advanced tier encompasses the
-testing, packaging, and distribution infrastructure that supports the
-entire suite, rather than referring only to the hardest challenges.
-Table~\ref{tab:tier-mapping} clarifies this relationship.
- 
-\begin{table}[h]
-\centering
-\caption{Tier Mapping: Challenge Difficulty vs.\ Project Deliverables}
-\label{tab:tier-mapping}
-\begin{tabular}{|p{1.6cm}|p{1.2cm}|p{4.7cm}|}
-\hline
-\textbf{Difficulty Tier} & \textbf{CTFs} & \textbf{Deliverable Scope} \\ \hline
-Basic &
-CTF1-2, CTF 7 &
-Standalone challenges targeting foundational vulnerabilities;
-single-step or two-step exploit chains;
-per-user flag personalisation \\ \hline
-Intermediate &
-CTF3--4 &
-Multi-stage exploit chains requiring technique synthesis;
-complex vulnerability classes (SQLi filter bypass, DOM XSS
-with bot escalation); microservices architecture \\ \hline
-Advanced &
-CTF5--6 &
-Four-stage chains with WAF/filter bypass and protocol-level pivoting \\ \hline
-\end{tabular}
-\end{table}
 
-
-Project-wide deliverables (applying to all/most CTFs):
-\begin{itemize}
-    \item Full Dockerisation as distributable stacks
-    \item Automated end-to-end testing
-    \item LLM-based difficulty validation and Human participant evaluation
-\end{itemize}
-
-The Basic tier is designed to be accessible to students with no prior
-CTF experience, requiring only familiarity with browser developer
-tools and basic HTTP concepts (and adequate research). The Intermediate tier assumes the
-skills developed in the Basic tier and adds the requirement to chain
-multiple techniques within a single challenge, synthesising
-information disclosed at one stage to enable exploitation at the next.
-The Advanced tier demands the additional ability to develop bypass
-techniques against active defences (WAF keyword filters, protocol
-restrictions) and to reason about internal service architectures that
-are not directly visible from the application's user-facing surface.
-This progression is designed to maintain Cs\'{i}kszentmih\'{a}lyi's
-flow state~\cite{Csikszentmihalyi} across the full skill range of the
-target cohort, and its effectiveness is assessed through the human
-participant evaluation described in Section~\ref{sec:vvt}.
- 
-\subsubsection{Shared Infrastructure}
- 
-Although each challenge varies by technology stack, all share a common infrastructure layer that provides per-user flag
-generation, credential management, and containerised deployment.
-Figure~\ref{fig:architecture} illustrates the relationship between
-these shared components and the individual challenge applications.
- 
-
-\begin{figure}[t] % 't' pulls it to the top of the column
+\begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{figures/ctf_shared_infrastructure_architecture.png}
-    \caption{Shared infrastructure architecture across the challenge suite. Generated by Anthropic Claude (2026) \cite{ClaudeDiagram2026}.}
-    \label{fig:exploit_chain}
+    \caption{Three-layer shared infrastructure: a generation
+    layer produces per-user flags and credentials; a
+    containerisation layer packages each challenge as a Docker
+    Compose stack; and a challenge application layer
+    implements the vulnerable behaviour. Generated by
+    Anthropic Claude (2026)~\cite{ClaudeDiagram2026}.}
+    \label{fig:architecture}
 \end{figure}
- 
-The architecture is organised into three layers. The
-\textbf{Challenge Generation Layer} is discussed in Section~\ref{sec:flag-personalisation}. The \textbf{Docker Containerisation Layer} is
-detailed in Section~\ref{sec:containerisation}. The \textbf{Challenge Application Layer} is described in
-Section~\ref{sec:challenge-design} are implemented.
- 
-This three-layer separation ensures that the concerns of user
-management, secure deployment, and vulnerability design are cleanly
-decoupled. A new cohort of students can be onboarded by re-running the
-generation layer with a fresh set of identifiers; the challenge
-applications themselves require no modification. Similarly, a
-challenge's vulnerability design can be updated without affecting the
-generation or containerisation layers, provided the flag injection
-interface is preserved.
 
+All challenges share the three-layer architecture shown in
+Figure~\ref{fig:architecture}. The \textbf{generation layer}
+(Section~\ref{sec:flag-personalisation}) produces per-user
+flags and credentials; the \textbf{containerisation layer}
+(Section~\ref{sec:containerisation}) packages each challenge
+with no student data baked into the image; and the
+\textbf{challenge application layer}
+(Section~\ref{sec:challenge-design}) implements the vulnerable
+behaviour. The layers are decoupled so that a new cohort is
+onboarded by re-running the generation scripts alone, without
+any modification to challenge source or container images.
 
-
-\subsection{Per-User Flag Personalisation and Academic Integrity Mechanisms}
+\subsection{Per-User Flag Personalisation}
 \label{sec:flag-personalisation}
 
 \subsubsection{Threat Model}
 
-The existing Networks and Systems module distributes nearly identical
-virtual machines containing a fixed set of challenges with randomised
-flags. This architecture is vulnerable to three
-distinct integrity threats. First, \textbf{solution sharing}: because
-every student faces an identical vulnerability surface, a single
-working exploit can be communicated to the entire cohort. The shared
-exploit requires no adaptation, so the recipient gains the flag
-without engaging with the underlying security concepts. Second,
-\textbf{flag copying}: even where flags are randomised per instance,
-if the randomisation is performed at VM build time and the same VM
-image is distributed, flags are static across sessions. A student who
-obtains another student's flag through any channel (messaging,
-observation, or screenshot) can submit it directly. Third,
-\textbf{LLM-assisted solving}: uniform problem structures that
-closely resemble publicly documented vulnerabilities can be solved by
-prompting a language model with the challenge description. Ji et
-al.~\cite{ji2025} demonstrate that with appropriate scaffolding, LLMs
-can achieve over 80\% performance improvement on standard CTF
-datasets, making this threat increasingly practical.
+The existing Networks and Systems VM distributes an identical
+image with statically randomised flags. This admits three
+integrity threats: \textit{solution sharing} (a working
+exploit is communicated verbatim to the cohort);
+\textit{flag copying} (per-VM flags obtained via messaging or
+screenshots are resubmitted); and \textit{LLM-assisted
+solving} (uniform problem structures resembling public
+write-ups are trivially solved by a prompted
+model~\cite{ji2025}). The scheme described below addresses
+flag copying and LLM-assisted solving directly. Solution
+sharing is addressed structurally through multi-stage chain
+design: a four-stage chain cannot be communicated as a single
+payload and still requires the receiver to execute each stage
+against their own instance.
 
-The flag personalisation system described in this section addresses
-the second and third threats directly, and provides partial mitigation
-for the first. The first threat (methodology sharing) is addressed
-structurally through the multi-stage exploit chain design discussed in
-Section~\ref{sec:design-philosophy}: chains requiring four sequential
-exploitation steps produce solution paths that are difficult to
-communicate concisely, unlike single-step challenges.
+\subsubsection{HMAC-SHA256 Flag Derivation}
 
-\subsubsection{Flag Generation Algorithm}
-
-The core flag generation algorithm used by six of the seven challenges
-(CTF1, CTF2, CTF3, CTF5, CTF6, CTF7) is deterministic derivation via
-HMAC-SHA256~\cite{rfc2104}. Given a per-challenge salt $s$ and a
-student username $u$, the flag token is computed as:
-
+Six of the seven challenges derive flags deterministically
+from a per-deployment salt $s$ and a student username $u$ via
+HMAC-SHA256~\cite{rfc2104}:
 \begin{equation}
-\textit{token} = \text{HMAC-SHA256}(s, \; u)\text{.hex}[{:}N]
+\mathit{token} = \mathrm{HMAC\text{-}SHA256}(s, u).\mathit{hex}[{:}N]
 \label{eq:hmac-flag}
 \end{equation}
-
-\noindent where $N$ is the token length in hexadecimal characters and
-the \texttt{.hex} notation denotes the full digest rendered as a
-lowercase hexadecimal string. The final flag is assembled as:
-
 \begin{equation}
-\textit{flag} = \textit{prefix}\texttt{\{}\textit{token}\texttt{\_}\textit{username}\texttt{\}}
+\mathit{flag} = \mathit{prefix}\texttt{\{}\mathit{token}\texttt{\_}u\texttt{\}}
 \label{eq:flag-format}
 \end{equation}
+where $N$ is the token length in hexadecimal characters
+(16 for Basic-tier single-flag challenges and 20 elsewhere,
+corresponding to 64- and 80-bit entropy respectively). For
+example, with prefix \texttt{durham}, salt
+\texttt{basic1-default-salt}, and username \texttt{abcd12},
+the generator produces
+\texttt{durham\{3a1f9c2b4e7d8a0f\_abcd12\}}. HMAC-SHA256 was
+selected for three properties. \textit{Determinism}: $(s, u)$
+always yields the same token, so flags can be regenerated
+from the student roster alone without persistent state.
+\textit{Collision resistance}: the 64-bit birthday bound is
+approximately $2^{-32}$ for cohorts of
+100--200~\cite{HMACNIST}. \textit{Deployment isolation}:
+changing $s$ produces a disjoint flag space, so flags or
+write-ups from a previous cohort are invalid without any
+source-code change.
 
-\noindent For example, with prefix \texttt{durham}, salt
-\texttt{basic1-default-salt}, username \texttt{abcd12}, and $N = 16$,
-the generator produces a flag of the form
-\texttt{durham\{3a1f9c2b4e7d8a0f\_abcd12\}}. The username is embedded
-in the flag itself, enabling attribution: any submitted flag
-immediately identifies the student for whom it was generated.
-
-HMAC-SHA256 was selected for three properties. First,
-\textbf{determinism}: the same username and salt always produce the
-same token, meaning flags can be regenerated at any time without
-requiring persistent state. If a \texttt{flags.json} file is lost or
-corrupted, it can be reconstructed from the student list and the
-deployment salt alone. Second, \textbf{collision resistance}: even
-truncated to 16 hexadecimal characters (64 bits of entropy), the
-probability of two distinct usernames producing the same token under a
-given salt is approximately $2^{-32}$ by the birthday
-bound~\cite{HMACNIST}, which is negligible for cohort sizes of
-100--200 students. Third, \textbf{deployment isolation}: changing the
-salt produces an entirely different flag space, so flags generated for
-one deployment (e.g.\ the 2025--26 academic year) are invalid in
-another (e.g.\ 2026--27), even for the same student.
-
-The generator architecture is pluggable: each challenge provides a
-module in \texttt{generators/<n>\_generator.js} that exports a
-function \texttt{(username, options) $\rightarrow$ token}. The
-\texttt{options} object carries the salt and token length, both of
-which can be overridden via environment variables
-(\texttt{GENERATOR\_SALT}, \texttt{GENERATOR\_TOKEN\_LENGTH}). This
-design allows a module administrator to change the flag space for an
-entire cohort by setting a single environment variable, without
-modifying any source code.
-
-\subsubsection{Token Length and Entropy Evolution}
-
-The token length was increased from 16 hexadecimal characters (64-bit
-entropy) in CTF1 to 20 hexadecimal characters (80-bit entropy) in
-CTF2 onwards. Table~\ref{tab:flag-params} summarises the per-challenge
-parameters.
-
-\begin{table}[h]
-\centering
-\caption{Flag Generation Parameters by Challenge}
-\label{tab:flag-params}
-\begin{tabular}{|c|l|c|c|}
-\hline
-\textbf{CTF} & \textbf{Prefix} & \textbf{Token} & \textbf{Entropy} \\ \hline
-1 & \texttt{durham}      & 16 hex & 64-bit \\ \hline
-2 & \texttt{durham-pm}   & 20 hex & 80-bit \\ \hline
-3 & \texttt{durham-hr}   & 20 hex & 80-bit \\ \hline
-5 & \texttt{durham-cms}  & 20 hex & 80-bit \\ \hline
-6 & \texttt{durham-vsec} & 20 hex & 80-bit \\ \hline
-7 & \texttt{durham-ds}   & 16 hex & 64-bit \\ \hline
-\end{tabular}
-\end{table}
-
-The increase from 64 to 80 bits raises the cost of brute-force
-token guessing from approximately $2^{63}$ expected attempts to
-$2^{79}$, a factor of roughly $10^{4.8}$. While 64-bit tokens are
-already computationally infeasible to brute-force for a student
-adversary, the increase was adopted as a precaution for the
-Intermediate and Advanced tiers, where students possess greater
-technical sophistication and where the multi-flag structure provides
-more opportunities to observe token patterns. CTF7 reverts to 16-character
-tokens because it is a single-flag basic challenge where the additional
-entropy provides no meaningful security benefit.
-
-\subsubsection{Multi-Flag Salt Derivation}
-
-Challenges containing multiple flags (CTF3, CTF5, CTF6) require an
-additional design consideration: if all flags for a given user were
-derived from the same salt, capturing one flag would reveal
-information about the derivation that could theoretically aid in
-guessing another. This is addressed through \textbf{per-flag salt
-parameterisation}. For CTF5 and CTF6, each of the four flags uses a
-distinct salt derived from a base salt and the flag number:
-
+Multi-flag challenges (CTF3, CTF5, CTF6) derive per-flag
+salts from a base salt by concatenation:
 \begin{equation}
-s_i = \textit{base\_salt}\texttt{-flag}i, \quad i \in \{1, 2, 3, 4\}
+s_i = \mathit{base\_salt}\texttt{-flag}i, \quad i \in \{1, \dots, 4\}
 \label{eq:per-flag-salt}
 \end{equation}
-
-\noindent For example, CTF5 uses salts \texttt{novacms-ctf5-2026-flag1}
-through \texttt{novacms-ctf5-2026-flag4}. Because HMAC-SHA256 with
-different keys produces statistically independent outputs, knowing
-one flag provides zero information about any other flag for the same
-user. CTF3 uses a similar approach with two distinct salts for its
-two HMAC-derived flags (\texttt{ctf3-api-flag-salt-2026} and
-\texttt{ctf3-decrypt-flag-salt-2026}).
+Because HMAC-SHA256 under distinct keys produces
+statistically independent outputs, capturing one flag reveals
+no information about any other flag for the same user.
 
 \subsubsection{Challenge-Specific Variations}
 
-Two challenges introduce additional layers on top of the core HMAC
-algorithm to serve specific pedagogical purposes.
+Two challenges layer additional mechanisms on top of the core
+derivation. CTF3 encrypts one of its HMAC-derived flags with
+AES-256-CBC, using a SHA-256 passphrase-derived key that the
+student must recover through source code inspection and a
+freshly generated IV per encryption. The encryption itself is
+part of the challenge, training the student in key
+identification, mode recognition, and decryption. CTF4
+departs from the HMAC scheme, using
+\texttt{CTF\{dom\_xss\_\$\{u\}\_\$\{Date.now()\}\}} because
+its exploit chain (DOM XSS escalated via an automated admin
+bot) requires per-instance isolation that is enforced through
+per-student Docker Compose overrides
+(Section~\ref{sec:containerisation}) rather than through flag
+derivation alone.
 
-\paragraph{CTF3: AES-256-CBC encryption layer.} One of CTF3's flags
-is encrypted after generation. The HMAC-derived plaintext flag is
-encrypted using AES-256-CBC, where the encryption key is derived by
-applying SHA-256 to a passphrase that students must discover through
-source code inspection. A random initialisation vector
-(\texttt{crypto.randomBytes(16)}) is generated for each encryption
-operation, meaning the ciphertext is non-deterministic even though
-the underlying flag is deterministic. The output format is
-\texttt{iv\_base64:ciphertext\_base64}. This design is deliberate:
-the encryption itself is part of the challenge, requiring students to
-identify the key material, understand the cipher mode, and implement
-decryption. The non-deterministic ciphertext also means that even if
-two students share the encrypted blob, they cannot confirm whether
-their underlying flags are the same without performing the
-decryption.
+\subsubsection{Integrity Properties and Positioning}
 
-\paragraph{CTF4: Non-HMAC flag generation.} CTF4 is the sole
-challenge that does not use the HMAC-based generator. Its flags
-follow the format \texttt{CTF\{dom\_xss\_\$\{username\}\_\$\{Date.now()\}\}},
-incorporating a timestamp that makes each flag instance unique not only per
-user but per generation event. CTF4 also uses a different deployment
-model: rather than injecting flags into a shared application, it generates
-per-user Docker Compose override files with isolated port mappings, creating
-fully separated challenge instances. This represents a fundamentally different
-approach to personalisation, one that varies the deployment environment
-itself rather than only the flag values. The trade-off is significantly
-higher infrastructure complexity: each student requires a separate Docker
-stack, which limits scalability relative to the shared-instance model used
-by the other challenges.
+Three properties follow directly from
+equations~(\ref{eq:hmac-flag})--(\ref{eq:per-flag-salt}).
+\textbf{Attribution}: because $u$ is embedded in the flag
+string, any submitted flag identifies its legitimate owner;
+submitting another student's flag is detectable without
+server-side comparison. \textbf{Year-over-year invalidation}:
+rotating $s$ invalidates all previously generated flags,
+including any published write-ups. \textbf{LLM resistance}:
+because $s$ is never exposed on the user-facing surface, an
+LLM without the salt cannot produce a valid flag even when it
+has correctly identified the methodology; the model may still
+guide the student, but the flag itself must be produced by
+executing the exploit against the student's personalised
+instance. These claims are evaluated empirically in
+Section~\ref{sec:results}.
 
-\paragraph{CTF6: Bootstrap script generation.} In addition to
-standard flag generation, CTF6's generator produces a synthetic cloud
-user-data bootstrap script that embeds Flag~2 within a realistic-looking
-instance initialisation payload. This script is served by the
-simulated AWS metadata endpoint and is the artefact that students
-discover through SSRF exploitation. The generated script is unique per
-user because the embedded flag is derived from the user's HMAC token,
-maintaining the personalisation guarantee through the SSRF exploit chain.
+The scheme is scoped deliberately to the flag layer. Chothia
+and Novakovic's SecGen~\cite{chothia2023} randomises the
+entire lab environment per student, defending against both
+flag copying and methodology sharing.
+Reimplementing SecGen-style environment generation across
+seven distinct technology stacks would have required
+infrastructure investment disproportionate to the target
+context, and flag-layer personalisation captures the dominant
+integrity risk (exam-style flag sharing) at a fraction of the
+cost.
 
-\subsubsection{Credential Generation Pipeline}
-
-Alongside flag generation, the system produces per-user credentials
-through the \texttt{generate\_credentials.js} module. Usernames
-follow the format \texttt{[a-z]\{4\}[0-9]\{2\}} (e.g.\
-\texttt{abcd12}), enforced by regex validation across all generators.
-This format was chosen to be short enough for students to type
-reliably while remaining sufficiently structured to avoid collisions
-in small cohorts. Passwords are generated non-deterministically using
-\texttt{crypto.randomBytes()} and rendered as hexadecimal (or base64
-for CTF5), producing 8--12 character strings with high entropy.
-Because passwords are non-deterministic, re-running the generator
-produces new passwords and requires restarting the associated
-challenge services.
-
-Default user roles vary by challenge to match each scenario's
-narrative context: \texttt{user} for CTF1, CTF2, and CTF7;
-\texttt{editor} for CTF5 (a content management system); and
-\texttt{analyst} for CTF6 (a security consultancy). CTF3 generates
-the richest credential bundles, including an employee identifier,
-department, position, hire date, and monthly salary alongside the
-authentication credentials, as these fields populate the HR system's
-employee database and form part of the SQL injection target surface.
-
-The generated credential bundles (\texttt{credentials.json}) flow
-into each challenge's data layer through stack-appropriate mechanisms:
-direct JSON file loading at startup for Node.js and Flask challenges
-(CTF1, CTF2, CTF5), database seeding via Laravel's
-\texttt{php artisan migrate:fresh -{}-seed} for CTF3, Docker
-Compose environment variable injection for CTF4, and combined
-JSON and per-user text file output for CTF7 (where the exploit reads
-flags from individual files on disk via \texttt{fs.readFileSync()}).
-Table~\ref{tab:flag-flow} summarises the data flow for each challenge.
-
-\begin{table}[h]
-\centering
-\caption{Generated Data Flow into Each Challenge}
-\label{tab:flag-flow}
-\begin{tabular}{|c|p{2.3cm}|p{4.2cm}|}
-\hline
-\textbf{CTF} & \textbf{Output Files} & \textbf{Consumed By} \\ \hline
-1 & \texttt{flags.json}, \texttt{credentials.json} &
-Express app reads at startup \\ \hline
-2 & \texttt{flags.json}, \texttt{credentials.json} &
-API server reads at startup; flags synced to vault entries \\ \hline
-3 & \texttt{flags.json}, \texttt{credentials.json} &
-Laravel seeds PostgreSQL via Artisan migration \\ \hline
-4 & Per-instance \texttt{.env}, compose override &
-Docker Compose per-user stack \\ \hline
-5 & \texttt{flags.json}, \texttt{credentials.json} &
-Flask app reads at startup \\ \hline
-6 & \texttt{flags.json}, \texttt{credentials.json}, bootstrap script &
-Rust/Flask services read at startup \\ \hline
-7 & \texttt{flags.json}, \texttt{users.json}, per-user \texttt{.txt} files &
-Express reads JSON; exploit reads \texttt{.txt} from disk \\ \hline
-\end{tabular}
-\end{table}
-
-In all cases, the generation layer is decoupled from the application
-layer: onboarding a new cohort requires only re-running the generation
-scripts with a fresh student list. No challenge source code requires
-modification.
-
-\subsubsection{Integrity Properties}
-
-The flag personalisation system addresses each threat identified in
-the threat model as follows.
-
-\paragraph{Flag sharing becomes attributable.} Because the username is
-embedded in the flag string itself
-(Equation~\ref{eq:flag-format}), every submitted flag identifies its
-legitimate owner. A student who submits a flag containing another
-student's username is immediately identifiable. This transforms flag
-sharing from an undetectable activity into a detectable and
-attributable one, shifting the deterrence calculus: the risk of
-detection now accompanies any attempt to share flags.
-
-\paragraph{Flag reuse across deployments is impossible.} The
-salt-based derivation ensures that flags generated under one
-deployment salt are invalid under another. An instructor deploying the
-same challenges in a subsequent academic year need only change the
-salt to invalidate all previously generated flags, including any
-that may have been shared through unofficial channels or published
-in online write-ups.
-
-\paragraph{LLM-generated flags are invalid.} Because flags are derived
-from a secret salt that is never exposed to the challenge
-application's user-facing surface, there is no information available
-to an LLM (or any other external tool) from which a valid flag could
-be constructed. An LLM may be able to guide a student through the
-exploitation methodology, but it cannot produce the flag itself
-without the student actually executing the exploit against their
-personalised instance. This property is evaluated empirically in
-Section~\ref{sec:results} through systematic LLM testing.
-
-\subsubsection{Scope and Limitations}
-
-The personalisation implemented in this project is deliberately
-scoped to the flag layer. Full SecGen-style environment
-randomisation~\cite{chothia2023}, which varies network ports, service
-configurations, and vulnerability profiles per student, was considered
-but not adopted for two reasons. First, the scope constraint: each
-challenge uses a distinct technology stack, and implementing
-per-student environment variation across seven different stacks would
-have required infrastructure investment disproportionate to the
-integrity benefit. Second, as argued in
-Section~\ref{sec:design-philosophy}, for web exploitation challenges
-the primary integrity risk is flag sharing rather than methodology
-sharing. A student who can articulate how to exploit a SQL injection
-filter bypass has demonstrated the intended learning outcome regardless
-of whether they arrived at the methodology independently or through
-discussion with peers. The per-user flag mechanism therefore targets
-the highest-impact threat without imposing the full architectural
-overhead of environment randomisation, occupying a pragmatic middle
-ground between simple flag randomisation and comprehensive
-per-student environment generation.
-
-
-
-\subsection{Challenge Design and Implementation}
+\subsection{Challenge Implementations}
 \label{sec:challenge-design}
 
-\subsection{CTF1 [INSERT subsection for each CTF]}
-% \label{sec:}
+Full per-challenge documentation is available in the
+submission's source tree; this section concentrates on the
+four design decisions that constitute the principal novelty
+of the suite, each of which operationalises one of the
+guiding principles of
+Section~\ref{sec:design-philosophy}.
 
-\subsection{Containerisation and Distributable Packaging}
+\textbf{Accepting multiple cookie encodings (CTF1).} The
+unsigned-cookie challenge's decoder accepts raw JSON, base64,
+URL-encoded base64, and URL-encoded JSON. This is a
+deliberate pedagogical choice: pilot attempts revealed that
+players who correctly identified the vulnerability
+frequently failed to exploit it because the browser had
+URL-encoded the cookie on re-submission through DevTools.
+Accepting multiple encodings keeps the vulnerability's
+\textit{concept} as the barrier and removes an incidental
+formatting trap, consistent with Fuzyll's maxim that
+learning should be the path to the
+flag~\cite{Fuzyll2015}. Post-design auditing also identified
+an unintended login-bypass path (the form accepted the
+base64 admin cookie as a password) which was removed; a
+sliding-window per-IP rate limiter now forces the player
+onto the intended cookie-tampering path.
+
+\textbf{Disclosing the WAF source to the player (CTF5).} The
+Jinja2 SSTI challenge in NovaCMS is gated by a twelve-word
+keyword blocklist whose full source is served as a static
+\texttt{CHANGELOG.md} asset advertised in the editor. The
+challenge is therefore not ``guess the blocklist'' but
+``reason about how to bypass a blocklist you can read,''
+shifting the learning outcome from enumeration to
+construction: players apply hex-escaped
+\texttt{\textbackslash x5f\textbackslash x5f} dunders and the
+Jinja \texttt{|attr()} filter to traverse the engine's MRO
+chain from \texttt{lipsum} to \texttt{os.environ} where the
+flag lives~\cite{JinjaMRO}. Because the WAF is visible, the
+challenge admits a calibrable difficulty surface: raising the
+bar is a matter of adding blocked substrings rather than
+obfuscating the filter.
+
+\textbf{Rewriting the IMDS link-local address (CTF6).}
+Docker's default bridge network does not route the AWS
+link-local metadata address \texttt{169.254.169.254}, yet
+teaching a Capital One-style SSRF-to-IMDS
+chain~\cite{khan2022} requires the player to supply exactly
+that address. The Rust preview handler therefore rewrites
+\texttt{169.254.169.254} to the Compose service hostname
+\texttt{metadata} before dispatching the request, so the
+player's mental model matches the real cloud environment
+while the container network actually delivers the traffic.
+The same handler supports \texttt{dict://} and
+\texttt{gopher://}, which enables the Redis pivot documented
+by PortSwigger~\cite{BurpSSRFRedis} and generalises the
+lesson beyond the single IMDS surface.
+
+\textbf{Per-student attribution via a file path (CTF7).} The
+insecure-deserialisation challenge exposes each flag as a
+per-user text file at
+\texttt{/app/src/data/flag-files/<u>.txt}. The intended
+payload, an immediately-invoked function expression passed to
+\texttt{node-serialize}'s
+\texttt{unserialize()}~\cite{CVE20175941,NodeSerialize}, must
+embed the student's own username in the path to retrieve the
+flag: any attempt to read another student's flag names the
+target explicitly, so the exploit itself constitutes
+attributable evidence of attempted impersonation,
+complementing the embedded-username attribution of
+equation~(\ref{eq:flag-format}).
+
+Two further challenges warrant brief mention. CTF2 hides the
+JWT signing secret behind a four-byte Proof-of-Work gate on a
+debug endpoint, modelling the real-world pattern in which a
+debug surface is ``protected'' by an obscure filter rather
+than by authentication; the player then forges a JWT against
+a \texttt{flag12} account whose vault entry is synchronised
+from \texttt{flags.json} at startup. CTF3 includes a
+deliberate alternative path
+(\texttt{/api/debug/user-config} annotated
+\texttt{// TODO: REMOVE BEFORE PRODUCTION}) that bypasses the
+SQL-injection stage; both paths are pedagogically valid, and
+the SQL path is rewarded through a second flag that the
+debug path does not unlock.
+
+\subsection{Containerisation and Distribution}
 \label{sec:containerisation}
 
-\subsection{Verification, Validation, and Testing Methodology}
+Each challenge is packaged as a Docker Compose
+stack~\cite{DockerDocs}. Three constraints derived from the
+threat model shape the packaging.
+\textit{No student data in the image}: flags and credentials
+are supplied as read-only bind mounts at startup
+(\texttt{./flags.json:/app/flags.json:ro}), so rotating a
+cohort is a matter of replacing the host-side files and
+restarting the stack rather than rebuilding.
+\textit{No code-change onboarding}: the generation layer
+writes to the mount point only, leaving the image untouched.
+\textit{No incidental exposure}: the simulated IMDS and the
+unauthenticated Redis in CTF6 declare no \texttt{ports:}
+directive and are reachable only by their service name on a
+private bridge network (\texttt{veridian-internal}),
+reproducing the defence-in-depth posture of a real cloud
+VPC.
+
+CTF4 requires a distinct deployment model. Its admin bot is a
+single privileged Playwright session and captured data is
+stored in a shared PostgreSQL instance, so a multi-tenant
+deployment would both trivialise the challenge and leak
+personalisation material between students. The generation
+layer therefore emits per-student directories, each
+containing a \texttt{.env} with unique secrets, a
+\texttt{docker-compose.override.yml} with distinct container
+names and a ten-port offset, and a per-user credentials
+bundle. The override is composed on top of the base Compose
+file at run time, so the same immutable image runs unchanged
+across both the shared-instance model (CTF1--3, 5--7) and
+the per-instance model (CTF4). A module administrator does
+not have to choose between ``build once'' and ``personalise'':
+both properties hold simultaneously.
+
+\subsection{Verification, Validation, and Testing}
 \label{sec:vvt}
 
-\subsection{Development Process and Tools}
-\label{sec:development-process}
+Testing CTF challenges raises a problem conventional software
+testing does not: the ``bug'' the developer is verifying is
+precisely the vulnerability that makes the challenge work.
+Tests must therefore establish two independent properties:
+that application-level contracts hold (authentication, rate
+limiting, authorisation boundaries) \textit{and} that the
+intended exploit still yields the flag. The regime below
+reflects this duality, and its outputs feed the three
+evaluation tracks of Section~\ref{sec:results}.
 
+\subsubsection{Exploit Scripts as Ground Truth}
 
+The distinctive element of the regime is an
+\textit{exploit-as-a-test} harness at \texttt{CTFs/e2e/}.
+For each challenge, a Python script
+(\texttt{ctf\{1..7\}\_exploit.py}) drives the full intended
+attack chain against a running container stack and asserts
+that the running student's personalised flag appears in the
+application's response. For CTF1, the script logs in,
+extracts the base64 cookie, decodes it, modifies
+\texttt{role} to \texttt{admin}, re-encodes, requests
+\texttt{/flag}, and checks that the expected HMAC flag string
+is present in the body. A \texttt{run\_all.sh} harness runs
+every script sequentially and reports pass or fail.
 
-\newpage
-[DELETE LATER]
-\newpage
+The harness supports three methodological claims.
+\textbf{Objective solvability}: pass or fail is independent
+of any human solver's skill or patience, supplying the
+process-based evidence Meinsma et al.~\cite{Meinsma2022}
+identify as missing from logging alone.
+\textbf{Regression baseline}: any subsequent code change that
+breaks the intended path is caught at CI time rather than
+during a student attempt.
+\textbf{Controlled LLM baseline}: a model that fails a
+challenge the script solves has failed on reasoning rather
+than on environmental accessibility, which cleanly separates
+two otherwise-confounded quantities in the LLM evaluation.
+
+\subsubsection{Unit Tests and Post-Design Auditing}
+
+Per-challenge unit tests exercise non-exploit contracts using
+each stack's native framework: Jest with
+Supertest~\cite{JestSupertest} for Node.js (CTF1, CTF7),
+pytest for Flask (CTF5). Representative assertions include
+``unauthenticated requests to \texttt{/flag} return 403,''
+``rate limiting activates after five failed logins,'' ``each
+WAF blocklist entry is enforced,'' and ``the v1 preview
+deprecation banner activates after five invocations.''
+CTF2, CTF3, CTF4, and CTF6 do not ship first-party unit tests;
+their contracts are covered only through the end-to-end
+layer, a limitation discussed in
+Section~\ref{sec:results}.
+
+Because realism motivates features that can themselves become
+unintended vulnerabilities (CTF3's
+\texttt{// TODO: REMOVE BEFORE PRODUCTION} debug endpoint,
+CTF4's shared-database capture store, CTF6's co-located
+internal services), each challenge ships a
+\texttt{workflow.md} cataloguing the risks identified during
+audit, their disposition (``accepted as alternative path,''
+``mitigated,'' ``cannot be fixed without breaking the
+intended path''), and the source file and fix commit. CTF4's
+audit is the most complete example, documenting eleven
+findings tied to specific files and fix status.
+
+\subsubsection{LLM and Human Evaluation Tracks}
+
+Two evaluation tracks supplement the automated regime. First,
+multiple LLMs are prompted with each challenge's public
+surface and asked to produce a working exploit under both
+passive and agentic scaffolding; a model is recorded as
+having solved a challenge only if the transcript culminates
+in a command that, executed against the stack, yields the
+player's personalised flag---a condition the HMAC
+construction of
+equation~(\ref{eq:hmac-flag}) makes impossible to satisfy by
+text generation alone. Second, a small-scale human
+walkthrough with participants of varying skill levels
+captures the process evidence (narrated screen recordings,
+time-per-flag, and intermediate artefacts such as decrypted
+blobs and forged JWTs) that Meinsma et
+al.~\cite{Meinsma2022} identify as absent from solver-count
+logging. Institutional ethics guidance was followed:
+participation was voluntary, data was anonymised at
+collection, and recordings were retained only for the
+duration of analysis. Both tracks' results are presented and
+interpreted in Section~\ref{sec:results}.
+
+\subsubsection{Tooling}
+
+Orchestration uses Docker and Docker
+Compose~\cite{DockerDocs}. Per-stack tooling includes
+npm/pnpm workspaces for Node.js, Composer for Laravel (CTF3),
+Poetry for Flask (CTF5), and Cargo for Rust (CTF6). Jest and
+Supertest~\cite{JestSupertest} underpin Node.js testing;
+pytest with Flask's test client handles CTF5;
+Playwright~\cite{Playwright} drives the headless admin bot in
+CTF4. End-to-end exploit scripts are written in Python 3
+using \texttt{requests} so that markers can read and audit
+them without familiarity with the host language of each
+challenge.

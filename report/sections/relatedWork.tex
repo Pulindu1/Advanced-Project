@@ -1,119 +1,261 @@
 \section{Related Work}
 \label{sec:relatedwork}
 
-\subsection{Introduction to Related Works}
-This section surveys published work across five areas relevant to the
-design and evaluation of the challenge suite: CTF pedagogy and its
-integration into graded coursework, progressive difficulty and
-multi-stage exploit design, web application vulnerability taxonomies
-(particularly OWASP coverage), containerised challenge distribution,
-and the emerging use of LLMs as automated CTF solvers. For each area,
-the review identifies key findings, evaluates methodological
-limitations, and highlights gaps that this project addresses. The
-overarching aim is to establish the academic and practitioner
-foundations for the design decisions described in the Methodology.
+\subsection{Scope of the Review}
+This section surveys published work across five areas that directly
+inform the design and evaluation of the challenge suite: CTF
+pedagogy and its integration into graded coursework; progressive
+difficulty and multi-stage exploit design; web application
+vulnerability taxonomies, with particular attention to OWASP
+coverage; containerised challenge distribution; and the emerging
+use of large language models (LLMs) as automated CTF solvers. For
+each area the review extracts the key findings, evaluates the
+methodological limitations of the cited work, and states the gap
+that this project addresses. The goal is not to exhaustively list
+every prior CTF platform but to foreground the specific prior
+findings that each design decision in
+Section~\ref{sec:methodology} either builds on or deliberately
+departs from.
 
 
 \subsection{CTF Pedagogy and Experiential Learning}
-Capture-the-Flag (CTF) competitions have become widely adopted as a
-useful pedagogical tool in cybersecurity education. Leune and Petrilli \cite{KeesPetrelli} demonstrate that CTF participation significantly enhances technical proficiency, student engagement, and self-confidence. By providing a hands-on environment for skill refinement, where exercises can effectively bridge the gap between theoretical knowledge and real-world cybersecurity practice. This is aligned with Dewey's principle that practical and theoretical instruction must proceed together. However, the study draws primarily on self-reported student attitudes rather than controlled experimental designs, limiting the strength of their causal claims.
+Capture-the-Flag competitions have become widely adopted as a
+pedagogical tool in cybersecurity education. Leune and Petrilli
+\cite{KeesPetrelli} report that CTF participation enhances technical
+proficiency, student engagement, and self-confidence, and argue that
+such exercises bridge the gap between theoretical knowledge and
+real-world practice in line with Dewey's principle that practical
+and theoretical instruction must proceed together~\cite{Dewey1938}.
+The study draws primarily on self-reported student attitudes rather
+than on a controlled experimental design, however, which weakens the
+strength of its causal claims and invites triangulation against
+process-based evidence.
 
-Meinsma et al. \cite{Meinsma2022} provide a measurement framework linking Jeopardy-style challenges to specific knowledge, skill, and attitude objectives using the CTFd platform \cite{CTFd}. Their results challenge the assumption that participation automatically builds competence, finding no clear evidence of measurable learning growth or a consistent correlation between performance and enthusiasm. They concluded that logging data alone cannot reveal how or why learning occurs. For this project, their work underscores the necessity of considering explicit learning objectives within each challenge and capturing process-based evidence of skill development rather than relying solely on flag completion.
+Meinsma et al.~\cite{Meinsma2022} provide a measurement framework
+linking Jeopardy-style challenges to explicit knowledge, skill, and
+attitude objectives using the CTFd platform~\cite{CTFd}. Their
+results pointedly challenge the assumption that participation
+automatically builds competence: they find no consistent evidence of
+measurable learning growth and no reliable correlation between
+performance and self-reported enthusiasm. They conclude that logging
+data alone cannot reveal how or why learning occurs. The implication
+for the present project is that flag capture counts are a necessary
+but insufficient outcome measure, and that challenge design must
+additionally expose process evidence (e.g.\ captured console logs,
+intermediate artefacts produced during exploitation) from which
+skill development can be inferred.
 
-The tension between these positions highlights a gap in empirical evidence for learning gain within graded, web-specific coursework. Vykopal et al. \cite{Vykopal} address this by identifying four risks when integrating CTFs into formal assessments: improper scoring, insufficient scaffolding, plagiarism, and limited analytics. They notably found that the pressure of a graded module can shift student focus from conceptual learning to "flag hunting," where the desire to win eclipses the pedagogical intent. This is directly relevant to the current project, as it underscores the need to prioritize instructional design over competitive dynamics to ensure that solving a challenge requires true understanding rather than just guesswork.
+The tension between these positions highlights a gap in empirical
+evidence for learning gain within graded, web-specific coursework.
+Vykopal et al.~\cite{Vykopal} address the integration question by
+identifying four risks when embedding CTFs into formal assessments:
+improper scoring, insufficient scaffolding, plagiarism, and limited
+analytics. They find that the pressure of a graded module can shift
+student focus from conceptual learning to ``flag hunting,'' where
+the desire to win eclipses the pedagogical intent. This is directly
+relevant to the current project, as it underscores the need to
+prioritise instructional design over competitive dynamics, to ensure
+that solving a challenge requires genuine understanding rather than
+guesswork or shared solutions.
 
-The literature establishes a consensus on the pedagogical potential of CTFs, though empirical validation for graded, web-specific coursework remains limited. Effective challenge design frequently employs a multi-level progression and practitioner-driven maxims—such as realism, fairness, and ensuring that learning is the direct path to the flag such as the ones proposed by \cite{Balaji2025}.
+Effective challenge design frequently combines Csikszentmih\'alyi's
+Flow Theory~\cite{Csikszentmihalyi}, which holds that optimal
+engagement arises when challenge difficulty matches participant
+skill, with practitioner-driven maxims such as realism, fairness,
+and ``learning as the path to the flag''~\cite{Fuzyll2015,Balaji2025}.
+The present project adopts a tiered progression (from basic cookie
+tampering in CTF1 to an SSRF chain pivoting through simulated cloud
+infrastructure in CTF6) to maintain this flow across a heterogeneous
+cohort, and uses the OWASP Top~10~\cite{OWASP2025} as the external
+coverage framework. A dual evaluation combining automated exploit
+scripts and a targeted human walkthrough is used to address the
+process-evidence gap identified by Meinsma et al.
 
-The integration of these principles is best understood through Csíkszentmihályi’s Flow Theory \cite{Csikszentmihalyi}, which suggests that optimal engagement occurs when challenge difficulty precisely matches participant skill. This project adopts a tiered structure (from basic cookie tampering to complex SSRF pivoting) to maintain this "flow," mitigating the frustration of over-taxing novices or the boredom of under-challenging experts.
-
-This project addresses these gaps and aligns with the literature by mapping challenges directly to OWASP \cite{OWASP2025} categories and utilizing a dual-evaluation approach—human participant testing and automated LLM analysis—to rigorously assess difficulty and pedagogical alignment.
 
 
+\subsection{Progressive Difficulty and Multi-Stage Exploits}
+Balaji et al.~\cite{Balaji2025} describe a structured learning path
+in which each flag unlocks the next level, progressing from basic
+to advanced topics. Their sequential-gating model aligns with the
+well-established pedagogical principle of scaffolding: each stage
+requires and thereby certifies competence before the next becomes
+accessible. Their platform, however, spans cryptography, reverse
+engineering, forensics, and web exploitation simultaneously, which
+means that the difficulty gradient operates \textit{across} domains
+rather than \textit{within} a single domain. That is appropriate for
+general CTF training but under-serves a course that wishes to build
+web-specific competence in depth.
 
-\subsection{Designing CTF Challenges: Progressive Difficulty and Multi-Stage Exploits}
-Balaji et al. \cite{Balaji2025} describe a structured learning path in which each flag unlocks the next level, progressing from basic to advanced topics. This sequential gating mechanism ensures that players demonstrate
-competence at each stage before proceeding, which aligns with the
-pedagogical principle of scaffolding. However, their platform spans
-cryptography, reverse engineering, forensics, and web exploitation
-simultaneously, meaning the difficulty gradient operates across domains
-rather than within a single domain. The present project adopts both that approach along with a
-different approach: the difficulty progression is achieved through increasing the complexity of the exploit chain within the same domain. This within-domain
-progression, from a single-step cookie manipulation (CTF1) through to a two-stage JWT forgery (CTF2) allows for more linear scaffolding.
+The present project adopts a hybrid position: the suite as a whole
+uses between-challenge gating similar to Balaji et al., but within
+the Advanced challenges (CTF5 and CTF6) a within-domain progression
+is introduced, where four sequential flags teach discrete
+sub-skills (e.g.\ SSTI information disclosure, then Jinja2 filter
+bypass via hex encoding, then MRO traversal to remote code
+execution). This lets a single scenario carry a complete micro-curriculum
+on a single vulnerability class, rather than asking the student to
+switch domains at every level.
 
-Fuzyll's practitioner maxims \cite{Fuzyll2015} argue that challenges should reward
-understanding over guesswork, and that learning should be the path to
-the flag rather than a coincidental byproduct. This principle motivates
-a deliberate design decision in this project: each challenge embeds
-multiple discovery chains leading to the same exploit, so that players
-who approach the problem from different angles can still reach the
-intended learning outcome. The trade-off is that multiple discovery
-paths increase the risk of unintended solutions, which must be
-mitigated through post-design vulnerability auditing, a process
-documented for each challenge in the project's workflow artefacts A 'safer example' would be in allowing a few edge cases of SQL injection rather than only a singular payload working.
+Fuzyll's practitioner maxims~\cite{Fuzyll2015} argue that challenges
+should reward understanding over guesswork, and that learning
+should be the path to the flag rather than a coincidental by-product.
+This motivates a deliberate design decision in the present project:
+each challenge embeds multiple discovery paths that lead to the
+same exploit (for example, CTF5's Flag~2 key material is signalled
+both through an HTML comment in the CMS editor and through an
+intentional CHANGELOG entry), so that players approaching the
+problem from different angles can still reach the intended learning
+outcome. The trade-off is that multiple discovery paths increase
+the risk of unintended solutions, which must be mitigated through
+post-design vulnerability auditing. This project treats the auditing
+step as a first-class engineering activity, recording its findings
+in per-challenge \texttt{workflow.md} files alongside the source.
 
 
 \subsection{Web Application Vulnerabilities and OWASP Coverage}
 The selection of vulnerability classes for the challenge suite is
-grounded in the OWASP Top 10 \cite{OWASP2025}, the most widely adopted taxonomy of
-web application security risks. OWASP serves as a practical framework
-for both industry practitioners and educators, and several authors have
-used it to structure CTF curricula. Sadat et al. \cite{sadat2024} survey common web
-application vulnerabilities alongside countermeasure strategies,
-confirming that classic flaws such as SQLi, XSS, and broken authentication remain the most prevalent
-targets for defensive training. Nawrocki et al. \cite{nawrocki} provide a
-complementary OWASP-mapped analysis, including an experimental test
-application and developer checklist. Both papers are useful for
-justifying the inclusion of foundational vulnerability classes.
+grounded in the OWASP Top~10~\cite{OWASP2025}, the most widely
+adopted taxonomy of web application security risks. Sadat et al.
+\cite{sadat2024} survey common web application vulnerabilities and
+countermeasures and confirm that classical flaws (SQLi, XSS, broken
+authentication) remain the most prevalent targets for defensive
+training. Nawrocki et al.~\cite{nawrocki} provide a complementary
+OWASP-mapped analysis. Both papers are useful for justifying the
+inclusion of foundational vulnerability classes in CTFs 1--4, but
+neither extends the analysis to emerging classes such as SSTI and
+SSRF, and neither reports measured learning outcomes.
 
-The challenge suite in this project is designed to cover a broad range
-of OWASP Top 10 (2021-2025) categories, including Broken Access
-Control, Cryptographic Failures, Injection, Identification and Authentication Failures, and Server-Side
-Request Forgery. Within the injection category alone, the suite
-encompasses SQL injection with filter bypass, DOM-based XSS, and
-server-side template injection, each implemented in a distinct
-technology stack. This breadth of coverage is deliberately wider than
-existing educational CTF platforms, which Sasiwanit et al. \cite{Sasiwanit} observe
-typically remain limited to classical vulnerabilities such as brute
-force, SQL injection, and XSS, omitting modern exploit classes such as
-SSTI, deserialisation, and prototype pollution.
+The suite designed here covers six of the ten 2021 OWASP categories
+(A01, A02, A03, A05, A07, A10), and represents three fundamentally
+different injection types within A03 alone: SQL injection at the
+database layer, DOM-based XSS at the browser rendering layer, and
+server-side template injection at the application's view layer.
+This breadth is deliberately wider than the platforms surveyed by
+Sasiwanit et al.~\cite{Sasiwanit}, which they observe remain
+limited to brute force, SQL injection, and XSS, omitting SSTI,
+insecure deserialisation, and SSRF despite their real-world prevalence.
 
-Two vulnerability classes warrant particular discussion because they are under-represented in CTF education literature and form key components of the challenge suite.
+Two vulnerability classes warrant particular discussion because they
+are under-represented in CTF education and are central to this
+suite.
 
-Server-Side Template Injection (SSTI) falls under OWASP's Injection category
-and occurs when user input is unsafely embedded into a template engine's rendering pipeline. Unlike SQL injection, which targets the database layer, SSTI targets the application's view layer and can escalate directly to remote code execution (RCE) by traversing the template
-engine's object hierarchy \cite{PortSwiggerSSTI}. Check
-Point Research \cite{CheckPointSSTI2024} reports that as of 2024, an average of one in sixteen organisations faced SSTI attacks weekly, with cloud-based organisations experiencing 30\% more frequent attacks than on-premises environments. Despite this prevalence, SSTI is rarely included in educational CTF platforms. An SSTI challenge in this project such as CTF5 addresses this gap by implementing a Jinja2/Flask environment where players progress from information disclosure through basic template injection to WAF-bypassed RCE, modelling the escalation path that practitioners encounter in real-world engagements.
+Server-Side Template Injection (SSTI) falls under the Injection
+category and occurs when user input is embedded unsafely into a
+template engine's rendering pipeline. Unlike SQL injection, which
+targets the database, SSTI targets the view layer and can escalate
+directly to remote code execution by traversing the template
+engine's object hierarchy~\cite{PortSwiggerSSTI,JinjaMRO}. Check
+Point Research~\cite{CheckPointSSTI2024} reports that as of 2024
+an average of one in sixteen organisations faced SSTI attacks
+weekly, with cloud-hosted organisations experiencing 30\% more
+frequent attacks than on-premises environments. Despite this
+prevalence, SSTI is rarely included in educational CTF platforms.
+CTF5 addresses this gap by implementing a Jinja2/Flask environment
+in which players progress from information disclosure through
+basic template injection to WAF-bypassed RCE via an MRO chain,
+modelling the escalation path that practitioners encounter in
+real-world engagements.
 
-Server-Side Request Forgery (SSRF) was in the 2021 OWASP Top 10 \cite{OWASP2025}, driven by community consensus regarding its high severity in cloud-native architectures despite a relatively low incidence rate of 2.72\%. The 2019 Capital One breach, analysed by Khan et al. \cite{khan2022}, exemplifies the catastrophic potential of this vulnerability. In that instance, an attacker exploited an SSRF flaw to query the AWS Instance Metadata Service (IMDSv1), obtaining role credentials that exposed over 100 million records. Khan et al. highlighted a critical design flaw in IMDSv1: the service implicitly trusted any local process request, a vulnerability AWS subsequently mitigated with the session-based token authentication of IMDSv2. Literature such as Khan et al. show the importance of the inclusion of SSRF vulnerabilities.
+Server-Side Request Forgery (SSRF) entered the 2021 OWASP Top 10
+\cite{OWASP2025} on community consensus about its severity in
+cloud-native architectures, despite a relatively low measured
+incidence rate of 2.72\%. The 2019 Capital One breach, analysed by
+Khan et al.~\cite{khan2022}, exemplifies the catastrophic potential
+of the class: an attacker exploited an SSRF flaw to query the AWS
+Instance Metadata Service (IMDSv1), obtained role credentials, and
+exfiltrated over 100 million records. Khan et al.\ identify a
+critical design flaw in IMDSv1---the service implicitly trusted any
+local process request---which AWS subsequently mitigated with the
+session-token authentication of IMDSv2~\cite{IMDSv2}. CTF6 models
+exactly this scenario, introducing a deliberately-IMDSv1-compatible
+metadata mock and a second pivot into an unauthenticated Redis
+service via the \texttt{dict://} scheme, recreating the
+defence-in-depth failures that enabled the real incident.
+
+Insecure deserialisation is a third under-represented class. It
+sits within A08 (Software and Data Integrity Failures) and is
+exemplified by CVE-2017-5941~\cite{CVE20175941,NodeSerialize},
+wherein the \texttt{node-serialize} library's
+\texttt{unserialize()} routine evaluates serialised function
+bodies, producing arbitrary code execution when a
+\texttt{\_\$\$ND\_FUNC\$\$\_}-tagged immediately-invoked function
+expression (IIFE) is passed in. The class receives less attention
+in educational platforms than SQLi or XSS, yet remains a frequent
+source of RCE in production Node.js applications. CTF7 is built
+directly on this CVE to introduce students to the class.
+
+
+\subsection{Personalised Challenge Environments and Academic Integrity}
+The most substantive prior work on personalising CTF-style labs is
+Chothia and Novakovic's SecGen framework~\cite{chothia2023}, which
+parameterises virtual machines at build time to produce per-student
+environments with different ports, service configurations, and
+vulnerability profiles. SecGen addresses both flag sharing and
+methodology sharing, but it imposes a heavy infrastructural cost:
+each student receives a separate VM image, which must be built,
+distributed, and reset across a cohort. Its randomisation is also
+restricted to the vocabulary of the underlying configuration
+templates, which makes modelling application-layer vulnerabilities
+(SSTI payloads, SQL filter bypasses, SSRF target topology) awkward.
+
+The present project positions itself as a lighter-weight alternative:
+flags are personalised deterministically via HMAC-SHA256 and the
+username is embedded in every flag, so flag sharing becomes
+detectable and attributable without requiring per-student
+environment builds. The deployment salt provides year-over-year
+invalidation of prior write-ups by a single environment-variable
+change. Full environment randomisation of the SecGen kind is
+intentionally not attempted; the trade-off and its implications are
+discussed in Section~\ref{sec:flag-personalisation}.
 
 
 \subsection{Containerisation and Secure Challenge Distribution}
-Modern CTF deployments increasingly look into the use Docker containers rather than full virtual machines, offering advantages in scalability, resource
-efficiency, and isolation. Raj et al. \cite{raj2016} introduced a CTF
-infrastructure using Docker containers, showing that containerisation
-significantly reduces the resource requirements for organisers and
-automates many setup tasks. Because containers share the host OS kernel,
-running many instances is far more efficient than spawning multiple VMs,
-and a single machine can host challenges for many participants
-simultaneously. Sasiwanit et al. \cite{Sasiwanit} validate this approach in their
-CTFd-integrated platform, using Docker for challenge isolation and VPN access control, and demonstrate through Apache JMeter stress testing that the architecture remains responsive under load.
- 
-However, Neither Raj et al. nor Sasiwanit et al. discuss the
-problem of having flag data within the docker images, as their platforms assume a centralised hosting model where students connect to a remote service rather than running containers
-locally.
+Modern CTF deployments increasingly use Docker containers rather
+than full virtual machines for scalability, resource efficiency,
+and isolation. Raj et al.~\cite{raj2016} introduced a Docker-based
+CTF infrastructure, showing that containerisation significantly
+reduces organiser overhead and automates setup. Because containers
+share the host kernel, running many instances is far more efficient
+than spawning VMs, and a single host can support a large cohort.
+Sasiwanit et al.~\cite{Sasiwanit} validate this approach in their
+CTFd-integrated platform and demonstrate through Apache JMeter
+stress testing that the architecture remains responsive under load.
+
+Neither paper addresses the question of flag data residing
+\textit{within} the container image. Both assume a centralised
+hosting model in which students connect to a remote service rather
+than running containers locally. This project targets a different
+deployment model: students may run the Docker Compose stack on
+their own machine, so the image itself must not contain the flag
+material for any particular student. The containerisation strategy
+described in Section~\ref{sec:containerisation} treats flag and
+credential material as runtime configuration mounted from the host,
+not as part of the built image.
+
 
 \subsection{LLM-Based Evaluation of CTF Challenges}
-Ji et al. \cite{ji2025} reported that LLMs possess substantial technical knowledge about
-vulnerability classes but struggle to apply that knowledge to specific
-scenarios and to adapt their strategies based on feedback from the CTF
-environment. With appropriate scaffolding, including retrieval-augmented
-generation and interactive environmental augmentation, their CTFAgent
-framework achieved over 80\% performance improvement on standard CTF
-datasets. This result has a direct implication for this project: the
-difficulty an LLM experiences with a challenge depends heavily on
-whether it is given raw prompts or an agentic framework with tool
-access, and any LLM evaluation methodology must control for this
-variable.
+Ji et al.~\cite{ji2025} report that LLMs possess substantial
+technical knowledge about vulnerability classes but struggle to
+apply that knowledge to specific scenarios and to adapt their
+strategies based on environmental feedback. With appropriate
+scaffolding, including retrieval-augmented generation and
+interactive environmental augmentation, their CTFAgent framework
+achieved over 80\% performance improvement on standard CTF
+datasets. The result carries a direct implication for the present
+work: the difficulty an LLM experiences with any given challenge
+depends heavily on whether it is given a raw natural-language
+prompt or an agentic harness with tool access, so any LLM
+evaluation must control for this variable and report the
+scaffolding used.
+
+Shao et al.'s CyberMetric benchmark~\cite{Shao2024} complements
+this by measuring LLM knowledge of cybersecurity concepts at the
+factual level, independent of exploitation skill. The distinction
+matters for the evaluation in Section~\ref{sec:results}: LLMs that
+score highly on CyberMetric-style knowledge tests can still fail
+on CTF6 because the evaluation requires them to discover
+\texttt{dict://}-based Redis pivoting in a specific simulated
+network, not merely to recall that such pivots exist.
 
 
 \subsection{Summary of Findings}
@@ -121,21 +263,25 @@ The literature establishes broad consensus that CTF exercises are
 pedagogically valuable for cybersecurity education, yet rigorous
 empirical evidence for measurable learning gain remains limited,
 particularly for web-specific challenges embedded within graded
-university coursework rather than stand-alone competitions. Existing
-educational CTF platforms predominantly cover classical vulnerability
-classes such as SQL injection and XSS, with modern exploit categories
-including SSTI and SSRF rarely represented despite their growing
-real-world prevalence and severity. The problem of securely
-distributing containerised challenges while protecting embedded
-sensitive data is a practical concern not addressed by the current
-literature on Docker-based CTF infrastructure. Finally, LLM-based
-evaluation of CTF challenges is a nascent but rapidly developing field;
-early benchmarks demonstrate that LLMs struggle with multi-stage
-exploitation requiring adaptive reasoning, though performance is highly
-dependent on the scaffolding provided. This project addresses these gaps
-by designing a challenge suite with broad OWASP coverage including
-under-taught vulnerability classes, packaging challenges as
-distributable Docker containers, and employing a dual evaluation
-methodology combining human participant testing with systematic
-LLM-based difficulty assessment.
-
+university coursework rather than stand-alone competitions.
+Existing educational CTF platforms predominantly cover classical
+vulnerability classes such as SQL injection and XSS, with modern
+exploit categories including SSTI, SSRF, and insecure
+deserialisation rarely represented despite their growing real-world
+prevalence. The problem of securely distributing containerised
+challenges while preventing the disclosure of embedded flag
+material is a practical concern not addressed in the containerised
+CTF literature. SecGen-style per-student environment randomisation
+provides strong integrity but imposes infrastructural costs that
+are disproportionate for web-only coursework. Finally, LLM-based
+evaluation is a nascent but rapidly developing area; early
+benchmarks show that solver performance is highly dependent on the
+agentic scaffolding provided, which must be controlled for. This
+project addresses these gaps by designing a web-exploitation suite
+with broad OWASP coverage including under-taught vulnerability
+classes, introducing a deterministic-HMAC personalisation layer
+that is lighter than SecGen, packaging each challenge as a
+self-contained Docker Compose stack with flags mounted at runtime,
+and adopting a dual evaluation methodology that combines
+automated exploit replay, a dual-model LLM solvability trial, and
+a structured human walkthrough.

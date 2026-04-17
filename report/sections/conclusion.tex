@@ -1,0 +1,127 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+This dissertation set out to answer how modern web application
+vulnerabilities can be authentically modelled and pedagogically
+structured within Capture-the-Flag environments to enhance
+learning outcomes in cybersecurity education. The answer advanced
+here is a seven-challenge suite that combines broad OWASP
+coverage---including under-represented classes such as server-side
+template injection, server-side request forgery, and insecure
+deserialisation---with a deterministic-HMAC personalisation layer
+that makes flag sharing attributable and makes LLM-generated
+flags structurally invalid, packaged as self-contained Docker
+Compose stacks whose intended exploit paths are verified by an
+objective end-to-end test harness.
+
+\subsection{Main findings}
+
+Three findings stand out from the evaluation.
+
+First, \textit{ground-truth testing of exploitation is feasible and
+cheap}. Writing a Python script that drives each challenge's
+intended exploit chain end-to-end and asserts the presence of the
+per-user flag in the response body produces an objective,
+repeatable measure of solvability that a conventional unit-test
+suite cannot. The scripts serve simultaneously as regression
+tests, as evidence for markers, and as the controlled baseline
+against which the LLM track is interpreted. This pattern
+generalises well beyond the present suite.
+
+Second, \textit{flag-layer personalisation is a surprisingly strong
+integrity posture at a fraction of the cost of full environment
+randomisation}. The Chothia--Novakovic SecGen
+framework~\cite{chothia2023} correctly identifies per-student
+randomisation as the strong answer to academic integrity, but the
+full cost of SecGen-style VM parameterisation is disproportionate
+for a web-specific graded module. Restricting personalisation to
+the flag layer (with username embedded in every flag and a
+per-deployment salt that invalidates write-ups across years) gives
+up the methodology-sharing defence in exchange for a marked
+reduction in operational overhead. For web-exploitation coursework,
+where methodology sharing generally still requires competence to
+act on, this is a pragmatic trade.
+
+Third, \textit{scaffolding design is the main determinant of
+pedagogical accessibility in the Advanced tier}. The LLM and human
+tracks agreed that the distinguishing feature of a successful
+Advanced-tier player was their willingness to engage with the
+breadcrumbing artefacts (CHANGELOG hints, \texttt{/health}
+metadata, WAF source disclosure) rather than to type a canonical
+public payload. This reframes the design question: the question is
+not ``how hard is the vulnerability'' but ``how visible is the
+reasoning path that solves it.''
+
+\subsection{Contributions}
+
+The specific contributions of this dissertation are:
+\begin{itemize}
+    \item a seven-challenge web-exploitation suite covering six
+          of the ten 2021 OWASP categories, with three distinct
+          injection sub-types and three stacks rarely
+          represented in educational CTFs (Flask/Jinja2,
+          Rust/Actix-web, React with queued admin bot);
+    \item a deterministic HMAC-SHA256 flag personalisation
+          scheme with per-deployment and per-flag-slot salt
+          parameterisation, embedded-username attribution, and
+          formal integrity properties at the flag layer;
+    \item a container-native distribution model that keeps
+          student data strictly out of the image layer, making
+          the same image safely reusable across cohorts;
+    \item an \textit{exploit-as-a-test} end-to-end harness that
+          acts as the ground-truth oracle for challenge
+          solvability;
+    \item a dual evaluation methodology combining automated
+          exploit replay with a structured LLM solvability trial
+          and a qualitative human walkthrough; and
+    \item documented design rationale, unintended-vulnerability
+          audits, and development history for each challenge,
+          captured as first-class artefacts in the repository.
+\end{itemize}
+
+\subsection{Further work}
+
+Three strands of further work are worth pursuing.
+
+\textit{Statistical evaluation of learning gain.} The human track
+here is diagnostic rather than confirmatory. A properly powered
+pre-/post-test study, using the normalised-gain
+statistic~\cite{hake1998} over a full cohort of Networks-and-Systems
+students, would provide the measurement that both
+Meinsma et al.~\cite{Meinsma2022} and Vykopal et al.~\cite{Vykopal}
+argue the field is missing. Because the suite ships with its own
+objective solvability baseline, such a study can separate
+``challenge was solvable'' from ``student solved it'' more
+cleanly than prior platforms have permitted.
+
+\textit{Expanded LLM agentic harnesses.} The LLM evaluation here
+uses two scaffolding conditions (passive and agentic). The space
+of agentic harnesses continues to expand~\cite{ji2025} and an
+adversarial-evolution style trial---where each iteration of the
+suite attempts to resist the best-known harness---would give the
+integrity argument a moving-target form that matches the
+real-world threat.
+
+\textit{Broader OWASP coverage and environment-level
+randomisation.} Four OWASP categories (A04, A06, A08, A09) remain
+outside the current suite's coverage, either because they are
+difficult to flag-ify (A04 Insecure Design) or because they
+require infrastructure outside the web layer (A08, A09). Extending
+the personalisation layer toward SecGen-style
+environment randomisation for a subset of challenges would close
+the methodology-sharing gap without replacing the whole scheme.
+
+\subsection{Closing remark}
+
+The contribution of this project is ultimately a concrete
+demonstration that the three commonly-separated goals of CTF
+design---vulnerability realism, pedagogical accessibility, and
+academic integrity---can be pursued jointly in a single web-specific
+coursework context, without either compromising any of them or
+paying the full cost of per-student environment randomisation. The
+suite produced here is, to the author's knowledge, the first
+web-exploitation CTF corpus to combine
+deterministic-HMAC personalisation, container-native distribution,
+and ground-truth exploit-script testing in an evaluated form, and
+it is offered as a reusable baseline for future work in
+cybersecurity education.
