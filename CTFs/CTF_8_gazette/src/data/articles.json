@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "title": "A Note to the Newsroom on the Security Review",
+    "author": "sarah.lin",
+    "status": "published",
+    "category": "editorial",
+    "body": "PressRoom has served us well for three years, but after Marcus's departure we can no longer claim to understand what is running under the bonnet. I have asked an outside auditor to spend a week with the system. If you see a new contributor account appear in the directory that is their starting point. Treat them as staff. Answer their questions. The Gazette has always been a small shop, and small shops survive by being honest about what they do not know."
+  },
+  {
+    "id": 2,
+    "title": "Digital-First, Not Print-Last",
+    "author": "sarah.lin",
+    "status": "published",
+    "category": "editorial",
+    "body": "When the print edition wound down last spring, the worry in the newsroom was that something uniquely local would go with it. Three months into the digital-first model, the opposite has happened. Our postbag is bigger than it has been in a decade. Readers in Gilesgate, in the Market Place, in villages the old distribution van never reached, are writing in. The paper is different. The Gazette is not."
+  },
+  {
+    "id": 3,
+    "title": "DRAFT: The tips that won't stop coming",
+    "author": "sarah.lin",
+    "status": "draft",
+    "category": "investigation",
+    "body": "Another envelope arrived on my desk this morning. No return address. Inside, two paragraphs lifted verbatim from a draft Priya filed to PressRoom last Tuesday, plus a printout of an internal editorial note I wrote in the margin. Someone has access to this system who should not. If Marcus left something behind it needs to be found now, not next quarter.\n\nFor the record, so the auditor has it in writing, the confidential marker for this draft is: {{PLAYER_FLAG1}}. Quote this back when you file your report so we can confirm you read the right draft. I have asked Marcus's replacement to lock down the admin panel at /admin, but I suspect the API endpoints are still wide open. If you are reading this as part of the security audit, please check /admin next.\n\n-- S.L."
+  },
+  {
+    "id": 4,
+    "title": "Morning at the Miners' Gala",
+    "author": "tom.ashworth",
+    "status": "published",
+    "category": "community",
+    "body": "By nine the banners were already streaming down Old Elvet, pit villages meeting in the city the way they have for more than a century. The day is quieter than it used to be, but no less stubborn. A retired fitter from Easington told me the Gala is now the one day a year his grandchildren ask about the pit. That is the work the Gala does. Not nostalgia. Memory."
+  },
+  {
+    "id": 5,
+    "title": "Saddler Street's newest coffee spot opens its doors",
+    "author": "tom.ashworth",
+    "status": "published",
+    "category": "community",
+    "body": "The unit between the bookshop and the framer has been dark for two years. As of this morning it is a cafe called Longform, run by a couple who moved north from Leeds last winter. The fit-out is plain: plywood, long benches, a single-origin chalkboard. The queue at opening stretched past the cathedral gate. Whether it lasts depends on the winter term, but for now Saddler Street has its corner back."
+  },
+  {
+    "id": 6,
+    "title": "River Wear levels rise sharply after weekend rain",
+    "author": "tom.ashworth",
+    "status": "published",
+    "category": "community",
+    "body": "The Environment Agency gauge at Chester-le-Street recorded a twenty-four-hour rise of just under a metre on Sunday, with the Wear peaking shortly before dawn. Elvet Bridge saw the familiar brown swell but no flooding. A flood warning remains in place for the lower Browney. Riverside path users should expect closures near the Viaduct until at least Thursday."
+  },
+  {
+    "id": 7,
+    "title": "Council planning committee waves through Elvet Wharf phase two",
+    "author": "priya.kapoor",
+    "status": "published",
+    "category": "council",
+    "body": "The sub-committee on River Wear development approved phase two of the Elvet Wharf scheme last night by five votes to two, ending a consultation that had drawn over four hundred written objections. Councillor James Holt, who chaired the session, said the scheme would bring investment the city could not turn down. Objectors outside the chamber said the process had moved too quickly and that questions about the lead consultancy, Riverside Associates Ltd, had not been answered."
+  },
+  {
+    "id": 8,
+    "title": "DRAFT: Who are Riverside Associates?",
+    "author": "priya.kapoor",
+    "status": "draft",
+    "category": "investigation",
+    "body": "Riverside Associates Ltd appears on three planning submissions this year. The company was incorporated eighteen months ago. Its registered address is a serviced office near the Viaduct. Two of the three directors also sit on the River Wear development sub-committee that approved the firm's most recent bid. Companies House filings are sparse. Our calls have not been returned. This piece stays in draft until a second source confirms."
+  },
+  {
+    "id": 9,
+    "title": "PressRoom system notes (internal)",
+    "author": "marcus.webb",
+    "status": "published",
+    "category": "internal",
+    "body": "Keeping this short because nobody reads it. PressRoom v3.2 is live. Articles come out of the articles table keyed by integer id; the API route /api/articles/:id returns the row. The admin dashboard at /admin has the usual stats and a maintenance tools block. Network Diagnostics is a quick ping utility for checking if upstream services are reachable. Added a filter after the incident in March. If you need anything else you will need to read the code, because I am not here to explain it. -- M.W."
+  }
+]

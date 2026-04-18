@@ -52,6 +52,7 @@ Per-CTF generators
 | CTF_5_internal_blog | `chgen_ctf5.js` | `ctf5_generator.js` | `durham-cms` | `CTFs/CTF_5_internal_blog/` |
 | CTF_6_veridian | `chgen_ctf6.js` | `ctf6_generator.js` | `durham-vsec` | `CTFs/CTF_6_veridian/` |
 | CTF_7_notes_app | `chgen_ctf7.js` | `ctf7_generator.js` | `durham-ds` | `CTFs/CTF_7_notes_app/` |
+| CTF_8_gazette | `chgen_ctf8.js` | `ctf8_generator.js` | `durham-gzflag1`, `durham-gzflag2`, `durham-gzflag3` | `CTFs/CTF_8_gazette/` |
 
 CTF7 (NorthSide Notes) generates:
 - `src/data/flags.json` (username to flag mapping)
@@ -59,6 +60,15 @@ CTF7 (NorthSide Notes) generates:
 - `src/data/flag-files/<username>.txt` (per-user flag files read by the exploit payload)
 
 Usage: `node chgen_ctf7.js abcd12 efgh34 ijkl56` or `node chgen_ctf7.js --count 10`
+
+CTF8 (Greystone Gazette) generates:
+- `src/data/flags.json` (username to nested `{flag1, flag2, flag3}` object)
+- `src/data/users.json` (players merged alongside seeded Gazette staff: Sarah Lin, Tom Ashworth, Priya Kapoor, Marcus Webb)
+- `src/data/flag-files/flag3-<username>.txt` (per-user flag file containing the flag and the Riverside Associates memo fragment read by the command injection payload)
+
+Three distinct tokens per player are produced by mixing a per-flag sub-salt (`-flag1`, `-flag2`, `-flag3`) into the base HMAC key.
+
+Usage: `node chgen_ctf8.js abcd12 efgh34 ijkl56` or `node chgen_ctf8.js --count 10`
 
 Automation notes
 

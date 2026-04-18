@@ -1,0 +1,47 @@
+{{ define "header" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ if .Title }}{{ .Title }}{{ else }}PressRoom, Greystone Gazette{{ end }}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="masthead">
+      <a class="masthead-title" href="/dashboard">The Greystone Gazette</a>
+      <span class="masthead-tagline">Independent local news for Durham City, since 1987</span>
+    </div>
+    <nav class="site-nav">
+      <span class="nav-system">PressRoom v3.2.1</span>
+      {{ if .User }}
+        <a href="/dashboard">Dashboard</a>
+        <span class="nav-user">Signed in as {{ .User.Username }}</span>
+        <a class="nav-logout" href="/logout">Log out</a>
+      {{ end }}
+    </nav>
+  </header>
+  <main class="site-main">
+{{ end }}
+
+{{ define "footer" }}
+  </main>
+  <footer class="site-footer">
+    <div class="footer-col">
+      <strong>The Greystone Gazette</strong><br>
+      2 Elvet Wynd, Durham City<br>
+      editorial@greystonegazette.example
+    </div>
+    <div class="footer-col">
+      <strong>PressRoom editorial system</strong><br>
+      Build pressroom-3.2.1-maintenance<br>
+      Built in-house, 2022. Under security review, 2026.
+    </div>
+    <div class="footer-col footer-note">
+      "Local stories, written where they happen."
+    </div>
+  </footer>
+</body>
+</html>
+{{ end }}

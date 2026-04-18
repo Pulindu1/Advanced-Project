@@ -1,0 +1,28 @@
+{
+  "id": "ctf8-greystone-gazette",
+  "title": "Greystone Gazette: PressRoom Editorial System",
+  "category": "web",
+  "difficulty": "intermediate",
+  "flags": 3,
+  "flagFormats": [
+    "durham-gzflag1{.*}",
+    "durham-gzflag2{.*}",
+    "durham-gzflag3{.*}"
+  ],
+  "points": 300,
+  "owasp": ["A01:2021", "A03:2021"],
+  "techStack": "Go / Gin / SQLite",
+  "deployment": {
+    "port": 3002,
+    "command": "docker compose up --build",
+    "containers": 1
+  },
+  "description": "A local newspaper's in-house editorial system is leaking unpublished drafts after its sole developer was made redundant. Players audit the PressRoom application, chain an IDOR through a missing server-side authorisation check and land on a blocklisted ping utility with command substitution still reachable.",
+  "learningObjectives": [
+    "Recognise sequential integer IDs as an IDOR risk and enumerate owned resources across user boundaries",
+    "Distinguish client-side access checks from server-side authorisation by comparing browser behaviour with raw API calls",
+    "Understand how OS command injection survives naive blocklists that omit command substitution",
+    "Compose a multi-flag exploit chain where each flag feeds breadcrumbs into the next",
+    "Map vulnerabilities to OWASP A01:2021 and A03:2021"
+  ]
+}

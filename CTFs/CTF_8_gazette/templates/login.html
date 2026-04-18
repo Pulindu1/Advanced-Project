@@ -1,0 +1,50 @@
+{{ template "header" . }}
+<section class="login-shell">
+  <div class="login-card">
+    <h1 class="login-title">PressRoom</h1>
+    <p class="login-sub">Greystone Gazette editorial system. Contributor sign-in.</p>
+
+    <div class="system-notice">
+      <strong>System notice:</strong>
+      Marcus Webb, our sole developer since 2022, left the Gazette six weeks ago.
+      An external security review of PressRoom is currently under way. If you are
+      the auditor, your contributor account has been prepared for you by the
+      editor-in-chief. Regular staff: carry on as normal, but please flag any
+      unusual behaviour to Sarah.
+    </div>
+
+    {{ if eq .ErrorKind "invalid" }}<p class="login-error">That username or password is not recognised.</p>{{ end }}
+    {{ if eq .ErrorKind "disabled" }}<p class="login-error">This account has been disabled. Contact the editor-in-chief.</p>{{ end }}
+    {{ if eq .ErrorKind "missing_fields" }}<p class="login-error">Please enter a username and password.</p>{{ end }}
+    {{ if eq .ErrorKind "session" }}<p class="login-error">PressRoom could not start your session. Please try again.</p>{{ end }}
+
+    <form method="post" action="/login" class="login-form">
+      <label>
+        <span>Username</span>
+        <input type="text" name="username" autocomplete="username" required>
+      </label>
+      <label>
+        <span>Password</span>
+        <input type="password" name="password" autocomplete="current-password" required>
+      </label>
+      <input type="hidden" name="next" value="{{ .Next }}">
+      <button type="submit">Sign in</button>
+    </form>
+
+    <details class="about-pressroom">
+      <summary>About PressRoom</summary>
+      <p>
+        PressRoom is the Greystone Gazette's in-house editorial system. It holds
+        drafts, editorial notes, and publishing records for everything the paper
+        has run since the 2023 digital switch-over. PressRoom was built by Marcus
+        Webb in 2022. It is not connected to the print archive.
+      </p>
+      <p>
+        If you have forgotten your password, email
+        <em>editorial@greystonegazette.example</em> and Sarah will reset it by
+        hand. There is no automated recovery route.
+      </p>
+    </details>
+  </div>
+</section>
+{{ template "footer" . }}

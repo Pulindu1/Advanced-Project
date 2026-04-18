@@ -1,0 +1,12 @@
+.git
+.gitignore
+README.md
+SOLUTIONS.md
+STORY.md
+workflow.md
+test/
+*.db
+*.sqlite
+*.sqlite3
+tmp/
+.DS_Store

@@ -1,0 +1,51 @@
+{
+  "sarah.lin": {
+    "password": "SYSTEM_INTERNAL",
+    "display_name": "Sarah Lin",
+    "role": "admin",
+    "active": true,
+    "description": "Editor-in-chief. PressRoom administrator."
+  },
+  "tom.ashworth": {
+    "password": "SYSTEM_INTERNAL",
+    "display_name": "Tom Ashworth",
+    "role": "reporter",
+    "active": true,
+    "description": "Reporter covering community and local news."
+  },
+  "priya.kapoor": {
+    "password": "SYSTEM_INTERNAL",
+    "display_name": "Priya Kapoor",
+    "role": "reporter",
+    "active": true,
+    "description": "Reporter covering council affairs and planning."
+  },
+  "marcus.webb": {
+    "password": "SYSTEM_INTERNAL",
+    "display_name": "Marcus Webb",
+    "role": "sysadmin",
+    "active": false,
+    "description": "Former sole developer and sysadmin. Account disabled after redundancy."
+  },
+  "abcd12": {
+    "password": "0f7241b22b",
+    "display_name": "abcd12",
+    "role": "contributor",
+    "active": true,
+    "description": "Contributor (player) account seeded by the security audit."
+  },
+  "efgh34": {
+    "password": "464c6e1af1f2",
+    "display_name": "efgh34",
+    "role": "contributor",
+    "active": true,
+    "description": "Contributor (player) account seeded by the security audit."
+  },
+  "ijkl56": {
+    "password": "85296937077",
+    "display_name": "ijkl56",
+    "role": "contributor",
+    "active": true,
+    "description": "Contributor (player) account seeded by the security audit."
+  }
+}

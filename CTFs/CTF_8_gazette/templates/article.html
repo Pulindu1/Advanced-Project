@@ -1,0 +1,22 @@
+{{ template "header" . }}
+<article class="article-view">
+  <div class="article-topbar">
+    <a class="back-link" href="/dashboard">Back to dashboard</a>
+    <span class="article-id-tag">PressRoom article #{{ .Article.ID }}</span>
+  </div>
+  <h1 class="article-headline">{{ .Article.Title }}</h1>
+  <p class="article-byline">
+    By {{ .Article.AuthorName }}
+    {{ if .Article.Category }} &middot; {{ .Article.Category }}{{ end }}
+    &middot; <span class="pill pill-{{ .Article.Status }}">{{ .Article.Status }}</span>
+    &middot; filed {{ .Article.CreatedAt }}
+  </p>
+  <div class="article-body">
+    {{ range paragraphs .Article.Body }}<p>{{ . }}</p>{{ end }}
+  </div>
+  <div class="article-footnote">
+    Article rendered from the PressRoom archive. If you believe you should not have
+    access to this piece, flag it to the editor-in-chief.
+  </div>
+</article>
+{{ template "footer" . }}

@@ -10,6 +10,15 @@ files changed (optional)
 
 
 
+### CTF8 Greystone Gazette - 18/04/26 - CTF8
+- NOTE: majority of the new CTF built. Some more work needed and some testing too.
+- New intermediate-tier CTF covering OWASP 2021 A01 and A03.
+- Three flags per user, chained: IDOR on /api/articles/:id, missing server-side auth on /api/admin/dashboard, command injection bypass via $(...) on /api/admin/health.
+- Flag format: durham-gzflag{1,2,3}{<token>_<username>}.
+- Tech stack: Go 1.21, Gin, modernc.org/sqlite, cookie sessions, html/template. Port 3002.
+- Includes challenge generator (chgen_ctf8.js, ctf8_generator.js), Docker multi-stage build with iputils, and integration tests covering the full three-flag chain.
+- Verified end-to-end in Docker: all three flags recovered, blocklist + unauth controls return expected errors.
+
 ### Finalise and make explooit path more intuitive - 16/04/26 - CTF7
 - Made the exploit path a little more intuitive.
 - Basically donw with the CTF, may need some minor fixes later.

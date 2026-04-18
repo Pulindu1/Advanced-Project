@@ -1,0 +1,12 @@
+services:
+  pressroom:
+    build: .
+    container_name: ctf8-greystone-gazette
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./src/data/flags.json:/app/src/data/flags.json:ro
+      - ./src/data/users.json:/app/src/data/users.json:ro
+      - ./src/data/articles.json:/app/src/data/articles.json:ro
+      - ./src/data/flag-files:/app/src/data/flag-files:ro
+    restart: unless-stopped
