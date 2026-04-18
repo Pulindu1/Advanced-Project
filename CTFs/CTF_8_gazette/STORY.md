@@ -42,15 +42,21 @@ Player contributor accounts (`abcd12`, `efgh34`, `ijkl56`) are described in-stor
 - Heading: "PressRoom"
 - Subtitle: "Greystone Gazette Editorial System"
 - System notice referencing Marcus Webb's departure and the ongoing security review
+- Dev handover notice pointing at "archive APIs in an intermediate migration state" with "ownership enforcement landed on the frontend only" -- class-level breadcrumb for Flag 1, deliberately vague about endpoints
 - About PressRoom expandable block (version, tech stack flavour)
 
 ### Dashboard (`templates/dashboard.html`)
 
 - Greeting with the logged-in user's display name
-- "Your Drafts" / "Recent Articles" headings
+- "Your articles" panel listing the signed-in user's own articles (always non-empty because each player is seeded with an onboarding draft at id >= 10)
+- Narrative "PressRoom tips" panel -- no exploit hints, just flavour about the Elvet Wynd office and the editorial channel
 - Newsroom sidebar with four fictional Durham-flavoured headlines
-- TODO comment in HTML source: `<!-- TODO: enforce per-user article filtering in API -->`
-- Copy line hinting that "articles 7 to 10 are yours" (breadcrumb for Flag 1)
+
+### Archive Page (`templates/archive.html`)
+
+- `/archive` route, available to every signed-in user via the top nav
+- Lists articles where `status = 'published'` OR `author_id = current user`. Foreign drafts are excluded server-side, so article 3 (Sarah's Flag 1 carrier) is absent and the ID gaps (`#3`, `#8`, and other players' onboarding IDs) become the player's discovery surface.
+- Columns: #id, Title (link), Byline, Desk, Status pill
 
 ### Article Page (`templates/article.html`)
 
@@ -72,6 +78,10 @@ Player contributor accounts (`abcd12`, `efgh34`, `ijkl56`) are described in-stor
 ### Flag 3 Memo (`src/data/flag-files/memo.txt`)
 
 Stand-alone narrative file containing the Riverside Associates / Elvet Wharf / Councillor J. Holt corruption summary. Not part of the exploit path -- it exists so the `flag-files/` directory reads like a realistic editorial drop folder if the player enumerates it.
+
+### Contributor Onboarding Articles (`src/data/contributor-articles.json`)
+
+Emitted by `chgen_ctf8.js` -- one article per player at IDs starting at 10, authored by the player, status `draft`, category `onboarding`. Body is narrative filler only (no exploit hints). Ensures the dashboard "Your articles" panel is never empty on first login, and gives the player a concrete example of the `/articles/<id>` <-> `/api/articles/<id>` parallel.
 
 ### Articles Data (`src/data/articles.json`)
 
@@ -117,7 +127,7 @@ These files hold only logic. Do not edit them when retheming:
 ## How to Retheme
 
 1. Edit `templates/*.html` to change visible copy.
-2. Edit `src/data/articles.json` -- keep article 3 as the flag-1 carrier (must include the literal token `{{PLAYER_FLAG1}}`) and keep article 9 referencing the admin panel and ping endpoint.
+2. Edit `src/data/articles.json` -- keep article 3 as the flag-1 carrier (must include the literal token `{{PLAYER_FLAG1}}`) and keep article 9 referencing the admin panel and ping endpoint. Do not change the ID space `1..9` used for staff articles; contributor onboarding articles start at `10` (see `src/data/contributor-articles.json`, generator output).
 3. Edit `src/data/flag-files/memo.txt` to change the investigation flavour text.
 4. Edit `static/css/style.css` for colours and typography. The purple `#68246d` is a Durham University convention; any replacement that keeps contrast above WCAG AA works.
 5. Update this file (`STORY.md`) to reflect the new strings.

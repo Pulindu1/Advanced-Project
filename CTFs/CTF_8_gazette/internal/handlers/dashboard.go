@@ -39,12 +39,9 @@ func (d *DashboardDeps) Index(c *gin.Context) {
 		return
 	}
 
-	minID, maxID := ownershipIDRange(articles)
 	c.HTML(http.StatusOK, "dashboard.html", gin.H{
 		"User":      user,
 		"Articles":  articles,
-		"MinID":     minID,
-		"MaxID":     maxID,
 		"ErrorKind": errorKind,
 	})
 }
@@ -80,18 +77,3 @@ func scanArticles(rows *sql.Rows) ([]models.Article, error) {
 	return out, rows.Err()
 }
 
-func ownershipIDRange(articles []models.Article) (int64, int64) {
-	if len(articles) == 0 {
-		return 0, 0
-	}
-	minID, maxID := articles[0].ID, articles[0].ID
-	for _, a := range articles[1:] {
-		if a.ID < minID {
-			minID = a.ID
-		}
-		if a.ID > maxID {
-			maxID = a.ID
-		}
-	}
-	return minID, maxID
-}

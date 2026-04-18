@@ -17,6 +17,8 @@
       <span class="nav-system">PressRoom v3.2.1</span>
       {{ if .User }}
         <a href="/dashboard">Dashboard</a>
+        <a href="/archive">Archive</a>
+        <a href="/admin">Admin</a>
         <span class="nav-user">Signed in as {{ .User.Username }}</span>
         <a class="nav-logout" href="/logout">Log out</a>
       {{ end }}

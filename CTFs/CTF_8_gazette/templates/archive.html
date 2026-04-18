@@ -1,0 +1,39 @@
+{{ template "header" . }}
+<section class="archive">
+  <h1 class="page-title">Newsroom archive</h1>
+  <p class="page-lede">
+    Every piece the Gazette has published, plus your own drafts and filings.
+    Articles still under editorial review or filed as drafts by other staff
+    are not listed here.
+  </p>
+
+  {{ if .Articles }}
+    <table class="archive-table">
+      <thead>
+        <tr>
+          <th class="archive-id">#</th>
+          <th class="archive-title">Title</th>
+          <th class="archive-author">Byline</th>
+          <th class="archive-category">Desk</th>
+          <th class="archive-status">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .Articles }}
+          <tr>
+            <td class="archive-id">#{{ .ID }}</td>
+            <td class="archive-title">
+              <a href="/articles/{{ .ID }}">{{ .Title }}</a>
+            </td>
+            <td class="archive-author">{{ .AuthorName }}</td>
+            <td class="archive-category">{{ if .Category }}{{ .Category }}{{ else }}&mdash;{{ end }}</td>
+            <td class="archive-status"><span class="pill pill-{{ .Status }}">{{ .Status }}</span></td>
+          </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  {{ else }}
+    <p class="panel-empty">The archive is currently empty.</p>
+  {{ end }}
+</section>
+{{ template "footer" . }}

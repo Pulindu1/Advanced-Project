@@ -1,0 +1,26 @@
+[
+  {
+    "id": 10,
+    "title": "Welcome to PressRoom -- file your first piece",
+    "author": "abcd12",
+    "status": "draft",
+    "category": "onboarding",
+    "body": "Welcome, abcd12. Sarah has asked the editorial desk to seed a placeholder draft under every new contributor's byline so that the dashboard is never empty on first login.\n\nUse this slot to write your first piece for the Gazette. Stories that stay close to the street tend to work best. Community diary items, planning meeting notes, and short interviews with people who live in the neighbourhood are all welcome.\n\nReplace this text when you are ready. If the draft system behaves unexpectedly -- articles appearing in the wrong bylines, drafts you did not file showing up in your list -- flag it in the audit report rather than editing round it."
+  },
+  {
+    "id": 11,
+    "title": "Welcome to PressRoom -- file your first piece",
+    "author": "efgh34",
+    "status": "draft",
+    "category": "onboarding",
+    "body": "Welcome, efgh34. Sarah has asked the editorial desk to seed a placeholder draft under every new contributor's byline so that the dashboard is never empty on first login.\n\nUse this slot to write your first piece for the Gazette. Stories that stay close to the street tend to work best. Community diary items, planning meeting notes, and short interviews with people who live in the neighbourhood are all welcome.\n\nReplace this text when you are ready. If the draft system behaves unexpectedly -- articles appearing in the wrong bylines, drafts you did not file showing up in your list -- flag it in the audit report rather than editing round it."
+  },
+  {
+    "id": 12,
+    "title": "Welcome to PressRoom -- file your first piece",
+    "author": "ijkl56",
+    "status": "draft",
+    "category": "onboarding",
+    "body": "Welcome, ijkl56. Sarah has asked the editorial desk to seed a placeholder draft under every new contributor's byline so that the dashboard is never empty on first login.\n\nUse this slot to write your first piece for the Gazette. Stories that stay close to the street tend to work best. Community diary items, planning meeting notes, and short interviews with people who live in the neighbourhood are all welcome.\n\nReplace this text when you are ready. If the draft system behaves unexpectedly -- articles appearing in the wrong bylines, drafts you did not file showing up in your list -- flag it in the audit report rather than editing round it."
+  }
+]

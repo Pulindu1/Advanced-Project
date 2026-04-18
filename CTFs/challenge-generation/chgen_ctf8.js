@@ -27,7 +27,13 @@ const CTF_DIR = path.resolve(__dirname, '..', 'CTF_8_gazette');
 const DATA_DIR = path.join(CTF_DIR, 'src', 'data');
 const FLAGS_OUTPUT = path.join(DATA_DIR, 'flags.json');
 const USERS_OUTPUT = path.join(DATA_DIR, 'users.json');
+const CONTRIB_ARTICLES_OUTPUT = path.join(DATA_DIR, 'contributor-articles.json');
 const FLAG_FILES_DIR = path.join(DATA_DIR, 'flag-files');
+
+// Contributor articles start at this ID to stay clear of the hand-authored
+// staff articles in articles.json (IDs 1..9). Each player gets exactly one
+// onboarding draft so the dashboard is not empty on first login.
+const CONTRIB_ARTICLE_BASE_ID = 10;
 
 const USERNAME_PATTERN = /^[a-z]{4}[0-9]{2}$/;
 const FLAG1_PREFIX = 'durham-gzflag1';
@@ -175,6 +181,29 @@ function main() {
   }
   fs.writeFileSync(USERS_OUTPUT, JSON.stringify(users, null, 2) + '\n');
   console.log(`Wrote users to ${USERS_OUTPUT}`);
+
+  // Emit one onboarding article per player. IDs start at CONTRIB_ARTICLE_BASE_ID
+  // and increment in the order usernames were provided, so the dashboard shows
+  // a sensible "first piece" for a newly-logged-in contributor. The bodies
+  // intentionally carry no exploit hints -- they are plain onboarding copy so
+  // the player learns the /articles/<id> URL pattern by clicking their own
+  // piece without any Flag 1 breadcrumb leaking through.
+  const contributorArticles = usernames.map((username, index) => ({
+    id: CONTRIB_ARTICLE_BASE_ID + index,
+    title: 'Welcome to PressRoom -- file your first piece',
+    author: username,
+    status: 'draft',
+    category: 'onboarding',
+    body: [
+      `Welcome, ${username}. Sarah has asked the editorial desk to seed a placeholder draft under every new contributor's byline so that the dashboard is never empty on first login.`,
+      '',
+      'Use this slot to write your first piece for the Gazette. Stories that stay close to the street tend to work best. Community diary items, planning meeting notes, and short interviews with people who live in the neighbourhood are all welcome.',
+      '',
+      'Replace this text when you are ready. If the draft system behaves unexpectedly -- articles appearing in the wrong bylines, drafts you did not file showing up in your list -- flag it in the audit report rather than editing round it.',
+    ].join('\n'),
+  }));
+  fs.writeFileSync(CONTRIB_ARTICLES_OUTPUT, JSON.stringify(contributorArticles, null, 2) + '\n');
+  console.log(`Wrote contributor articles to ${CONTRIB_ARTICLES_OUTPUT}`);
 
   for (const username of usernames) {
     // The flag file must contain only the flag token. When the intended

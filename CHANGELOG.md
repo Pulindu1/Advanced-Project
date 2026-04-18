@@ -10,6 +10,11 @@ files changed (optional)
 
 
 
+
+### Added Archive section - 18/04/26 - CTF8
+- UI was bland and lacked interactivity. We therefore added an Archive section.
+- Flag 1 was handed too easily so made it slightly harder. There's now multiple ways to reach it too.
+
 ### CTF8 Greystone Gazette - 18/04/26 - CTF8
 - NOTE: majority of the new CTF built. Some more work needed and some testing too.
 - New intermediate-tier CTF covering OWASP 2021 A01 and A03.

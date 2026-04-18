@@ -101,6 +101,7 @@ func newTestServer(t *testing.T) (*gin.Engine, string) {
 	limiter := middleware.NewLoginRateLimiter()
 	authDeps := &handlers.AuthDeps{DB: db, RateLimiter: limiter}
 	articleDeps := &handlers.ArticleDeps{DB: db, Flags: flags}
+	archiveDeps := &handlers.ArchiveDeps{DB: db}
 	adminDeps := &handlers.AdminDeps{DB: db, Flags: flags}
 
 	r.POST("/login", limiter.Middleware(), authDeps.LoginSubmit)
@@ -109,6 +110,7 @@ func newTestServer(t *testing.T) (*gin.Engine, string) {
 	{
 		api.GET("/me", authDeps.Me)
 		api.GET("/articles/:id", articleDeps.APIGetArticle)
+		api.GET("/archive", archiveDeps.APIArchive)
 		api.GET("/admin/dashboard", adminDeps.APIDashboard)
 		api.POST("/admin/health", adminDeps.APIHealth)
 	}
@@ -182,7 +184,7 @@ func TestUnauthenticatedArticleReturns401(t *testing.T) {
 
 func TestAuthenticatedOwnArticleReturns200(t *testing.T) {
 	r, _ := newTestServer(t)
-	cookie := loginAs(t, r, "abcd12", "e196163226")
+	cookie := loginAs(t, r, "abcd12", "c2e2a5078")
 	// Article 3 is Sarah's draft. First find one owned by abcd12. None are
 	// seeded, so the IDOR test below covers foreign access; here we just
 	// verify that the own-articles listing endpoint responds.
@@ -197,7 +199,7 @@ func TestIDORForeignArticleReturns200(t *testing.T) {
 	// Sarah Lin's article (authored by a different user) without any
 	// ownership check.
 	r, _ := newTestServer(t)
-	cookie := loginAs(t, r, "abcd12", "e196163226")
+	cookie := loginAs(t, r, "abcd12", "c2e2a5078")
 	w := getWithCookie(t, r, "/api/articles/3", cookie)
 	if w.Code != http.StatusOK {
 		t.Fatalf("IDOR should return 200, got %d", w.Code)
@@ -215,7 +217,7 @@ func TestAdminDashboardNoServerSideAuth(t *testing.T) {
 	// Confirms Flag 2 vulnerability: contributor (non-admin) can hit the
 	// admin API directly.
 	r, _ := newTestServer(t)
-	cookie := loginAs(t, r, "abcd12", "e196163226")
+	cookie := loginAs(t, r, "abcd12", "c2e2a5078")
 	w := getWithCookie(t, r, "/api/admin/dashboard", cookie)
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200 (missing server-side auth), got %d", w.Code)
@@ -233,7 +235,7 @@ func TestHealthLocalhostPingOrBlocked(t *testing.T) {
 	// The runner may or may not be permitted to send ICMP echo. We only
 	// assert that the endpoint returns a 200 with structured output.
 	r, _ := newTestServer(t)
-	cookie := loginAs(t, r, "abcd12", "e196163226")
+	cookie := loginAs(t, r, "abcd12", "c2e2a5078")
 	w := postJSONWithCookie(t, r, "/api/admin/health", map[string]string{"host": "127.0.0.1"}, cookie)
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
@@ -245,7 +247,7 @@ func TestHealthLocalhostPingOrBlocked(t *testing.T) {
 
 func TestHealthBlocklistRejectsSemicolon(t *testing.T) {
 	r, _ := newTestServer(t)
-	cookie := loginAs(t, r, "abcd12", "e196163226")
+	cookie := loginAs(t, r, "abcd12", "c2e2a5078")
 	w := postJSONWithCookie(t, r, "/api/admin/health", map[string]string{"host": "127.0.0.1;ls"}, cookie)
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
@@ -259,7 +261,7 @@ func TestHealthCommandSubstitutionBypass(t *testing.T) {
 	// Confirms Flag 3 vulnerability: command substitution is not blocked.
 	// We use $(echo foo) which must appear in the ping command's output.
 	r, flagsDir := newTestServer(t)
-	cookie := loginAs(t, r, "abcd12", "e196163226")
+	cookie := loginAs(t, r, "abcd12", "c2e2a5078")
 
 	// Ensure the per-user flag file exists at the expected runtime path
 	// so that $(cat ...) returns content even in CI where ping may fail.
@@ -277,12 +279,37 @@ func TestHealthCommandSubstitutionBypass(t *testing.T) {
 	}
 }
 
+func TestArchiveExcludesForeignDrafts(t *testing.T) {
+	// The archive listing must show published articles and the caller's own
+	// articles, but hide drafts belonging to other users. Article 3 is
+	// Sarah's draft (the Flag 1 target), so it must not appear.
+	r, _ := newTestServer(t)
+	cookie := loginAs(t, r, "abcd12", "c2e2a5078")
+	w := getWithCookie(t, r, "/api/archive", cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var articles []map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &articles); err != nil {
+		t.Fatalf("decode archive: %v", err)
+	}
+	for _, a := range articles {
+		idNum, ok := a["id"].(float64)
+		if !ok {
+			t.Fatalf("archive row missing numeric id: %+v", a)
+		}
+		if int64(idNum) == 3 {
+			t.Fatalf("archive must not include article 3 (foreign draft): %+v", a)
+		}
+	}
+}
+
 func TestHealthFlag3Exfiltration(t *testing.T) {
 	// Full Flag 3 exploit chain: issue $(cat .../flag3-<user>.txt) and
 	// verify the flag shows up in the ping output (typically as part of
 	// the "Name or service not known" error).
 	r, flagsDir := newTestServer(t)
-	cookie := loginAs(t, r, "abcd12", "e196163226")
+	cookie := loginAs(t, r, "abcd12", "c2e2a5078")
 
 	flagPath := filepath.Join(flagsDir, "flag3-abcd12.txt")
 	payload := map[string]string{"host": "$(cat " + flagPath + ")"}

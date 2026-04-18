@@ -27,12 +27,16 @@ type articleSeed struct {
 	Body     string `json:"body"`
 }
 
-// Seed loads users.json and articles.json from dataDir and upserts them into
-// the database. Existing rows with the same username or id are overwritten so
-// that the seed is idempotent across container restarts.
+// Seed loads users.json, articles.json, and (optionally) contributor-articles.json
+// from dataDir and upserts them into the database. Existing rows with the same
+// username or id are overwritten so that the seed is idempotent across restarts.
+// contributor-articles.json is emitted by chgen_ctf8.js and carries one
+// onboarding draft per player; if the file is missing the seed still succeeds
+// (useful for tests that run without the generator step).
 func Seed(db *sql.DB, dataDir string) error {
 	usersPath := fmt.Sprintf("%s/users.json", dataDir)
 	articlesPath := fmt.Sprintf("%s/articles.json", dataDir)
+	contribPath := fmt.Sprintf("%s/contributor-articles.json", dataDir)
 
 	userMap, err := loadUsers(usersPath)
 	if err != nil {
@@ -42,6 +46,10 @@ func Seed(db *sql.DB, dataDir string) error {
 	if err != nil {
 		return fmt.Errorf("load articles: %w", err)
 	}
+	contribArticles, err := loadArticlesOptional(contribPath)
+	if err != nil {
+		return fmt.Errorf("load contributor articles: %w", err)
+	}
 
 	if err := seedUsers(db, userMap); err != nil {
 		return err
@@ -49,7 +57,11 @@ func Seed(db *sql.DB, dataDir string) error {
 	if err := seedArticles(db, articles); err != nil {
 		return err
 	}
-	log.Printf("seed: loaded %d users and %d articles", len(userMap), len(articles))
+	if err := seedArticles(db, contribArticles); err != nil {
+		return err
+	}
+	log.Printf("seed: loaded %d users, %d staff articles, %d contributor articles",
+		len(userMap), len(articles), len(contribArticles))
 	return nil
 }
 
@@ -68,6 +80,21 @@ func loadUsers(path string) (map[string]userSeed, error) {
 func loadArticles(path string) ([]articleSeed, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
+		return nil, err
+	}
+	var out []articleSeed
+	if err := json.Unmarshal(raw, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func loadArticlesOptional(path string) ([]articleSeed, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	var out []articleSeed

