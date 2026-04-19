@@ -12,6 +12,11 @@ files changed (optional)
 
 
 
+
+### Phase 2 done and updated methodology  - 19/04/26 - CTF9
+- Flag implementation done.
+- Methodology updated to include CTFs 8 and 9.
+
 ### Phase 2: Flag implementations and narrative - 19/04/26 - CTF9
 - completed the main implementations of the CTF including the flag. Testing is needed now.
 
