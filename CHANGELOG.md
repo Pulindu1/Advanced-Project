@@ -11,6 +11,10 @@ files changed (optional)
 
 
 
+
+### Phase 1: Built Skeleton - 19/04/26 - CTF9
+- Built the skeleton for CTF9. The planning is all done too.
+
 ### Added Archive section - 18/04/26 - CTF8
 - UI was bland and lacked interactivity. We therefore added an Archive section.
 - Flag 1 was handed too easily so made it slightly harder. There's now multiple ways to reach it too.

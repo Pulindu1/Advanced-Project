@@ -1,0 +1,58 @@
+{
+  "helen.cross": {
+    "password": "SYSTEM_INTERNAL",
+    "display_name": "Dr. Helen Cross",
+    "role": "research_lead",
+    "active": true,
+    "description": "Managing Director of Dunholm Research. Signs off on board-level decisions."
+  },
+  "amir.patel": {
+    "password": "DunholmCTO2024!",
+    "display_name": "Amir Patel",
+    "role": "cto_admin",
+    "active": true,
+    "description": "Chief Technology Officer. Full admin on TrialVault."
+  },
+  "rachel.osei": {
+    "password": "SYSTEM_INTERNAL",
+    "display_name": "Rachel Osei",
+    "role": "security_lead",
+    "active": true,
+    "description": "Security Lead. Owns the security memos referenced in admin."
+  },
+  "james.whitfield": {
+    "password": "SYSTEM_INTERNAL",
+    "display_name": "Dr. James Whitfield",
+    "role": "clinical_lead",
+    "active": true,
+    "description": "Clinical Lead. Lead investigator on the Phase 2 trials."
+  },
+  "sophie.chen": {
+    "password": "SYSTEM_INTERNAL",
+    "display_name": "Sophie Chen",
+    "role": "trial_coordinator",
+    "active": true,
+    "description": "Trial Coordinator. Author of the Phase 2 cohort welcome note."
+  },
+  "abcd12": {
+    "password": "60dbeb154d5",
+    "display_name": "abcd12",
+    "role": "researcher",
+    "active": true,
+    "description": "Player account (external reviewer) seeded for the audit."
+  },
+  "efgh34": {
+    "password": "aad9540ad88",
+    "display_name": "efgh34",
+    "role": "researcher",
+    "active": true,
+    "description": "Player account (external reviewer) seeded for the audit."
+  },
+  "ijkl56": {
+    "password": "056be56a76",
+    "display_name": "ijkl56",
+    "role": "researcher",
+    "active": true,
+    "description": "Player account (external reviewer) seeded for the audit."
+  }
+}

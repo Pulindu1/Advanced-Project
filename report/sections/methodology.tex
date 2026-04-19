@@ -3,7 +3,7 @@
 
 This section describes how the gaps identified in
 Section~\ref{sec:relatedwork} are translated into a concrete
-artefact: a seven-challenge web-exploitation suite with a
+artefact: a challenge web-exploitation suite with a
 shared personalisation layer, reproducible containerisation,
 and an end-to-end testing regime whose outputs form the
 evidence base for Section~\ref{sec:results}.
@@ -14,41 +14,46 @@ evidence base for Section~\ref{sec:results}.
 Five principles were established at the outset and applied
 uniformly across the suite. \textit{Realism over
 artificiality}: every challenge is scenario-wrapped as an
-application a student could plausibly encounter (a module
-portal, a password manager, an HR system), so that
+application a student could plausibly encounter (a password manager, an HR system, etc...), so that
 exploitation exercises the path to the flag rather than a
 synthetic puzzle~\cite{Fuzyll2015,Vykopal}.
 \textit{Within-domain scaffolding}: stages inside a challenge
 gate each other through in-application breadcrumbs
 (\texttt{CHANGELOG} entries, \texttt{/health} metadata, the
 visible source of a WAF) rather than through external hints,
-maintaining challenge--skill balance across the cohort's
+maintaining challenge and skill balance across the cohort's
 skill distribution~\cite{Csikszentmihalyi,Balaji2025}.
 \textit{Broad OWASP coverage}: the suite deliberately includes
-modern classes---SSTI, SSRF, and insecure deserialisation---that
+modern classes (such as SSTI, SSRF, and insecure deserialisation) that
 Sasiwanit et al.~\cite{Sasiwanit} identify as under-represented
 in existing platforms. \textit{Per-user integrity}: flags are
 derived deterministically from a per-deployment secret salt
 and embed the recipient's username, making sharing both
 attributable and invariant across cohorts
 (Section~\ref{sec:flag-personalisation}). \textit{Stack
-diversity}: no two challenges share the same primary
-technology stack, forcing the player to adapt to different
+diversity}: challenges vary by primary
+technology stack (with a preference for more common modern tech stack and frameworks), forcing the player to adapt to different
 framework idioms rather than pattern-matching a single stack.
 
 \subsection{Suite Architecture}
 \label{sec:challenge-architecture}
 
-Table~\ref{tab:suite-summary} summarises the seven challenges
-and their OWASP coverage. Reading the table top to bottom
-traces the intended learning path: a student begins with a
-single-step cookie manipulation in Node.js and concludes with
-a four-stage SSRF chain traversing simulated cloud
-infrastructure in a Rust service. Six of the ten 2021 OWASP
-categories are represented, and the injection category (A03)
-is further decomposed into SQL injection (CTF3), DOM-based XSS
-(CTF4), and server-side template injection (CTF5). The four
-omitted categories either resist flag-ification (A04 Insecure
+Table~\ref{tab:suite-summary} summarises the challenges
+and their OWASP coverage. The suite is designed in a
+jeopardy format: challenges are independent of one another
+and can be attempted in any order, with each challenge
+carrying a point value proportional to its flag count and
+difficulty tier. A student might begin with a single-step
+cookie manipulation in CTF1 and later attempt a four-stage
+SSRF chain in CTF6, or tackle them in reverse; the
+progressive difficulty described in
+Section~\ref{sec:design-philosophy} provides a recommended
+trajectory but does not impose a mandatory sequence.
+Collectively, six of the ten 2021 OWASP categories are
+represented, and the injection category (A03) is further
+decomposed into SQL injection (CTF3), DOM-based XSS (CTF4),
+and server-side template injection (CTF5). The four omitted
+categories either resist flag-ification (A04 Insecure
 Design, A09 Logging and Monitoring Failures), would require
 shipping genuinely vulnerable dependencies into the
 distributable (A06), or concern CI/CD rather than the web
@@ -88,7 +93,7 @@ Rust/Actix-web, Redis, simulated IMDS & 4 & Advanced \\ \hline
 7 & NorthSide Notes &
 Insecure deserialisation (CVE-2017-5941) &
 A08 &
-Node.js, Express, EJS, \texttt{node-serialize} & 1 & Basic \\ \hline
+Node.js, Express, EJS, \texttt{node-serialize} & 1 & Basic/Intermediate \\ \hline
 \end{tabular}
 \end{table*}
 
@@ -136,6 +141,26 @@ design: a four-stage chain cannot be communicated as a single
 payload and still requires the receiver to execute each stage
 against their own instance.
 
+The existing module's flag generation framework provides a
+class-based, template-driven pipeline designed to produce
+per-student zip packages for VM or server deployment. Because
+the challenges in this project are distributed as Docker
+Compose stacks rather than provisioned VMs, and because each
+challenge uses a different technology stack with its own data
+ingestion format, the templating and server-deploy
+infrastructure of the upstream framework was unnecessary
+overhead. A purpose-built replacement was therefore
+implemented: lightweight standalone scripts that invoke
+pluggable per-challenge generator modules and write
+\texttt{flags.json} and \texttt{credentials.json} directly
+into each challenge's data directory. The core cryptographic
+primitive is unchanged (HMAC-SHA256 keyed on a deployment
+salt), but the surrounding machinery is reduced from a
+class hierarchy with template expansion and remote deployment
+to a single-command invocation per challenge, better suited
+to the container-native distribution model adopted by this
+project.
+
 \subsubsection{HMAC-SHA256 Flag Derivation}
 
 Six of the seven challenges derive flags deterministically
@@ -166,7 +191,7 @@ changing $s$ produces a disjoint flag space, so flags or
 write-ups from a previous cohort are invalid without any
 source-code change.
 
-Multi-flag challenges (CTF3, CTF5, CTF6) derive per-flag
+Multi-flag challenges (such as CTF3) derive per-flag
 salts from a base salt by concatenation:
 \begin{equation}
 s_i = \mathit{base\_salt}\texttt{-flag}i, \quad i \in \{1, \dots, 4\}
@@ -175,23 +200,6 @@ s_i = \mathit{base\_salt}\texttt{-flag}i, \quad i \in \{1, \dots, 4\}
 Because HMAC-SHA256 under distinct keys produces
 statistically independent outputs, capturing one flag reveals
 no information about any other flag for the same user.
-
-\subsubsection{Challenge-Specific Variations}
-
-Two challenges layer additional mechanisms on top of the core
-derivation. CTF3 encrypts one of its HMAC-derived flags with
-AES-256-CBC, using a SHA-256 passphrase-derived key that the
-student must recover through source code inspection and a
-freshly generated IV per encryption. The encryption itself is
-part of the challenge, training the student in key
-identification, mode recognition, and decryption. CTF4
-departs from the HMAC scheme, using
-\texttt{CTF\{dom\_xss\_\$\{u\}\_\$\{Date.now()\}\}} because
-its exploit chain (DOM XSS escalated via an automated admin
-bot) requires per-instance isolation that is enforced through
-per-student Docker Compose overrides
-(Section~\ref{sec:containerisation}) rather than through flag
-derivation alone.
 
 \subsubsection{Integrity Properties and Positioning}
 

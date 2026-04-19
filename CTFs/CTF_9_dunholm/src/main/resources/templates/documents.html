@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>TrialVault, Documents</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+    <main>
+        <h1>Documents</h1>
+        <ul>
+            <li th:each="d : ${documents}" th:text="${d.displayTitle}">Title</li>
+        </ul>
+    </main>
+</body>
+</html>

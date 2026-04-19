@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: trialvault-postgres
+    environment:
+      POSTGRES_DB: trialvault
+      POSTGRES_USER: trialvault
+      POSTGRES_PASSWORD: trialvault
+    volumes:
+      - trialvault-db:/var/lib/postgresql/data
+    networks:
+      - trialvault-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trialvault -d trialvault"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: trialvault-redis
+    networks:
+      - trialvault-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    container_name: trialvault-web
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/trialvault
+      SPRING_DATASOURCE_USERNAME: trialvault
+      SPRING_DATASOURCE_PASSWORD: trialvault
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: "6379"
+      SPRING_CONFIG_LOCATION: "classpath:/application.properties,file:/app/config/application.properties"
+      JWT_PRIVATE_KEY_PEM: ""
+      DOC_PRIVATE_KEY_PEM: ""
+    ports:
+      - "3003:8080"
+    networks:
+      - trialvault-net
+
+volumes:
+  trialvault-db:
+
+networks:
+  trialvault-net:
+    driver: bridge

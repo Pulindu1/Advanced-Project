@@ -53,6 +53,7 @@ Per-CTF generators
 | CTF_6_veridian | `chgen_ctf6.js` | `ctf6_generator.js` | `durham-vsec` | `CTFs/CTF_6_veridian/` |
 | CTF_7_notes_app | `chgen_ctf7.js` | `ctf7_generator.js` | `durham-ds` | `CTFs/CTF_7_notes_app/` |
 | CTF_8_gazette | `chgen_ctf8.js` | `ctf8_generator.js` | `durham-gzflag1`, `durham-gzflag2`, `durham-gzflag3` | `CTFs/CTF_8_gazette/` |
+| CTF_9_dunholm | `chgen_ctf9.js` | `ctf9_generator.js` | `durham-drflag1` .. `durham-drflag6` | `CTFs/CTF_9_dunholm/` |
 
 CTF7 (NorthSide Notes) generates:
 - `src/data/flags.json` (username to flag mapping)
@@ -69,6 +70,14 @@ CTF8 (Greystone Gazette) generates:
 Three distinct tokens per player are produced by mixing a per-flag sub-salt (`-flag1`, `-flag2`, `-flag3`) into the base HMAC key.
 
 Usage: `node chgen_ctf8.js abcd12 efgh34 ijkl56` or `node chgen_ctf8.js --count 10`
+
+CTF9 (Dunholm Research, TrialVault) generates:
+- `data/flags.json` (username to nested `{flag1..flag6}` object)
+- `data/users.json` (players merged alongside seeded Dunholm staff: Helen Cross, Amir Patel, Rachel Osei, James Whitfield, Sophie Chen)
+
+Six distinct tokens per player are produced by mixing a per-flag sub-salt (`-flag1` through `-flag6`) into the base HMAC key `ctf9-dr-default-salt`.
+
+Usage: `node chgen_ctf9.js abcd12 efgh34 ijkl56` or `node chgen_ctf9.js --count 10`
 
 Automation notes
 

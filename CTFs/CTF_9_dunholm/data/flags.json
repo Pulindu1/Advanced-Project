@@ -1,0 +1,26 @@
+{
+  "abcd12": {
+    "flag1": "durham-drflag1{71ef03daa17b99dd_abcd12}",
+    "flag2": "durham-drflag2{8e780130f9a15b45_abcd12}",
+    "flag3": "durham-drflag3{a8d75c8729cae0b4_abcd12}",
+    "flag4": "durham-drflag4{fb79b18008fc5358_abcd12}",
+    "flag5": "durham-drflag5{65a169fc1f82825d_abcd12}",
+    "flag6": "durham-drflag6{0aac182be829679f_abcd12}"
+  },
+  "efgh34": {
+    "flag1": "durham-drflag1{357fb3daefedaacd_efgh34}",
+    "flag2": "durham-drflag2{4776566972397e70_efgh34}",
+    "flag3": "durham-drflag3{4c74a7fab4a349fd_efgh34}",
+    "flag4": "durham-drflag4{758d63af494d8571_efgh34}",
+    "flag5": "durham-drflag5{9ce1a25d6e48fb36_efgh34}",
+    "flag6": "durham-drflag6{094c7bf109a070d1_efgh34}"
+  },
+  "ijkl56": {
+    "flag1": "durham-drflag1{6d3c1d02016cd5d3_ijkl56}",
+    "flag2": "durham-drflag2{c7ab8e6f16e2c6b7_ijkl56}",
+    "flag3": "durham-drflag3{a14d990cf8c9493f_ijkl56}",
+    "flag4": "durham-drflag4{f3bec452c0f91dc5_ijkl56}",
+    "flag5": "durham-drflag5{8362e2cdf9adefc2_ijkl56}",
+    "flag6": "durham-drflag6{9d5c27f2ec9952fa_ijkl56}"
+  }
+}

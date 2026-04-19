@@ -1,0 +1,15 @@
+target/
+.git/
+.gitignore
+.idea/
+*.iml
+.vscode/
+.DS_Store
+README.md
+SOLUTIONS.md
+STORY.md
+workflow.md
+CHANGELOG.md
+ctf-config.json
+scripts/
+src/test/
