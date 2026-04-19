@@ -2,13 +2,141 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>TrialVault, Admin</title>
+    <title>Admin, TrialVault</title>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
 </head>
 <body>
-    <main>
-        <h1>Admin</h1>
-        <p>Phase A placeholder.</p>
-    </main>
+
+<header th:replace="~{fragments/layout :: header('admin', ${username})}"></header>
+
+<main>
+    <h1>Administrator console</h1>
+    <p class="page-intro">
+        This console is restricted to administrator accounts. It reads from
+        <code>/api/admin/dashboard</code> with the signed-in session; if your account
+        does not carry an administrator role the API returns 403 and this page shows
+        nothing.
+    </p>
+
+    <div class="panel" id="status">
+        <h2>Console</h2>
+        <p class="muted" id="status-text">Loading administrator data from the API...</p>
+    </div>
+
+    <div class="panel" id="summary" hidden>
+        <h2>Summary</h2>
+        <dl class="kv">
+            <dt>Viewer</dt><dd id="viewer">-</dd>
+            <dt>Handover token</dt><dd id="flag">-</dd>
+            <dt>Active trials</dt><dd id="stat-trials">-</dd>
+            <dt>Documents total</dt><dd id="stat-docs">-</dd>
+            <dt>Failed logins (24h)</dt><dd id="stat-failed">-</dd>
+        </dl>
+    </div>
+
+    <div class="panel" id="memo" hidden>
+        <h2>Security memo (pinned)</h2>
+        <div id="memo-body" class="muted"></div>
+    </div>
+
+    <div class="panel" id="queries" hidden>
+        <h2>Recent SQL activity</h2>
+        <table class="data">
+            <thead><tr><th>When</th><th>Actor</th><th>Query</th></tr></thead>
+            <tbody id="queries-body"></tbody>
+        </table>
+    </div>
+
+    <div class="panel" id="note" hidden>
+        <h2>CTO handover note</h2>
+        <div id="note-body" class="muted"></div>
+    </div>
+
+    <div class="panel" id="users" hidden>
+        <h2>Users</h2>
+        <table class="data">
+            <thead><tr><th>Username</th><th>Display name</th><th>Role</th><th>Active</th></tr></thead>
+            <tbody id="users-body"></tbody>
+        </table>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script>
+(function () {
+    function text(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = value == null ? "" : String(value);
+    }
+    function show(id) {
+        var el = document.getElementById(id);
+        if (el) el.hidden = false;
+    }
+    function renderList(target, lines) {
+        var host = document.getElementById(target);
+        if (!host || !Array.isArray(lines)) return;
+        host.innerHTML = "";
+        lines.forEach(function (line) {
+            var p = document.createElement("p");
+            p.style.margin = "0 0 0.3rem 0";
+            p.textContent = line;
+            host.appendChild(p);
+        });
+    }
+
+    fetch("/api/admin/dashboard", { credentials: "same-origin" })
+        .then(function (r) {
+            if (r.status === 401) throw new Error("not signed in");
+            if (r.status === 403) throw new Error("administrator role required");
+            if (!r.ok) throw new Error("api returned " + r.status);
+            return r.json();
+        })
+        .then(function (data) {
+            text("status-text", "Administrator data loaded.");
+            text("viewer", data.viewer);
+            text("flag", data.flag);
+            if (data.stats) {
+                text("stat-trials", data.stats.active_trials);
+                text("stat-docs", data.stats.documents_total);
+                text("stat-failed", data.stats.failed_logins_24h);
+            }
+            show("summary");
+
+            renderList("memo-body", data.rachel_memo || []);
+            show("memo");
+
+            renderList("note-body", data.amir_note || []);
+            show("note");
+
+            var qb = document.getElementById("queries-body");
+            (data.recent_sql_queries || []).forEach(function (row) {
+                var tr = document.createElement("tr");
+                ["at", "actor", "query"].forEach(function (k) {
+                    var td = document.createElement("td");
+                    td.textContent = row[k] || "";
+                    tr.appendChild(td);
+                });
+                qb.appendChild(tr);
+            });
+            show("queries");
+
+            var ub = document.getElementById("users-body");
+            (data.users || []).forEach(function (u) {
+                var tr = document.createElement("tr");
+                ["username", "display_name", "role", "active"].forEach(function (k) {
+                    var td = document.createElement("td");
+                    td.textContent = u[k] == null ? "" : String(u[k]);
+                    tr.appendChild(td);
+                });
+                ub.appendChild(tr);
+            });
+            show("users");
+        })
+        .catch(function (err) {
+            text("status-text", "Could not load administrator data: " + err.message);
+        });
+})();
+</script>
 </body>
 </html>

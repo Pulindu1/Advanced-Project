@@ -64,6 +64,17 @@ public class JwtService implements InitializingBean {
     private void loadPrivateKey() throws Exception {
         String pem = cfg.getPrivateKeyPem();
         if (pem == null || pem.isBlank()) {
+            String loc = cfg.getPrivateKeyLocation();
+            if (loc != null && !loc.isBlank()) {
+                Resource r = resourceLoader.getResource(loc);
+                if (r.exists()) {
+                    try (InputStream in = r.getInputStream()) {
+                        pem = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                    }
+                }
+            }
+        }
+        if (pem == null || pem.isBlank()) {
             log.warn("JWT private key not provided; signing disabled");
             return;
         }

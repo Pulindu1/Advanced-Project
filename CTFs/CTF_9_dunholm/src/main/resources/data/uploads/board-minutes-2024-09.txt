@@ -1,0 +1,57 @@
+Dunholm Research Ltd
+Board Minutes, September 2024
+Chair: Dr. Helen Cross
+Attendees: Helen Cross (chair), Amir Patel, Rachel Osei, Dr. James Whitfield,
+           Sophie Chen (minute taker)
+Apologies: none
+
+1. Open
+
+The chair opened the meeting at 09:30 in the Elvet meeting room at Durham
+Science Park. The previous minutes were confirmed without amendment.
+
+2. Competitor disclosure
+
+Helen summarised the event: on 2024-09-08 a competitor published a
+pre-print whose methods section includes three paragraphs of the NIMMOD-2
+Phase 2 dossier verbatim, including the unredacted biomarker panel names
+and the draft sponsor response. No pre-publication sharing with the
+competitor was authorised.
+
+Rachel reported that she is leading the internal investigation. The
+security team is reviewing TrialVault access logs across the relevant
+period. The immediate concerns are:
+
+  a) How the draft content left the TrialVault boundary.
+  b) Whether any other embargoed material is at risk.
+  c) Whether disclosure to the MHRA is required.
+
+James confirmed that the Phase 2 protocol has not been altered as a result
+of the disclosure and that enrolment can continue under the existing
+protocol.
+
+3. Technical response
+
+Amir reported that the TrialVault application has been in production for
+eighteen months and has been well maintained. He noted that there is no
+evidence of an external intrusion and that the logging subsystem is
+functioning correctly.
+
+Rachel requested that the access-log review be completed by the security
+team rather than by the CTO function, given the need for independence.
+The board agreed.
+
+4. External advice
+
+The board agreed to commission an external audit of TrialVault, scoped to
+access control, cryptographic handling, and log integrity. Helen will
+draft the terms of reference.
+
+5. Communications
+
+Draft communications to the sponsor and the MHRA are being prepared by
+Helen; no external statement will be issued until the audit is complete.
+
+6. Close
+
+Next meeting: October 2024.

@@ -46,6 +46,9 @@ services:
       DOC_PRIVATE_KEY_PEM: ""
     ports:
       - "3003:8080"
+    volumes:
+      - ./data/flags.json:/app/seed/flags.json:ro
+      - ./data/users.json:/app/seed/users.json:ro
     networks:
       - trialvault-net
 

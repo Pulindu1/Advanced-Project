@@ -12,6 +12,9 @@ public class JwtConfig {
     @Value("${jwt.private-key-pem:}")
     private String privateKeyPem;
 
+    @Value("${jwt.private-key-location:}")
+    private String privateKeyLocation;
+
     @Value("${jwt.issuer}")
     private String issuer;
 
@@ -26,6 +29,7 @@ public class JwtConfig {
 
     public String getPublicKeyLocation() { return publicKeyLocation; }
     public String getPrivateKeyPem() { return privateKeyPem; }
+    public String getPrivateKeyLocation() { return privateKeyLocation; }
     public String getIssuer() { return issuer; }
     public String getCookieName() { return cookieName; }
     public long getExpiryMinutes() { return expiryMinutes; }

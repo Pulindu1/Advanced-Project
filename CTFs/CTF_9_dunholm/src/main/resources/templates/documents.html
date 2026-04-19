@@ -2,15 +2,49 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>TrialVault, Documents</title>
+    <title>Documents, TrialVault</title>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
 </head>
 <body>
-    <main>
-        <h1>Documents</h1>
-        <ul>
-            <li th:each="d : ${documents}" th:text="${d.displayTitle}">Title</li>
+
+<header th:replace="~{fragments/layout :: header('documents', ${username})}"></header>
+
+<main>
+    <h1>Document vault</h1>
+    <p class="page-intro">
+        Editorial and regulatory documents for the three open studies. Files are served
+        through the download endpoint; request a file by name and TrialVault streams it
+        back in plain text.
+    </p>
+
+    <div class="panel">
+        <h2>Available documents</h2>
+        <ul class="doc-list">
+            <li th:each="d : ${documents}">
+                <span class="title" th:text="${d.displayTitle}">Title</span>
+                <span th:classappend="${d.classification == 'RESTRICTED'} ? 'classification restricted' : 'classification'"
+                      class="classification"
+                      th:text="${d.classification}">INTERNAL</span>
+                <span class="summary" th:text="${d.summary}">Short summary.</span>
+                <span class="summary">
+                    File:
+                    <a th:href="@{/api/files/download(name=${d.filename})}" th:text="${d.filename}">name.txt</a>
+                    &middot; owner <span th:text="${d.ownerUsername != null ? d.ownerUsername : 'team'}">owner</span>
+                </span>
+            </li>
         </ul>
-    </main>
+    </div>
+
+    <div class="panel">
+        <h2>How to fetch a file directly</h2>
+        <p class="muted">
+            The download endpoint accepts a <code>name</code> query parameter. For
+            example, to fetch the welcome note:
+        </p>
+<pre class="codeblock">GET /api/files/download?name=welcome-note.txt</pre>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

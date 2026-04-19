@@ -1,0 +1,44 @@
+Dunholm Research Ltd, Information Access Policy (short form)
+
+1. What this policy covers
+
+This policy covers access to all Dunholm Research systems and documents,
+including the TrialVault application, the archived regulatory submissions,
+the participant welcome materials, and any data classified as RESTRICTED
+or INTERNAL.
+
+2. Named access
+
+Access to RESTRICTED documents is granted by the Research Lead (Helen
+Cross) and reviewed quarterly. Access to INTERNAL documents is granted
+on appointment by the Security Lead (Rachel Osei). Access to audit
+engagements is explicitly delegated in writing.
+
+3. Authentication
+
+Staff authenticate to TrialVault using their Dunholm username and
+password. Password reuse with external systems is not permitted.
+Multi-factor authentication is not yet enabled and is a standing item on
+the security roadmap.
+
+4. Handover handling
+
+During the current handover and external audit, external auditor
+accounts are created with the standard username pattern (four letters
+plus two digits) and are given researcher-level access. These accounts
+are recorded in the audit register and removed at the close of the
+engagement.
+
+5. Acceptable use
+
+All access is recorded in the TrialVault logs. Personal use of the
+system is not permitted. Copying RESTRICTED content out of TrialVault
+requires written authorisation from the Research Lead.
+
+6. Reporting concerns
+
+Concerns about access, configuration, or possible disclosure should be
+reported to the Security Lead.
+
+Policy reference: DR-POL-IT-004 (short form)
+Current version: 2024-06

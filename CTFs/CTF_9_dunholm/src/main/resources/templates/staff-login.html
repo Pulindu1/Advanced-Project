@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Staff sign in, TrialVault</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<main class="login-page">
+    <h1>Staff sign in</h1>
+    <p class="subtitle">Restricted, incident response portal</p>
+
+    <div class="alert info">
+        This sign-in is reserved for the TrialVault technical owner while the incident
+        response console is open. Other accounts will be rejected by policy.
+    </div>
+
+    <div class="alert" th:if="${error == '1'}">Sign-in was not accepted.</div>
+    <div class="alert" th:if="${error == 'rate'}">Too many attempts from this address. Please wait and try again.</div>
+
+    <form method="post" action="/staff-login" class="login-form" autocomplete="off">
+        <label>Staff username
+            <input type="text" name="username" required autofocus/>
+        </label>
+        <label>Password
+            <input type="password" name="password" required/>
+        </label>
+        <button type="submit">Open incident console</button>
+    </form>
+
+    <p class="muted" style="font-size:0.8rem;color:#4b5766;margin-top:1.25rem;">
+        This session is governed by the Information Access Policy (DR-POL-IT-004).
+    </p>
+</main>
+</body>
+</html>

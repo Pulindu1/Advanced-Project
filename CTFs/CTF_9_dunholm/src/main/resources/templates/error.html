@@ -2,13 +2,38 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>TrialVault, Error</title>
+    <title>Something went wrong, TrialVault</title>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
 </head>
 <body>
-    <main>
+
+<header class="site-header">
+    <div class="brand">
+        TrialVault
+        <small>Dunholm Research Ltd</small>
+    </div>
+    <nav>
+        <a th:href="@{/dashboard}">Dashboard</a>
+    </nav>
+</header>
+
+<main>
+    <div class="panel">
         <h1>Something went wrong.</h1>
-        <p>Please return to the dashboard and try again.</p>
-    </main>
+        <p>
+            The request could not be completed. If this is unexpected, return to the
+            dashboard and try again. If the problem continues, ask the Security Lead
+            to check the TrialVault logs for the reference below.
+        </p>
+        <dl class="kv" style="margin-top:1rem;">
+            <dt>Status</dt><dd th:text="${status != null ? status : '-'}">-</dd>
+            <dt>Error</dt><dd th:text="${error != null ? error : '-'}">-</dd>
+            <dt>Path</dt><dd th:text="${path != null ? path : '-'}">-</dd>
+            <dt>Time</dt><dd th:text="${timestamp != null ? timestamp : '-'}">-</dd>
+        </dl>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

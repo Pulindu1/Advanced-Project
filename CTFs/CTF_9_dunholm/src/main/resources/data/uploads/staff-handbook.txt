@@ -1,0 +1,50 @@
+Dunholm Research Ltd, Staff Handbook (extract)
+
+A letter from the managing director
+
+Welcome to Dunholm Research. We are a small clinical research company
+based at Durham Science Park. Our work is focused on early-stage trial
+design in neuroinflammation, cardiorenal safety, and oncology biomarker
+screening. The company was founded in 2019 and has been profitable since
+the end of 2022.
+
+Our core platform, TrialVault, is an internal editorial and document
+management system that supports the full life cycle of our studies, from
+protocol drafting through to regulatory submission. The integrity of
+TrialVault is a direct expression of our integrity as a company, and
+everyone who works here is responsible for maintaining it.
+
+-- Dr. Helen Cross, Managing Director
+
+Leadership
+
+Dr. Helen Cross, Managing Director. Joined Dunholm 2019. Previously at
+Northumbria Biomedical. Responsible for clinical strategy and the
+sponsor relationship.
+
+Amir Patel, Chief Technology Officer. Joined Dunholm 2021. Previously at
+two clinical trial platform vendors. Responsible for TrialVault,
+infrastructure, and the technical side of the regulatory response.
+
+Rachel Osei, Security Lead. Joined Dunholm 2023. Previously in the
+information-security function at a London teaching hospital trust.
+Responsible for security policy, internal review, and the audit liaison.
+
+Dr. James Whitfield, Clinical Lead. Joined Dunholm 2020. Principal
+investigator on DR-2024-017 and the clinical contact for the DSMB.
+
+Sophie Chen, Trial Coordinator. Joined Dunholm 2023. Site liaison for
+the three open studies and the point of contact for participant
+communications.
+
+Offices
+
+We are based at a single office at Durham Science Park. The post room
+handles outbound regulatory correspondence weekly. Visitors should sign
+in at reception on Meadowfield Avenue.
+
+Security posture
+
+All staff have read and acknowledged the Information Access Policy. The
+short-form version of that policy is circulated at induction and
+reviewed annually.

@@ -256,3 +256,4 @@ Hand-typed curl recipe for the marker, parameterised on `USER` and `PASS`:
 | Date | Phase | Note |
 |------|-------|------|
 | 2026-04-19 | Plan | Initial workflow written; Q1--Q5 and D1--D9 captured at top. Awaiting Phase A start. |
+| 2026-04-19 | Phase A | Skeleton built and verified. Switched base image to `eclipse-temurin:17-jre-jammy` because `17-jre-alpine` has no arm64 manifest. Stack boots cleanly on port 3003, `/actuator/info` returns the unauthenticated Flag 1 prompt, `/actuator/env` surfaces `app.config.dunholm-handoff-a` (placeholder value), `/login` returns 200, `/dashboard` redirects to login, generator produces six flags per player. Awaiting approval before Phase B. |

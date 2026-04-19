@@ -1,0 +1,30 @@
+Dunholm Research Ltd
+Q2 2024 Trial Operations Summary
+Prepared by: Dr. James Whitfield, Clinical Lead
+Distribution: internal, clinical team + sponsor liaison
+
+Q2 enrolment across the active cohort was 84 participants, broken down as
+follows:
+
+  DR-2024-017  NIMMOD-2                    Phase 2    47 enrolled, 2 withdrawn
+  DR-2024-018  DRH-412 safety extension    Phase 1b   18 completed, 1 AE
+  DR-2024-019  Biomarker solid tumour      Phase 2    19 enrolled, 0 withdrawn
+
+Safety signals through the quarter remained within the pre-specified
+thresholds. The single grade 2 adverse event in the DRH-412 arm resolved
+without intervention and the data safety monitoring board (DSMB) chose to
+continue the study without modification.
+
+Regulatory notes:
+  The MHRA submission draft for DR-2024-017 is at v3. Helen is coordinating
+  the final response pack with the sponsor and expects to submit in August.
+
+Administrative notes:
+  The trial coordinator team (Sophie) has flagged that our participant
+  welcome pack should be rewritten before the Phase 2 open-label extension.
+  A revised draft is in /documents/welcome-note.txt.
+
+This summary is routinely circulated to the clinical team lead, the research
+lead, and the sponsor liaison. It does not contain patient-identifiable data.
+
+Next review: end of Q3 2024.

@@ -2,21 +2,32 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>TrialVault, Dunholm Research</title>
+    <title>Sign in, TrialVault</title>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
 </head>
 <body>
-    <main class="login-page">
-        <h1>TrialVault</h1>
-        <p class="subtitle">Dunholm Research, Phase A skeleton</p>
-        <form method="post" action="/login" class="login-form">
-            <label>Username<input type="text" name="username" required/></label>
-            <label>Password<input type="password" name="password" required/></label>
-            <button type="submit">Sign in</button>
-        </form>
-        <footer>
-            <!-- TrialVault v3.4.1 / Powered by Spring Boot -->
-        </footer>
-    </main>
+<main class="login-page">
+    <h1>TrialVault</h1>
+    <p class="subtitle">Dunholm Research Ltd, editorial and document management</p>
+
+    <div class="alert" th:if="${error == '1'}">Username or password was not recognised.</div>
+    <div class="alert" th:if="${error == 'rate'}">Too many attempts from this address. Please wait a moment and try again.</div>
+    <div class="alert ok" th:if="${logout != null}">You have been signed out.</div>
+
+    <form method="post" action="/login" class="login-form" autocomplete="off">
+        <label>Username
+            <input type="text" name="username" required autofocus/>
+        </label>
+        <label>Password
+            <input type="password" name="password" required/>
+        </label>
+        <button type="submit">Sign in</button>
+    </form>
+
+    <p class="muted" style="font-size:0.8rem;color:#4b5766;margin-top:1.25rem;">
+        Access is logged. Report problems to the Security Lead (Rachel Osei).
+    </p>
+</main>
+<!-- TrialVault v3.4.1 / Powered by Spring Boot -->
 </body>
 </html>

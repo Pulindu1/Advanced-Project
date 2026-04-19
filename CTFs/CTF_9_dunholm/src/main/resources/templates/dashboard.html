@@ -2,13 +2,98 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>TrialVault, Dashboard</title>
+    <title>Dashboard, TrialVault</title>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
 </head>
 <body>
-    <main>
-        <h1>Dashboard</h1>
-        <p>Signed in as <span th:text="${username}">user</span>.</p>
-    </main>
+
+<header th:replace="~{fragments/layout :: header('dashboard', ${username})}"></header>
+
+<main>
+    <h1>Dashboard</h1>
+    <p class="page-intro">
+        Welcome back. This is the editorial home for the three open studies and the
+        regulatory correspondence queue. Flagged items from the Security Lead appear at
+        the top of the right-hand column.
+    </p>
+
+    <div class="grid-2">
+        <section>
+            <div class="panel">
+                <h2>Open studies</h2>
+                <table class="data">
+                    <thead>
+                        <tr><th>Code</th><th>Title</th><th>Phase</th><th>PI</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>DR-2024-017</td>
+                            <td>NIMMOD-2, open-label extension</td>
+                            <td>Phase 2</td>
+                            <td>J. Whitfield</td>
+                            <td>Enrolling</td>
+                        </tr>
+                        <tr>
+                            <td>DR-2024-009</td>
+                            <td>Cardiorenal safety imaging pilot</td>
+                            <td>Phase 1b</td>
+                            <td>J. Whitfield</td>
+                            <td>Follow-up</td>
+                        </tr>
+                        <tr>
+                            <td>DR-2023-041</td>
+                            <td>Oncology biomarker screen, cohort B</td>
+                            <td>Observational</td>
+                            <td>H. Cross</td>
+                            <td>Analysis</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="panel">
+                <h2>Recent editorial activity</h2>
+                <ul style="margin:0;padding-left:1.1rem;">
+                    <li>Sophie Chen updated the Phase 2 welcome note draft (DR-2024-017).</li>
+                    <li>James Whitfield closed out the Q2 trial summary for the sponsor.</li>
+                    <li>Helen Cross revised the regulatory submission v3 ahead of MHRA review.</li>
+                    <li>Rachel Osei pinned a security memo to the audit handover folder.</li>
+                </ul>
+            </div>
+
+            <div class="panel">
+                <h2>Quick links</h2>
+                <p style="margin:0.2rem 0;">
+                    <a th:href="@{/documents}">Open the document vault</a>, or jump to a
+                    named file via <code>/api/files/download?name=&lt;filename&gt;</code>.
+                </p>
+            </div>
+        </section>
+
+        <aside>
+            <div class="panel">
+                <h2>Handover status</h2>
+                <dl class="kv">
+                    <dt>Engagement</dt><dd>External audit (scoped)</dd>
+                    <dt>Auditor accounts</dt><dd>Issued per policy</dd>
+                    <dt>Security owner</dt><dd>Rachel Osei</dd>
+                    <dt>Technical owner</dt><dd>Amir Patel</dd>
+                </dl>
+            </div>
+
+            <div class="panel">
+                <h2>Pinned notice</h2>
+                <p class="muted" style="margin:0;">
+                    The board has commissioned an external audit of TrialVault following
+                    the competitor disclosure on 8 September. Access continues normally
+                    during the engagement; please report anything that looks wrong to the
+                    Security Lead.
+                </p>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

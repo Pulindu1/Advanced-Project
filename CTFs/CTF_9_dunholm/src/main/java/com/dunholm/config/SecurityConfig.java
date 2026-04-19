@@ -27,27 +27,19 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/logout", "/error", "/static/**", "/css/**", "/favicon.ico").permitAll()
+                .requestMatchers("/", "/login", "/logout", "/staff-login", "/error",
+                                 "/static/**", "/css/**", "/js/**", "/favicon.ico").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/files/**").permitAll()
                 .requestMatchers("/api/research/**").permitAll()
                 .requestMatchers("/api/admin/**").permitAll()
-                .requestMatchers("/dashboard", "/documents", "/admin", "/incident-report").authenticated()
+                .requestMatchers("/incident-report").permitAll()
+                .requestMatchers("/dashboard", "/documents", "/admin").authenticated()
                 .anyRequest().permitAll()
             )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/dashboard", true)
-                .failureUrl("/login?error=1")
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/login?logout=1")
-                .deleteCookies("tv_session")
-                .permitAll()
-            )
+            .formLogin(form -> form.disable())
+            .httpBasic(basic -> basic.disable())
+            .logout(logout -> logout.disable())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

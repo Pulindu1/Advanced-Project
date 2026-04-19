@@ -12,6 +12,9 @@ files changed (optional)
 
 
 
+### Phase 2: Flag implementations and narrative - 19/04/26 - CTF9
+- completed the main implementations of the CTF including the flag. Testing is needed now.
+
 ### Phase 1: Built Skeleton - 19/04/26 - CTF9
 - Built the skeleton for CTF9. The planning is all done too.
 

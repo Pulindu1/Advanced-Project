@@ -1,0 +1,41 @@
+Dunholm Research Ltd
+MHRA submission draft v3, DR-2024-017 (NIMMOD-2)
+Prepared by: Dr. Helen Cross, Research Lead
+Status: internal draft, not for external circulation
+
+1. Study rationale
+
+NIMMOD-2 extends the DR-2023-011 baseline survey into an open-label Phase 2
+dose-ranging study evaluating neuroinflammation modulation in participants
+with early-onset multiple sclerosis. The baseline survey established the
+relevant biomarker panel and confirmed that the expected safety margins
+held at the proposed therapeutic dose range.
+
+2. Endpoints
+
+Primary: change from baseline in the NIMMOD composite biomarker score at
+week 24. Secondary: standard MS functional measures (EDSS, T25FW, 9HPT).
+
+3. Statistical plan
+
+Intent-to-treat population, mixed-model repeated measures, pre-specified
+subgroup analyses by age at onset and baseline EDSS. Analyses will be led
+by the Newcastle collaborator site.
+
+4. Safety monitoring
+
+DSMB convened quarterly. Stopping rules per MHRA guidance; the blinded
+monitoring team has standing access to the raw biomarker panels.
+
+5. Regulatory history
+
+Pre-submission meeting with MHRA held 2024-03-11. Feedback was positive;
+the MHRA requested clarification on the biomarker validation path which is
+addressed in Appendix B.
+
+6. Open items before external circulation
+
+The redaction review on Appendix C (site monitoring plan) has not yet been
+completed. Do not circulate externally until Rachel signs off.
+
+End of draft v3.

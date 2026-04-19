@@ -2,13 +2,81 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>TrialVault, Incident Report</title>
+    <title>Incident report, TrialVault</title>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
 </head>
 <body>
-    <main>
-        <h1>Incident Report</h1>
-        <p>Phase A placeholder.</p>
-    </main>
+
+<header class="site-header">
+    <div class="brand">
+        TrialVault
+        <small>Incident response console</small>
+    </div>
+    <nav>
+        <a th:href="@{/dashboard}">Dashboard</a>
+    </nav>
+    <span class="who">
+        staff session:
+        <strong th:text="${staffUser}">amir.patel</strong>
+    </span>
+</header>
+
+<main>
+    <h1>Incident response</h1>
+    <p class="page-intro">
+        This page is only reachable while a staff session is open. It is intended for
+        the TrialVault technical owner during the current audit engagement.
+    </p>
+
+    <div class="panel">
+        <h2>DR-2024-IR-001, competitor disclosure</h2>
+        <dl class="kv">
+            <dt>Opened</dt><dd>2024-09-09</dd>
+            <dt>Chair</dt><dd>Dr. Helen Cross</dd>
+            <dt>Security lead</dt><dd>Rachel Osei</dd>
+            <dt>Technical owner</dt><dd>Amir Patel</dd>
+            <dt>Status</dt><dd>External audit in progress</dd>
+        </dl>
+
+        <p>
+            On 8 September 2024 a competitor published a pre-print reproducing three
+            paragraphs of the NIMMOD-2 Phase 2 dossier verbatim, including the
+            unredacted biomarker panel names and the draft sponsor response. There is
+            no pre-publication sharing agreement with the competitor. The board has
+            commissioned an external audit scoped to access control, cryptographic
+            handling, and log integrity.
+        </p>
+    </div>
+
+    <div class="panel">
+        <h2>Auditor handover token</h2>
+        <p class="muted">
+            Linked to the player account that opened this staff session. Record this
+            alongside the other handover tokens already captured.
+        </p>
+        <p>
+            Player account:
+            <strong th:text="${playerUsername != null ? playerUsername : '(not identified)'}">player</strong>
+        </p>
+        <p>
+            Handover token:
+            <span class="codeblock" style="display:inline-block;padding:0.35rem 0.7rem;"
+                  th:text="${flag6 != null ? flag6 : 'token could not be derived for this session'}">
+                flag
+            </span>
+        </p>
+    </div>
+
+    <div class="panel">
+        <h2>Next steps for the owner</h2>
+        <ol style="margin:0;padding-left:1.2rem;">
+            <li>Confirm the five outstanding items on Rachel's security memo.</li>
+            <li>Review the TrialVault access logs across 1 August to 15 September.</li>
+            <li>Prepare the written response to the MHRA and the sponsor.</li>
+        </ol>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

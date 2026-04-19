@@ -1,0 +1,60 @@
+Dunholm Research Ltd, Security Memo
+Subject: TrialVault handover security review
+Author: Rachel Osei, Security Lead
+Distribution: Helen Cross (research lead), Amir Patel (CTO), audit team
+
+Scope
+
+This memo summarises the outstanding security items identified during the
+pre-audit review of TrialVault ahead of the external auditor engagement.
+It is the baseline I am asking the audit team to confirm or refute.
+
+1. Raw SQL on the research search endpoint
+
+The endpoint at /api/research/search still concatenates the user query
+into a SQL string and calls entityManager.createNativeQuery. I flagged
+this in the February review and again in April. Amir's position is that
+the endpoint is read-only and that the team uses it daily. Both statements
+are true. Neither addresses the injection risk. Please move this to a
+parameterised repository method before the auditors arrive.
+
+2. RSA-512 for release envelopes
+
+The encrypted releases written into /data/vault/ are wrapped with
+RSA-512. The short modulus has been public knowledge as a weakness since
+at least 1999 (CWI public factoring of RSA-155). factordb.com maintains a
+cache of pre-factored moduli; any modulus that lands there is effectively
+broken. I raised the upgrade to RSA-3072 or ECC at the Q1 architecture
+review; the rotation was deferred to allow the NIMMOD-2 release to go out
+on the existing scheme. That deferral needs to close before the next
+external release.
+
+3. Debug request body logging
+
+The auth service logs the raw JSON request body at DEBUG. In development
+this is fine. The handover runbook says this should drop to INFO in
+production. It has not yet been changed. Until it is, every login attempt
+writes the submitted password verbatim into /app/logs/trialvault.log,
+which is served back out via the management endpoint.
+
+4. JWT verification trust-algorithm-header
+
+The JWT verifier honours the alg header from the token when deciding how
+to verify. This was added for the cross-realm pilot and must not ship to
+the external audit without an explicit algorithm allow-list pinning the
+verifier to RS256.
+
+5. Actuator exposure
+
+The Actuator endpoints are currently exposed on the default path and are
+not authenticated. The handover runbook asked for this to be restricted
+to the internal monitoring network. Until that is in place, the info,
+env, health, and logfile endpoints are all reachable from the public
+listener.
+
+Each of the five items has been raised with the CTO function on at least
+two occasions. Please treat this memo as the definitive inbound for the
+audit team: if the items above remain unresolved at the point the
+auditors begin work, the findings should reflect their current state.
+
+-- Rachel Osei

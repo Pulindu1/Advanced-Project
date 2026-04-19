@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<header class="site-header" th:fragment="header(active, username)">
+    <div class="brand">
+        TrialVault
+        <small>Dunholm Research Ltd</small>
+    </div>
+    <nav>
+        <a th:href="@{/dashboard}" th:classappend="${active == 'dashboard'} ? 'active' : ''">Dashboard</a>
+        <a th:href="@{/documents}" th:classappend="${active == 'documents'} ? 'active' : ''">Documents</a>
+        <a th:href="@{/admin}" th:classappend="${active == 'admin'} ? 'active' : ''">Admin</a>
+    </nav>
+    <span class="who" th:if="${username != null}">
+        signed in as <strong th:text="${username}">user</strong>
+    </span>
+    <form class="inline-logout" method="post" th:action="@{/logout}" th:if="${username != null}">
+        <button type="submit" class="logout">Sign out</button>
+    </form>
+</header>
+
+<footer class="site-footer" th:fragment="footer">
+    <span>TrialVault 3.4.1, Dunholm Research Ltd, Durham Science Park</span>
+    <span>Information classification: INTERNAL unless otherwise marked</span>
+</footer>
+
+</body>
+</html>
