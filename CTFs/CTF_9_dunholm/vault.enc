@@ -1,0 +1,15 @@
+# DUNHOLM RESEARCH TRIALVAULT, classified release envelope
+# Audience: abcd12
+# Scheme: RSA-512 + AES-256-GCM hybrid
+# The RSA-wrapped key, IV, and ciphertext follow. Base64.
+
+[ALG] hybrid: rsa-512/pkcs1v15 wraps aes-256-gcm
+[WRAPPED_KEY_B64] gw/ap+1h4kN9Q/zIWubYIUuyfnQWTwY/FgkVdMA68ZDAk3y1Np4h3qmC/0exV67PTvTDgQM49s1aPtb1Y0IaKQ==
+[IV_B64] anqTtmkpkqfy9CGw
+[CIPHERTEXT_B64] BfM6w2zsbpnyCNTZJyJQMdEcyW2hGG9kgzv64uRxTgpmF4lwnMZYdaikcSVpDlURF81u0K8iPG2t8EPJqegpO+SGYus10v0vVJfo7lEir8MnkeAGnA38sOU1IDrp4KpVjQJdLbLircOgOubJNa6ZuIZ+RxCR/70MEBVK0FNLyFNZf5H4JeiHkCPwh22MebGmPPFEFy0FUMX3K8cbP4gE5MPGkLjyMdx2h8o4MBB+mdSVtRvQ9kmNISPSmvWACPyGJw8dX1wsTsavbm9xgaNkoTuqQN+8aTQXsgFk42W5ROLBk/YDdbqAjPadjyoRfa8PSD5etcUn7AaySNlcqSU+BtIL0Xmf3zhehY+WzzGMACCuYYSqYsnSVMq3FDYDSaN81Tc2Bjw6P0rzR+wmz7L30OVGSA7r7Av7aR5Jv3YAhs9DopIlnlR1td/QJjZYxGCrXfHeSuSSMmP3dXx1eo/gU4z6YyQ2GftuU6yn9qX738T3Zk4zVzhnzCJ7gji9C0sjxXjgY/DprpL/gid6pQsIa4tzqEmD3o1hFenBRhNoWRSgQG3lQCoeanL+sNi2kard21QDkRE5Rf1AiYfrfZw15Mgki/i1GhnoPlL1NpzE+b7aUJXvSCk5xRUcUmLPHuNfjlZeMkDwhYHnKx1XqcUCsvG4I8VAaKITQeysyaBPAS0ratZaGnzqUBXzQTsooE+orWpiG9ZBVz+zZNbZWWTxX6/3SlvZhW0AgeMrfVXhZ229BeTgiowFOfq6YeGexxPRfFOhJyUqE69slnJXo+QPiUwwwvHECl8Z3bBqGRbUBE/f1lXBbEpQQqG90YfRV/OOS444+6LF1D1/O2yBmltFdxnpgS1aZF5rFc3DWGeUTpRrhdAeiotSW5KlbJQWVjIk6+3ZnaGQduvwZ7jDnrAcSlXNcvSKqc3BmJjBF4D306D5/52BhrRnTLBNZG0DpXzIdQsBnWESn7HT1LIcKf7QO7TILE56wRnnVnDSOnjl+U0ZJRwsMOXFEKkHvLasoFDvi8RKdpbQeqdjMWfhI+L5YrcVjf7qSGOzfDi2TyNV/oKLeWt6natSOxXMU7trOfm7RWY+QUFneJ1KborehWzJ/iWNdz7B7haQGvRhyaN6mhIwsZ31ExtSubB2SqDPODfnxcRpMI2zzxz2R/1aODxo2c7wX1EEKD8Ue9e6Xo3YjxKHgZJv/eVXawAhzI4PF2CjEn8T1pUtB3nMbkV+EWSzI3UkkH+KQ2WB5eq1zF9jkUko5LfKzAZ3V1E4I5Pp0Xs4CFOU5NB977R0RyBoaCXc9xdmuqwnTYGAj6leru6gNrxf3NwMbbKs26QRkRNKbl6wCNEcDPluReudTh/7S9tTM5aLKI1CzsqGTzOxreDDBbXY3wj+VkQkQQRfPxARZiJETvi3YKkJTx4mo0m1sAb+0DbZsu+TDfX2qSw=
+
+# To decrypt:
+# 1. Factor n from doc-public.pem into p, q (try factordb.com first).
+# 2. Recover d = e^-1 mod (p-1)(q-1), unwrap the AES key.
+# 3. Alternatively: the AES key = SHA-256(DR_API_KEY_PART1 || encryption_key_part2).
+#    Use whichever path is available; both converge on the same key.

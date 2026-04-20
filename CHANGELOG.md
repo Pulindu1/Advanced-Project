@@ -12,6 +12,8 @@ files changed (optional)
 
 
 
+### Improved doccumentation - 20/04/26 - CTF9
+- SOLUTIONS.md wasn't very clear for flags 5 and 6 so I made them simpler.
 
 ### Tests, docs and polishes - 20/04/26 - CTF9
 - README.md, SOLUTIONS.md, STORY.md, ctf-config.json, V1-V8 unintended-vulnerability audit appended to workflow.md.
