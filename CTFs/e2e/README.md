@@ -12,7 +12,10 @@ Automated scripts that walk through every CTF's full exploit chain and confirm e
 | `ctf4_exploit.py` | CTF_4_corporate_helpdesk | 1 | 3 | DOM XSS -> admin bot exfiltration -> flag capture |
 | `ctf5_exploit.py` | CTF_5_internal_blog | 4 | 8 | Info disclosure -> SSTI -> WAF bypass -> RCE |
 | `ctf6_exploit.py` | CTF_6_veridian | 4 | 10 | SSRF -> cloud metadata -> dict:// Redis pivot -> session replay |
-| **Total** | | **14 flags** | **34 tests** | |
+| `ctf7_exploit.py` | CTF_7_notes_app | 1 | 6 | node-serialize@0.0.4 IIFE deserialisation (CVE-2017-5941) |
+| `ctf8_exploit.py` | CTF_8_gazette | 3 | 4 | IDOR + missing server-side auth + `$(...)` command injection |
+| `ctf9_exploit.py` | CTF_9_dunholm | 6 | 12 | Actuator info leak + `....//` traversal + RS256->HS256 forgery + blind SQLi + AES-GCM vault decrypt + log-leak & staff login |
+| **Total** | | **24 flags** | **56 tests** | |
 
 ## Prerequisites
 
@@ -20,7 +23,7 @@ Automated scripts that walk through every CTF's full exploit chain and confirm e
 pip3 install -r requirements.txt
 ```
 
-Dependencies: `requests`, `pytest`, `PyJWT`, `pycryptodome`
+Dependencies: `requests`, `pytest`, `PyJWT`, `pycryptodome`, `cryptography`
 
 ## Usage
 
@@ -49,6 +52,9 @@ python3 -m pytest ctf3_exploit.py -v    # requires ports 8004, 5174
 python3 -m pytest ctf4_exploit.py -v    # requires ports 4001, 5174
 python3 -m pytest ctf5_exploit.py -v    # requires port 5175
 python3 -m pytest ctf6_exploit.py -v    # requires port 5180
+python3 -m pytest ctf7_exploit.py -v    # requires port 3001
+python3 -m pytest ctf8_exploit.py -v    # requires port 3002
+python3 -m pytest ctf9_exploit.py -v    # requires port 3003
 ```
 
 ## Port Mapping
@@ -61,6 +67,9 @@ python3 -m pytest ctf6_exploit.py -v    # requires port 5180
 | CTF4 | Express API / React frontend / PostgreSQL / Redis | 4001 / 5174 / 5433 / 6380 |
 | CTF5 | Flask app | 5175 |
 | CTF6 | Rust/Actix-web app (+ internal metadata, Redis) | 5180 |
+| CTF7 | Node.js notes app | 3001 |
+| CTF8 | Go/Gin pressroom + SQLite | 3002 |
+| CTF9 | Java/Spring Boot + PostgreSQL 16 + Redis 7 | 3003 |
 
 **Conflict:** CTF3 and CTF4 both bind to port 5174. Stop one before starting the other.
 

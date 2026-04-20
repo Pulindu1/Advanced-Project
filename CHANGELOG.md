@@ -9,6 +9,9 @@ files changed (optional)
 # Logs:
 
 
+### E2E tests + updated methodology - 20/04/26 - CTF8, CTF9
+- E2E tests added for CTF 8 and CTF9
+- Methodology was a little mid. I improved that too. I still need to look over it again and finish it up later.
 
 
 

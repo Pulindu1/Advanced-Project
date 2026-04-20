@@ -170,6 +170,25 @@ CTFs/CTF_8_gazette/
 
 ---
 
+## Running tests
+
+- **Integration** (`test/integration_test.go`) runs handlers against an
+  in-memory Gin router. No Docker needed.
+
+  ```bash
+  go test ./test -v
+  ```
+
+- **End-to-end** lives in the shared suite at `CTFs/e2e/ctf8_exploit.py`
+  and drives the dockerised stack over HTTP on port 3002:
+
+  ```bash
+  docker compose up -d
+  cd ../e2e && python3 -m pytest ctf8_exploit.py -v
+  ```
+
+---
+
 ## References
 
 - [OWASP A01:2021](https://owasp.org/Top10/A01_2021-Broken_Access_Control/)

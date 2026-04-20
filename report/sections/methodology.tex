@@ -1,39 +1,48 @@
 \section{Methodology}
 \label{sec:methodology}
 
-This section describes how the gaps identified in
-Section~\ref{sec:relatedwork} are translated into a concrete
-artefact: a challenge web-exploitation suite with a
-shared personalisation layer, reproducible containerisation,
-and an end-to-end testing regime whose outputs form the
-evidence base for Section~\ref{sec:results}.
+\subsection{Research Question and Deliverables}
+\label{sec:research-question}
+
+The project asks whether a web-exploitation CTF suite can be
+personalised per student without per-student image rebuilds,
+and whether the resulting artefacts can supply the
+process-level evidence that solver-count logging alone cannot.
+The answer takes the form of a three-tier deliverables ladder:
+\textit{Basic} covers CTF1, CTF2, and CTF7 (single-flag
+challenges with per-user HMAC personalisation and
+containerised deployment); \textit{Intermediate} covers CTF3,
+CTF4, and CTF8 (multi-flag or multi-stage challenges, one of
+which is deployed per-instance rather than shared);
+\textit{Advanced} covers CTF5, CTF6, and CTF9 (WAF-bypass
+SSTI, SSRF-to-IMDS with a Redis pivot, and a six-stage
+enterprise chain). The suite as delivered spans nine
+challenges, twenty-five flags, eight of the ten 2021 OWASP
+categories, and nine technology stacks, packaged as
+Docker Compose stacks with a shared flag-generation layer
+and an exploit-as-a-test harness.
 
 \subsection{Design Philosophy}
 \label{sec:design-philosophy}
 
-Five principles were established at the outset and applied
-uniformly across the suite. \textit{Realism over
-artificiality}: every challenge is scenario-wrapped as an
-application a student could plausibly encounter (a password manager, an HR system, etc...), so that
+Three principles shape the suite.
+\textit{Realism}: every challenge is scenario-wrapped as an
+application a student could plausibly encounter, so that
 exploitation exercises the path to the flag rather than a
-synthetic puzzle~\cite{Fuzyll2015,Vykopal}.
-\textit{Within-domain scaffolding}: stages inside a challenge
-gate each other through in-application breadcrumbs
-(\texttt{CHANGELOG} entries, \texttt{/health} metadata, the
-visible source of a WAF) rather than through external hints,
-maintaining challenge and skill balance across the cohort's
-skill distribution~\cite{Csikszentmihalyi,Balaji2025}.
-\textit{Broad OWASP coverage}: the suite deliberately includes
-modern classes (such as SSTI, SSRF, and insecure deserialisation) that
-Sasiwanit et al.~\cite{Sasiwanit} identify as under-represented
-in existing platforms. \textit{Per-user integrity}: flags are
-derived deterministically from a per-deployment secret salt
-and embed the recipient's username, making sharing both
-attributable and invariant across cohorts
-(Section~\ref{sec:flag-personalisation}). \textit{Stack
-diversity}: challenges vary by primary
-technology stack (with a preference for more common modern tech stack and frameworks), forcing the player to adapt to different
-framework idioms rather than pattern-matching a single stack.
+synthetic puzzle~\cite{Fuzyll2015,Vykopal}. In-application
+breadcrumbs (CHANGELOG entries, \texttt{/health} metadata, the
+visible source of a WAF) gate multi-stage chains rather than
+external hints, to sustain challenge--skill balance across a
+cohort~\cite{Csikszentmihalyi,Balaji2025}.
+\textit{Per-user integrity}: flags are derived from a
+per-deployment salt and embed the recipient's username, so
+sharing is attributable and cohort rotation is salt-only
+(Section~\ref{sec:flag-personalisation}).
+\textit{Stack diversity}: challenges vary by primary
+technology so that players adapt to framework idioms rather
+than pattern-match a single stack, which is a property of
+coverage Sasiwanit et al.~\cite{Sasiwanit} identify as absent
+from existing platforms.
 
 \subsection{Suite Architecture}
 \label{sec:challenge-architecture}
@@ -137,40 +146,31 @@ any modification to challenge source or container images.
 \subsubsection{Threat Model}
 
 The existing Networks and Systems VM distributes an identical
-image with statically randomised flags. This admits three
-integrity threats: \textit{solution sharing} (a working
-exploit is communicated verbatim to the cohort);
-\textit{flag copying} (per-VM flags obtained via messaging or
-screenshots are resubmitted); and \textit{LLM-assisted
-solving} (uniform problem structures resembling public
-write-ups are trivially solved by a prompted
-model~\cite{ji2025}). The scheme described below addresses
-flag copying and LLM-assisted solving directly. Solution
-sharing is addressed structurally through multi-stage chain
-design: a multi-stage chain (four stages in CTF5 and CTF6,
-six in CTF9) cannot be communicated as a single payload and
-still requires the receiver to execute each stage against
-their own personalised instance.
+image with statically randomised flags. Two integrity
+threats follow from that: \textit{flag copying} (per-VM
+flags redistributed via messaging or screenshots) and
+\textit{LLM-assisted solving} (uniform problem structures
+resembling public write-ups are solved by a prompted
+model~\cite{ji2025}). The scheme addresses both directly. A
+third threat, \textit{solution sharing} (a verbatim
+exploit communicated to the cohort), is addressed
+structurally: a multi-stage chain (four stages in CTF5 and
+CTF6, six in CTF9) cannot be communicated as a single
+payload and still requires the receiver to execute each
+stage against their own personalised instance.
 
-The existing module's flag generation framework provides a
-class-based, template-driven pipeline designed to produce
-per-student zip packages for VM or server deployment. Because
-the challenges in this project are distributed as Docker
-Compose stacks rather than provisioned VMs, and because each
-challenge uses a different technology stack with its own data
-ingestion format, the templating and server-deploy
-infrastructure of the upstream framework was unnecessary
-overhead. A purpose-built replacement was therefore
-implemented: lightweight standalone scripts that invoke
-pluggable per-challenge generator modules and write
-\texttt{flags.json} and \texttt{credentials.json} directly
-into each challenge's data directory. The core cryptographic
-primitive is unchanged (HMAC-SHA256 keyed on a deployment
-salt), but the surrounding machinery is reduced from a
-class hierarchy with template expansion and remote deployment
-to a single-command invocation per challenge, better suited
-to the container-native distribution model adopted by this
-project.
+The existing module's flag generator is a class-based,
+template-driven pipeline that emits per-student zip packages
+for VM deployment. Because challenges here ship as Docker
+Compose stacks and each uses a different data format,
+templating and remote-deploy were unnecessary overhead. The
+replacement is a set of lightweight scripts that invoke
+per-challenge generator modules and write \texttt{flags.json}
+and \texttt{credentials.json} directly into each challenge's
+bind-mount directory. The cryptographic primitive is
+unchanged (HMAC-SHA256 keyed on a deployment salt); only the
+surrounding machinery is simplified to suit
+container-native distribution.
 
 \subsubsection{HMAC-SHA256 Flag Derivation}
 
@@ -217,17 +217,34 @@ four for CTF5 and CTF6, six for CTF9).
 Because HMAC-SHA256 under distinct keys produces
 statistically independent outputs, capturing one flag reveals
 no information about any other flag for the same user.
+Algorithm~\ref{alg:flag-gen} shows the end-to-end pipeline.
+
+\begin{algorithm}[t]
+\caption{Per-user flag generation pipeline}
+\label{alg:flag-gen}
+\small
+\begin{algorithmic}[1]
+\Require base salt $s$, username $u$, prefix $p$, flag count $k$, token length $N$
+\Ensure \texttt{flags.json} written to challenge bind-mount
+\State $F \gets \{\}$
+\For{$i \gets 1$ \textbf{to} $k$}
+  \State $s_i \gets s \Vert \texttt{"-flag"} \Vert i$ \Comment{per-flag salt}
+  \State $t_i \gets \mathrm{HMAC\text{-}SHA256}(s_i, u).\mathit{hex}[{:}N]$
+  \State $F[i] \gets p \Vert \texttt{"\{"} \Vert t_i \Vert \texttt{"\_"} \Vert u \Vert \texttt{"\}"}$
+\EndFor
+\State \textbf{write} $F$ to \texttt{\$CHALLENGE/data/flags.json}
+\end{algorithmic}
+\end{algorithm}
 
 \subsubsection{Integrity Properties and Positioning}
 
-Three properties follow directly from
-equations~(\ref{eq:hmac-flag})--(\ref{eq:per-flag-salt}).
+Three properties follow.
 \textbf{Attribution}: because $u$ is embedded in the flag
 string, any submitted flag identifies its legitimate owner;
 submitting another student's flag is detectable without
 server-side comparison. \textbf{Year-over-year invalidation}:
 rotating $s$ invalidates all previously generated flags,
-including any published write-ups. \textbf{LLM resistance}:
+including published write-ups. \textbf{LLM resistance}:
 because $s$ is never exposed on the user-facing surface, an
 LLM without the salt cannot produce a valid flag even when it
 has correctly identified the methodology; the model may still
@@ -236,163 +253,153 @@ executing the exploit against the student's personalised
 instance. These claims are evaluated empirically in
 Section~\ref{sec:results}.
 
-The scheme is scoped deliberately to the flag layer. Chothia
-and Novakovic's SecGen~\cite{chothia2023} randomises the
-entire lab environment per student, defending against both
-flag copying and methodology sharing.
-Reimplementing SecGen-style environment generation across
-nine distinct technology stacks would have required
-infrastructure investment disproportionate to the target
-context, and flag-layer personalisation captures the dominant
-integrity risk (exam-style flag sharing) at a fraction of the
-cost.
+The scheme is scoped to the flag layer.
+SecGen~\cite{chothia2023} randomises the entire lab
+environment per student, but reimplementing SecGen-style
+generation across nine stacks would cost more than the
+dominant risk (exam-style flag sharing) warrants; flag-layer
+personalisation captures that risk at a fraction of the cost.
 
 \subsection{Challenge Implementations}
 \label{sec:challenge-design}
 
-Full per-challenge documentation is available in the
-submission's source tree; this section walks through the
-suite in order and records the distinctive design decision
-taken in each challenge, each of which operationalises one
-of the guiding principles of
-Section~\ref{sec:design-philosophy}.
+Full per-challenge documentation is available in the source
+tree; this section records the distinctive design decision
+taken in each challenge, grouped by tier of the deliverables
+ladder (Section~\ref{sec:research-question}).
 
-\textbf{CTF1, accepting multiple cookie encodings.} The
-unsigned-cookie decoder accepts raw JSON, base64,
-URL-encoded base64, and URL-encoded JSON. This is a
-deliberate pedagogical choice: pilot attempts revealed that
-players who correctly identified the vulnerability
-frequently failed to exploit it because the browser had
-URL-encoded the cookie on re-submission through DevTools.
-Accepting multiple encodings keeps the vulnerability's
-\textit{concept} as the barrier and removes an incidental
-formatting trap, consistent with Fuzyll's maxim that
-learning should be the path to the
-flag~\cite{Fuzyll2015}. Post-design auditing also identified
-an unintended login-bypass path (the form accepted the
-base64 admin cookie as a password) which was removed; a
-sliding-window per-IP rate limiter now forces the player
-onto the intended cookie-tampering path.
+\subsubsection{Basic tier}
 
-\textbf{CTF2, gating a weak secret behind Proof-of-Work.}
-The password manager hides the JWT signing secret behind a
-four-byte hex Proof-of-Work gate exposed on a debug
-endpoint, modelling the real-world pattern in which a debug
-surface is ``protected'' by an obscure filter rather than by
-authentication. With the secret in hand the player forges a
-token against the \texttt{flag12} account, whose vault entry
-is synchronised from \texttt{flags.json} at startup so the
-flag is delivered through the same vault UI any authenticated
-user sees. A client-side PBKDF2 + AES-GCM layer for stored
-passwords is deliberately preserved as scenery: it does not
-affect the intended exploit, but its presence simulates the
-depth of a production password manager and prevents the
-player from pattern-matching the challenge as a toy.
+\textbf{CTF1 --- Module Portal: accepting multiple cookie
+encodings.} The unsigned-cookie decoder accepts raw JSON,
+base64, URL-encoded base64, and URL-encoded JSON. Pilot
+attempts revealed that players who correctly identified the
+vulnerability frequently failed to exploit it because the
+browser URL-encoded the cookie on re-submission through
+DevTools. Accepting multiple encodings keeps the
+vulnerability's concept as the barrier and removes an
+incidental formatting trap, as recommended by
+Fuzyll~\cite{Fuzyll2015}. An unintended login-bypass (the
+form accepted the base64 admin cookie as a password) was
+removed during audit and replaced with a sliding-window
+per-IP rate limiter; the iteration is revisited in
+Section~\ref{sec:dev-audit}.
 
-\textbf{CTF3, parallel paths through SQL injection and a
-debug endpoint.} The HR system ships two distinct routes to
-the data behind its four flags. A naive
-\texttt{isBlocked()} regex filter passes
-\texttt{'OR~1=1--} through unaltered because it only
-matches keywords surrounded by whitespace, and a parallel
-endpoint \texttt{/api/debug/user-config} annotated
+\textbf{CTF2 --- Password Manager: gating a weak secret
+behind Proof-of-Work.} The manager hides the JWT signing
+secret behind a four-byte-hex Proof-of-Work gate exposed on
+a debug endpoint, modelling the real-world pattern in which
+a debug surface is ``protected'' by an obscure filter rather
+than by authentication. With the secret in hand the player
+forges a token against the \texttt{flag12} account, whose
+vault entry is synchronised from \texttt{flags.json} at
+startup so the flag is delivered through the same vault UI
+any authenticated user sees. A client-side PBKDF2 + AES-GCM
+layer for stored passwords is preserved as scenery: it does
+not affect the intended exploit, but its presence simulates
+the depth of a production password manager and prevents
+pattern-matching as a toy.
+
+\textbf{CTF7 --- NorthSide Notes: per-student attribution
+via a file path.} The insecure-deserialisation challenge
+exposes each flag as a per-user text file at
+\texttt{/app/src/data/flag-files/<u>.txt}. The intended
+payload, an immediately-invoked function expression passed
+to \texttt{node-serialize}'s
+\texttt{unserialize()}~\cite{CVE20175941,NodeSerialize},
+must embed the student's own username in the path: any
+attempt to read another student's flag names the target
+explicitly, so the exploit itself constitutes attributable
+evidence of attempted impersonation, complementing the
+embedded-username attribution of
+equation~(\ref{eq:flag-format}).
+
+\subsubsection{Intermediate tier}
+
+\textbf{CTF3 --- HR System: parallel paths through SQL
+injection and a debug endpoint.} The HR system ships two
+distinct routes to the data behind its four flags. A naive
+\texttt{isBlocked()} regex filter passes \texttt{'OR~1=1--}
+through unaltered because it only matches keywords
+surrounded by whitespace, and a parallel endpoint
+\texttt{/api/debug/user-config} annotated
 \texttt{// TODO: REMOVE BEFORE PRODUCTION} returns plaintext
 passwords from \texttt{credentials.json}. Both paths are
 pedagogically valid; the injection path is rewarded with an
-additional flag that the debug path does not unlock, so the
-less-confident player is guaranteed to make progress while
-the more ambitious player is incentivised to attempt both
-and encounter the realistic anti-pattern of a forgotten
-maintenance endpoint.
+additional flag, so a less-confident player is guaranteed to
+make progress while a more ambitious player encounters the
+anti-pattern of a forgotten maintenance endpoint.
 
-\textbf{CTF4, bot-mediated XSS and per-instance deployment.}
-The knowledge-base page contains an \texttt{eval()} sink
-that is reached only when an admin bot (a Playwright-driven
-headless browser registered as a BullMQ consumer) follows a
-link the player submits through the report workflow. This
-structurally mirrors the real-world ``XSS-as-CSRF via an
-automated admin'' pattern~\cite{DOMXSSWalker2023}, and it
-also forces the player to navigate URL-encoding subtleties
-(notably, the payload must use \texttt{.concat()} rather than
-\texttt{+} for string concatenation because \texttt{+}
-decodes to a space inside a query string) that a static
-\texttt{alert(1)} exercise would hide. Because the bot
-holds a single privileged session and exfiltrated data lands
-in a shared PostgreSQL table, a multi-tenant deployment
-would leak personalisation between players; the generation
-layer therefore emits a per-student Compose override with a
-ten-port offset and a unique \texttt{.env}, running the same
-immutable image in a per-instance deployment mode
-(Section~\ref{sec:containerisation}).
+\textbf{CTF4 --- Corporate Helpdesk: bot-mediated XSS and
+per-instance deployment.} The knowledge-base page contains
+an \texttt{eval()} sink reached only when an admin bot (a
+Playwright-driven headless browser registered as a BullMQ
+consumer) follows a link submitted through the report
+workflow. This mirrors the real-world ``XSS-as-CSRF via an
+automated admin'' pattern~\cite{DOMXSSWalker2023} and forces
+the player to navigate URL-encoding subtleties (the payload
+must use \texttt{.concat()} rather than \texttt{+} because
+\texttt{+} decodes to a space inside a query string) that a
+static \texttt{alert(1)} exercise would hide. Because the
+bot holds a single privileged session and exfiltrated data
+lands in a shared PostgreSQL table, a multi-tenant
+deployment would leak personalisation; the generation layer
+therefore emits a per-student Compose override with a
+ten-port offset, running the same immutable image in
+per-instance mode (Section~\ref{sec:containerisation}).
 
-\textbf{CTF5, disclosing the WAF source to the player.} The
-Jinja2 SSTI challenge in NovaCMS is gated by a twelve-word
-keyword blocklist whose full source is served as a static
-\texttt{CHANGELOG.md} asset advertised in the editor. The
-challenge is therefore not ``guess the blocklist'' but
-``reason about how to bypass a blocklist you can read,''
-shifting the learning outcome from enumeration to
-construction: players apply hex-escaped
-\texttt{\textbackslash x5f\textbackslash x5f} dunders and the
-Jinja \texttt{|attr()} filter to traverse the engine's MRO
-chain from \texttt{lipsum} to \texttt{os.environ} where the
-flag lives~\cite{JinjaMRO}. Because the WAF is visible, the
-challenge admits a calibrable difficulty surface: raising the
-bar is a matter of adding blocked substrings rather than
-obfuscating the filter.
-
-\textbf{CTF6, rewriting the IMDS link-local address.}
-Docker's default bridge network does not route the AWS
-link-local metadata address \texttt{169.254.169.254}, yet
-teaching a Capital One-style SSRF-to-IMDS
-chain~\cite{khan2022} requires the player to supply exactly
-that address. The Rust preview handler therefore rewrites
-\texttt{169.254.169.254} to the Compose service hostname
-\texttt{metadata} before dispatching the request, so the
-player's mental model matches the real cloud environment
-while the container network actually delivers the traffic.
-The same handler supports \texttt{dict://} and
-\texttt{gopher://}, which enables the Redis pivot documented
-by PortSwigger~\cite{BurpSSRFRedis} and generalises the
-lesson beyond the single IMDS surface.
-
-\textbf{CTF7, per-student attribution via a file path.} The
-insecure-deserialisation challenge exposes each flag as a
-per-user text file at
-\texttt{/app/src/data/flag-files/<u>.txt}. The intended
-payload, an immediately-invoked function expression passed to
-\texttt{node-serialize}'s
-\texttt{unserialize()}~\cite{CVE20175941,NodeSerialize}, must
-embed the student's own username in the path to retrieve the
-flag: any attempt to read another student's flag names the
-target explicitly, so the exploit itself constitutes
-attributable evidence of attempted impersonation,
-complementing the embedded-username attribution of
-equation~(\ref{eq:flag-format}).
-
-\textbf{CTF8, breadcrumb chaining across three distinct
-weaknesses.} The Gazette editorial system presents a
-three-flag chain whose design goal is to demonstrate that
-independent weak controls compose into a compromise greater
-than any of them individually. Flag 1 is an IDOR on
+\textbf{CTF8 --- Greystone Gazette: breadcrumb chaining
+across three weaknesses.} The editorial system presents a
+three-flag chain that demonstrates how independent weak
+controls compose into a compromise greater than any
+individually. Flag 1 is an IDOR on
 \texttt{GET /api/articles/:id} obtained by enumerating
-sequential integer identifiers; the target draft embeds a
-\texttt{\{\{PLAYER\_FLAG1\}\}} template token that the server
-substitutes with the \emph{requesting user's} flag at
-response time, so IDOR delivers the attacker their own
-per-user flag rather than anyone else's. Flag 2 is reached
-by calling \texttt{/api/admin/dashboard} directly,
-demonstrating that a client-side role redirect in
+sequential identifiers; the target draft embeds a
+\texttt{\{\{PLAYER\_FLAG1\}\}} template token that the
+server substitutes with the \emph{requesting user's} flag,
+so IDOR delivers the attacker their own per-user flag. Flag
+2 is reached by calling \texttt{/api/admin/dashboard}
+directly, showing that a client-side role redirect in
 \texttt{static/js/admin.js} is not an access-control
-boundary. Flag 3 is OS command injection on a
-\texttt{ping}-style diagnostics endpoint whose blocklist
-rejects \texttt{;}, \texttt{|}, \texttt{\&}, \texttt{\textbackslash n}
-and \texttt{\textbackslash r} but leaves command substitution
-\texttt{\$(\ldots)} untouched, reinforcing the NCSC guidance
-that allowlists are the only robust defence against
-injection classes~\cite{NCSCInjection}. A per-user flag file
-at \texttt{/app/flags/flag3-<u>.txt} ties the command-injection
-payload to the player in the same way as CTF7.
+boundary. Flag 3 is OS command injection on a \texttt{ping}
+diagnostics endpoint whose blocklist rejects \texttt{;},
+\texttt{|}, \texttt{\&}, \texttt{\textbackslash n} and
+\texttt{\textbackslash r} but leaves command substitution
+\texttt{\$(\ldots)} untouched, an instance of the NCSC
+guidance that allowlists are the only robust defence against
+injection classes~\cite{NCSCInjection}.
+
+\subsubsection{Advanced tier}
+
+\textbf{CTF5 --- NovaCMS: disclosing the WAF source to the
+player.} The Jinja2 SSTI challenge is gated by a
+twelve-word keyword blocklist whose full source is served as
+a static \texttt{CHANGELOG.md} asset advertised in the
+editor. The challenge is therefore not ``guess the
+blocklist'' but ``bypass a blocklist you can read,'' which
+shifts the learning outcome from enumeration to
+construction: players apply hex-escaped
+\texttt{\textbackslash x5f\textbackslash x5f} dunders and
+the Jinja \texttt{|attr()} filter to traverse the engine's
+MRO chain from \texttt{lipsum} to \texttt{os.environ} where
+the flag lives~\cite{JinjaMRO}. Because the WAF is visible,
+difficulty is calibrable by adding blocked substrings rather
+than obfuscating the filter.
+
+\textbf{CTF6 --- Veridian Secure: rewriting the IMDS
+link-local address.} Docker's default bridge network does
+not route the AWS link-local address
+\texttt{169.254.169.254}, yet teaching a Capital One-style
+SSRF-to-IMDS chain~\cite{khan2022} requires the player to
+supply exactly that address. The Rust preview handler
+therefore rewrites \texttt{169.254.169.254} to the Compose
+service hostname \texttt{metadata} before dispatching the
+request, so the player's mental model matches the real
+cloud environment while the container network delivers the
+traffic. The same handler supports \texttt{dict://} and
+\texttt{gopher://}, enabling the Redis pivot documented by
+PortSwigger~\cite{BurpSSRFRedis} and generalising the lesson
+beyond the single IMDS surface.
 
 \textbf{CTF9, a six-stage enterprise vulnerability chain.}
 The TrialVault platform is the largest challenge in the
@@ -415,28 +422,43 @@ filter written as \texttt{name.replace("../", "")}; only the
 a subtlety the SOLUTIONS document captures explicitly. Flag
 3 exploits JWT algorithm confusion: when the verifier
 honours the token's own \texttt{alg} header, the public-key
-PEM bytes (harvested in Flag 2 via traversal) become a valid
-HS256 HMAC secret, a pattern described in CVE-2016-10555 and
-generalised by Auth0~\cite{Auth0JWTAttacks}. Flag 4 is a
-blind Boolean SQL injection against a deliberately raw
+PEM bytes $P$ (harvested in Flag 2 via traversal) become a
+valid HS256 secret, giving the forged token
+\begin{equation}
+T = b_h \Vert \texttt{.} \Vert b_c \Vert \texttt{.} \Vert
+B_{64}\!\left(\mathrm{HMAC\text{-}SHA256}(P,\, b_h \Vert \texttt{.} \Vert b_c)\right)
+\label{eq:jwt-confusion}
+\end{equation}
+where $b_h$ and $b_c$ are base64-encoded header and claims
+with \texttt{alg=HS256}, a pattern generalised by
+Auth0~\cite{Auth0JWTAttacks}. Flag 4 is blind Boolean SQL
+injection against a raw
 \texttt{ResearchService.search} that concatenates the query
-parameter into \texttt{ILIKE}. Flag 5 combines a factoring
-problem (a 512-bit RSA modulus) with an AES-256-GCM
-decryption whose key is the SHA-256 of the composite of two
-secrets harvested in earlier flags, so the crypto stage
-cannot be short-circuited by solving only the factoring
-half. Flag 6 retrieves a plaintext password from
-\texttt{/actuator/logfile}, where it appears in a DEBUG-level
-log line produced by the authentication service, and forces
-a form-login as the staff account \texttt{amir.patel}; the
-form-login is gated by Spring Security's session, not by
-the forgeable JWT of Flag 3, so the earlier algorithm-confusion
-exploit does not bypass this stage. The chain is
-deliberately asymmetric: the forged-JWT path for Flag 3 is
-architecturally separated from the session-authenticated
-path for Flag 6, so the challenge teaches that not all
-administrative surfaces share a single authentication
-mechanism.
+parameter into \texttt{ILIKE} (Listing~\ref{lst:research}).
+Flag 5 combines a factoring problem (a 512-bit RSA modulus)
+with an AES-256-GCM decryption whose key is
+$\mathrm{SHA\text{-}256}(k_1 \Vert k_2)$, with $k_1, k_2$
+harvested in earlier flags, so the crypto stage cannot be
+short-circuited by factoring alone. Flag 6 retrieves a
+plaintext password from \texttt{/actuator/logfile} (a
+DEBUG-level log line produced by the authentication
+service) and forces a form-login as the staff account
+\texttt{amir.patel}; the form-login is gated by Spring
+Security's session, not by the forgeable JWT of Flag 3, so
+the earlier algorithm-confusion exploit does not bypass
+this stage. The asymmetry teaches that not all
+administrative surfaces share one authentication mechanism.
+
+\begin{lstlisting}[float=t,language=Java,numbers=left,
+  basicstyle=\footnotesize\ttfamily,
+  caption={CTF9 \texttt{ResearchService.search}:
+  deliberately raw native-query concatenation targeted by
+  Flag 4.},label={lst:research}]
+String sql = "SELECT COUNT(*) FROM trials "
+  + "WHERE title ILIKE '%" + query + "%'";
+Object raw = entityManager
+  .createNativeQuery(sql).getSingleResult();
+\end{lstlisting}
 
 \begin{figure}[t]
     \centering
@@ -450,15 +472,14 @@ mechanism.
 \label{sec:containerisation}
 
 Each challenge is packaged as a Docker Compose
-stack~\cite{DockerDocs}. Three constraints derived from the
-threat model shape the packaging.
-\textit{No student data in the image}: flags and credentials
-are supplied as read-only bind mounts at startup
-(\texttt{./flags.json:/app/flags.json:ro}), so rotating a
-cohort is a matter of replacing the host-side files and
-restarting the stack rather than rebuilding.
-\textit{No code-change onboarding}: the generation layer
-writes to the mount point only, leaving the image untouched.
+stack~\cite{DockerDocs}. Packaging is shaped by two
+invariants derived from the threat model.
+\textit{No student data in the image}: flags and
+credentials are supplied as read-only bind mounts at
+startup (\texttt{./flags.json:/app/flags.json:ro}), so
+rotating a cohort is a matter of replacing the host-side
+files and restarting the stack rather than rebuilding; the
+generation layer writes to mount points only.
 \textit{No incidental exposure}: the simulated IMDS and the
 unauthenticated Redis in CTF6 declare no \texttt{ports:}
 directive and are reachable only by their service name on a
@@ -482,159 +503,183 @@ the per-instance model (CTF4). A module administrator does
 not have to choose between ``build once'' and ``personalise'':
 both properties hold simultaneously.
 
-CTF9 is the largest stack in the suite and raises a
-containerisation concern of its own: the Java application
-needs an RSA signing key to issue legitimate JWTs but must
-\emph{not} expose that key on any surface the player can
-reach through the Flag 2 traversal. The application
-therefore loads its JWT private key and the document
-encryption private key from environment variables supplied
-by Compose, never from the filesystem; the repository
-preserves the matching files under \texttt{src/main/resources/keys/}
-purely as developer reference material, and they are not
-shipped into the runtime image. The same three
-invariants (no student data in the image; no code-change
-onboarding; no incidental exposure) hold: \texttt{flags.json}
-and \texttt{users.json} are bind-mounted read-only into
-\texttt{/app/seed/}, the PostgreSQL and Redis services do
-not declare a \texttt{ports:} directive and are reachable
-only on the internal \texttt{trialvault-net} bridge, and the
-web service maps a single external port (\texttt{3003}) to
-the Spring Boot container's \texttt{8080}.
+CTF9 is the largest stack and adds a key-handling
+constraint: the Java application needs an RSA signing key
+for legitimate JWTs but must not expose it on any surface
+the Flag 2 traversal can reach. The application therefore
+loads the JWT private key and the document-encryption key
+from environment variables supplied by Compose; the
+matching files under \texttt{src/main/resources/keys/} are
+kept as developer reference and are not shipped into the
+runtime image. \texttt{flags.json} and \texttt{users.json}
+are bind-mounted read-only into \texttt{/app/seed/};
+PostgreSQL and Redis services declare no \texttt{ports:}
+directive and are reachable only on the internal
+\texttt{trialvault-net} bridge; the web service maps a
+single external port (\texttt{3003}) to the Spring Boot
+container's \texttt{8080}.
 
 \subsection{Verification, Validation, and Testing}
 \label{sec:vvt}
 
-Testing CTF challenges raises a problem conventional software
-testing does not: the ``bug'' the developer is verifying is
-precisely the vulnerability that makes the challenge work.
-Tests must therefore establish two independent properties:
-that application-level contracts hold (authentication, rate
-limiting, authorisation boundaries) \textit{and} that the
-intended exploit still yields the flag. The regime below
-reflects this duality, and its outputs feed the three
-evaluation tracks of Section~\ref{sec:results}.
+Testing CTF challenges raises a problem conventional
+software testing does not: the ``bug'' under verification
+is precisely the vulnerability that makes the challenge
+work. Tests must therefore establish two properties: that
+application-level contracts hold (authentication, rate
+limiting, authorisation boundaries) and that the intended
+exploit still yields the flag. Coverage across the nine
+challenges is summarised in Table~\ref{tab:vvt-matrix}.
+
+\begin{table}[t]
+\centering
+\caption{VVT coverage matrix. U = unit/contract tests,
+I = integration tests, E = exploit-as-a-test script,
+A = post-design audit record.}
+\label{tab:vvt-matrix}
+\small
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{CTF} & \textbf{U} & \textbf{I} & \textbf{E} & \textbf{A} \\ \hline
+1 & \checkmark & & \checkmark & \checkmark \\ \hline
+2 & & & \checkmark & \checkmark \\ \hline
+3 & & & \checkmark & \checkmark \\ \hline
+4 & & & \checkmark & \checkmark \\ \hline
+5 & \checkmark & & \checkmark & \checkmark \\ \hline
+6 & & & \checkmark & \checkmark \\ \hline
+7 & \checkmark & & \checkmark & \checkmark \\ \hline
+8 & \checkmark & \checkmark & \checkmark & \checkmark \\ \hline
+9 & \checkmark & \checkmark & \checkmark & \checkmark \\ \hline
+\end{tabular}
+\end{table}
 
 \subsubsection{Exploit Scripts as Ground Truth}
 
-The distinctive element of the regime is an
-\textit{exploit-as-a-test} harness at \texttt{CTFs/e2e/}.
-For CTF1 through CTF7, a Python script
-(\texttt{ctf\{1..7\}\_exploit.py}) drives the full intended
-attack chain against a running container stack and asserts
-that the running student's personalised flag appears in the
-application's response. For CTF1, the script logs in,
-extracts the base64 cookie, decodes it, modifies
-\texttt{role} to \texttt{admin}, re-encodes, requests
-\texttt{/flag}, and checks that the expected HMAC flag string
-is present in the body. A \texttt{run\_all.sh} harness runs
-every script sequentially and reports pass or fail. CTF8 and
-CTF9 follow the same harness philosophy but use the native
-test runner of their host language: CTF8 ships an in-process
-Gin test server at \texttt{test/integration\_test.go} that
-combines contract assertions (session enforcement, rate
-limiting, admin-only gates) with an end-to-end walk of the
-IDOR $\to$ broken-auth $\to$ command-injection chain;
-CTF9 uses JUnit 5 with \texttt{spring-boot-starter-test},
-which starts the application context on a random port and
-exercises the same dual requirement of contract plus
-exploit. Running in-process is the natural choice for these
-stacks because the cost of spinning up Gin or Spring
-Boot within the test runner is negligible, whereas an
-external HTTP harness over \texttt{docker compose up} would
-add several seconds of latency per run without any gain in
-realism.
+The distinctive element is an \textit{exploit-as-a-test}
+harness at \texttt{CTFs/e2e/}. For CTF1--CTF7, a Python
+script (\texttt{ctf\{1..7\}\_exploit.py}) drives the full
+intended attack chain against a running container stack and
+asserts that the student's personalised flag appears in the
+application's response (Algorithm~\ref{alg:exploit-harness}).
+A \texttt{run\_all.sh} wrapper runs every script sequentially
+and reports pass or fail. CTF8 and CTF9 follow the same
+philosophy using native in-process runners: CTF8's
+\texttt{test/integration\_test.go} combines contract
+assertions (session enforcement, rate limiting, admin-only
+gates) with an end-to-end walk of the IDOR
+$\to$ broken-auth $\to$ command-injection chain, and CTF9
+uses JUnit~5 with \texttt{spring-boot-starter-test} on a
+random-port application context. In-process runners are
+used for CTF8 and CTF9 because the cost of spinning up Gin
+or Spring Boot inside the test runner is negligible, whereas
+an external HTTP harness over \texttt{docker compose up}
+would add seconds of latency per run without gain in realism.
 
-The harness supports three methodological claims.
+\begin{algorithm}[t]
+\caption{Generic exploit-as-a-test harness}
+\label{alg:exploit-harness}
+\small
+\begin{algorithmic}[1]
+\Require stack URL $U$, username $u$, expected prefix $p$
+\State wait for \texttt{GET} $U$\texttt{/health} $\to$ 200
+\State $r \gets$ run exploit steps for the challenge
+\If{$r$ contains pattern $p\texttt{\{[0-9a-f]+\_}u\texttt{\}}$}
+  \State \Return PASS
+\Else
+  \State \Return FAIL
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+The harness supports two methodological claims.
 \textbf{Objective solvability}: pass or fail is independent
 of any human solver's skill or patience, supplying the
-process-based evidence Meinsma et al.~\cite{Meinsma2022}
+process-level evidence Meinsma et al.~\cite{Meinsma2022}
 identify as missing from logging alone.
-\textbf{Regression baseline}: any subsequent code change that
-breaks the intended path is caught at CI time rather than
-during a student attempt.
-\textbf{Controlled LLM baseline}: a model that fails a
-challenge the script solves has failed on reasoning rather
-than on environmental accessibility, which cleanly separates
-two otherwise-confounded quantities in the LLM evaluation.
+\textbf{Regression baseline}: a code change that breaks the
+intended path is caught at CI time rather than during a
+student attempt.
 
-\subsubsection{Unit Tests and Post-Design Auditing}
+\subsubsection{Contract and Unit Tests}
 
-Per-challenge unit and integration tests exercise non-exploit
-contracts using each stack's native framework: Jest with
-Supertest~\cite{JestSupertest} for Node.js (CTF1, CTF7),
-pytest for Flask (CTF5), the Go standard \texttt{testing}
-package driving an in-process Gin server for CTF8, and
-JUnit~5 with Spring Boot Test for CTF9. Representative
-assertions include ``unauthenticated requests to
-\texttt{/flag} return 403,'' ``rate limiting activates after
-five failed logins,'' ``each WAF blocklist entry is
-enforced,'' ``the v1 preview deprecation banner activates
-after five invocations,'' ``a forged HS256 token signed with
-the public-key PEM does not bypass the session-gated
+Per-challenge unit and integration tests exercise
+non-exploit contracts using each stack's native framework:
+Jest with Supertest~\cite{JestSupertest} for Node.js (CTF1,
+CTF7), pytest for Flask (CTF5), the Go standard
+\texttt{testing} package with an in-process Gin server for
+CTF8, and JUnit~5 with Spring Boot Test for CTF9.
+Representative assertions include ``unauthenticated requests
+to \texttt{/flag} return 403,'' ``rate limiting activates
+after five failed logins,'' ``each WAF blocklist entry is
+enforced,'' ``a forged HS256 token signed with the
+public-key PEM does not bypass the session-gated
 \texttt{/incident-report} endpoint,'' and ``the traversal
 filter strips \texttt{../} but permits \texttt{....//}.''
 CTF2, CTF3, CTF4, and CTF6 do not ship first-party unit
 tests; their contracts are covered only through the
-end-to-end layer, a limitation discussed in
-Section~\ref{sec:results}.
+end-to-end layer, acknowledged as a limitation.
 
-Because realism motivates features that can themselves become
-unintended vulnerabilities (CTF3's
-\texttt{// TODO: REMOVE BEFORE PRODUCTION} debug endpoint,
-CTF4's shared-database capture store, CTF6's co-located
-internal services, CTF9's Actuator exposure), each later
-challenge ships a \texttt{workflow.md} cataloguing the risks
-identified during audit, their disposition (``accepted as
-alternative path,'' ``mitigated,'' ``cannot be fixed without
-breaking the intended path''), and the source file and fix
-commit. CTF4's audit is the most complete retrospective
-example, documenting eleven findings tied to specific files
-and fix status; CTF9's pre-build audit records eight
-findings with accompanying mitigations, including an
-explicit argument that the private JWT key is loaded from
-an environment variable rather than the classpath so the
-Flag 2 traversal cannot reach it.
+\subsubsection{Development and Audit Iteration}
+\label{sec:dev-audit}
+
+Realism motivates features that can themselves become
+unintended vulnerabilities, so each later challenge ships a
+\texttt{workflow.md} cataloguing the risks identified during
+audit, their disposition (``accepted as alternative path,''
+``mitigated,'' ``cannot be fixed without breaking the
+intended path''), and the source file or fix commit. Three
+iteration cycles shaped the final artefact. The CTF1 audit
+surfaced a login-bypass in which the form accepted the
+base64 admin cookie as a password; the intended
+cookie-tampering path was preserved by adding a
+sliding-window per-IP rate limiter on the login handler.
+The CTF4 audit is the most extensive, documenting eleven
+findings tied to specific files and fix status, and drove
+the per-instance deployment model when a shared PostgreSQL
+capture store was found to leak personalisation between
+players. The CTF9 pre-build audit recorded eight findings
+with mitigations, the most significant being that the
+private JWT key is loaded from an environment variable
+rather than the classpath so the Flag 2 traversal cannot
+reach it.
 
 \subsubsection{LLM and Human Evaluation Tracks}
 
-Two evaluation tracks supplement the automated regime. First,
-multiple LLMs are prompted with each challenge's public
-surface and asked to produce a working exploit under both
+Two evaluation tracks supplement the automated regime.
+Multiple LLMs are prompted with each challenge's public
+surface and asked to produce a working exploit under
 passive and agentic scaffolding; a model is recorded as
 having solved a challenge only if the transcript culminates
 in a command that, executed against the stack, yields the
 player's personalised flag---a condition the HMAC
-construction of
-equation~(\ref{eq:hmac-flag}) makes impossible to satisfy by
-text generation alone. Second, a small-scale human
-walkthrough with participants of varying skill levels
-captures the process evidence (narrated screen recordings,
-time-per-flag, and intermediate artefacts such as decrypted
-blobs and forged JWTs) that Meinsma et
+construction of equation~(\ref{eq:hmac-flag}) makes
+impossible to satisfy by text generation alone, so a model
+that fails a script-soluble challenge has failed on
+reasoning rather than environmental accessibility. A
+small-scale human walkthrough with participants of varying
+skill captures the process evidence (narrated screen
+recordings, time-per-flag, intermediate artefacts such as
+decrypted blobs and forged JWTs) that Meinsma et
 al.~\cite{Meinsma2022} identify as absent from solver-count
 logging. Institutional ethics guidance was followed:
 participation was voluntary, data was anonymised at
 collection, and recordings were retained only for the
-duration of analysis. Both tracks' results are presented and
-interpreted in Section~\ref{sec:results}.
+duration of analysis. Both tracks' results are presented in
+Section~\ref{sec:results}.
 
 \subsubsection{Tooling}
 
-Orchestration uses Docker and Docker
-Compose~\cite{DockerDocs}. Per-stack tooling includes
-npm/pnpm workspaces for Node.js, Composer for Laravel
-(CTF3), Poetry for Flask (CTF5), Cargo for Rust (CTF6), Go
-modules for CTF8, and Maven for the Spring Boot build of
-CTF9. Jest and Supertest~\cite{JestSupertest} underpin
-Node.js testing; pytest with Flask's test client handles
-CTF5; Playwright~\cite{Playwright} drives the headless
-admin bot in CTF4; the Go standard \texttt{testing} package
-with \texttt{net/http/httptest} underpins CTF8; JUnit~5 with
-\texttt{spring-boot-starter-test} handles CTF9. The
-stack-agnostic end-to-end exploit scripts for CTF1--CTF7
-are written in Python~3 using \texttt{requests} so that
-markers can read and audit them without familiarity with
-the host language of each challenge, and CTF8 and CTF9
+Orchestration uses Docker Compose
+v2~\cite{DockerDocs}. Core stacks and versions are as
+shipped in the repository: Spring Boot 3.2.5 with Java 17
+and JUnit~5 (CTF9); Go 1.21 with Gin 1.10 (CTF8); Rust
+1.75+ with actix-web 4 (CTF6); Flask 3.1 with pytest 8.3
+(CTF5); Laravel 11 on PHP 8.2 (CTF3); Node.js 20 with
+Express 4.21--5.2, Jest 30.2 and Supertest 7.1 (CTF1, CTF2,
+CTF4, CTF7); Playwright 1.40 with BullMQ 5.1 drives the
+admin bot in CTF4~\cite{Playwright}. Stack-agnostic
+end-to-end exploit scripts for CTF1--CTF7 are written in
+Python~3 using \texttt{requests}, so markers can audit them
+without familiarity with each host language; CTF8 and CTF9
 re-use the same HTTP-level assertions from within their
 native runners.

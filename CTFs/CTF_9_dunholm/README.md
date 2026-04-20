@@ -233,6 +233,26 @@ CTFs/CTF_9_dunholm/
 
 ---
 
+## Running tests
+
+- **Unit** (`src/test/java/...`, JUnit 5) covers JWT algorithm-confusion
+  cases. Runs with the usual Maven command, no Docker needed:
+
+  ```bash
+  mvn test
+  ```
+
+- **End-to-end** lives in the shared suite at `CTFs/e2e/ctf9_exploit.py`
+  and reproduces every flag chain against the dockerised stack on port
+  3003:
+
+  ```bash
+  docker compose up -d
+  cd ../e2e && pip install -r requirements.txt && python3 -m pytest ctf9_exploit.py -v
+  ```
+
+---
+
 ## References
 
 - [OWASP A01:2021](https://owasp.org/Top10/A01_2021-Broken_Access_Control/)
