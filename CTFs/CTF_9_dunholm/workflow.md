@@ -220,18 +220,59 @@ Summary of what was built, deviations from the brief, exact verification command
 
 ---
 
-## 6. Unintended vulnerability audit (filled in during Phase C)
+## 6. Unintended vulnerability audit
 
-Planned entries:
+Following the format established in CTF4 and reused by CTF6.
 
-- V1 Thymeleaf XSS in trial data, mitigated by auto-escaping on every `${}` binding.
-- V2 SQL injection on login, mitigated by parameterised JPA repository call.
-- V3 Brute-force login, mitigated by the D7 rate limiter.
-- V4 Direct HTTP access to `/data/vault/` via static resource serving, mitigated because `/data/vault/` is outside `classpath:/static/` and outside every configured `spring.mvc.static-path-pattern`.
-- V5 JWT `alg: none` bypass, mitigated by an explicit rejection branch in `JwtService.verifyToken`.
-- V6 Reading `private.pem` via traversal, mitigated by loading the private key from an environment variable rather than the filesystem (Q4).
-- V7 Cross-user Flag 4 extraction via SQLi, discussed: the `secrets` table row for Flag 4 is keyed by `flag4_<username>`, and the blind SQLi requires the extracting user to reference their own key in the payload. Any attempt to extract another user's key names that user explicitly, mirroring the CTF7 per-user file-path attribution pattern.
-- V8 SSRF via Actuator gateway, not applicable because Spring Cloud Gateway is not on the classpath.
+### V1 -- Thymeleaf Template Injection / XSS
+
+**Risk:** Narrative strings derived from seeded data are rendered into `dashboard.html`, `documents.html`, `admin.html`, and `incident-report.html`. If any binding used `th:utext` or a raw concatenation into server-rendered HTML, a player could inject script via a secret value or a document filename and use the Thymeleaf surface to pivot to a stored XSS that leaks other players' JWT cookies.
+
+**Mitigation:** Every binding in the templates is `th:text` / `${}`, which auto-escapes by default in Thymeleaf 3. No `th:utext` or `[(...)]` unescaped inline is used anywhere. The admin dashboard is rendered client-side via `textContent` / `createElement` in `admin.html`, never `innerHTML`. Verify with `grep -R 'th:utext\|innerHTML' src/main/resources/templates/` returning empty.
+
+### V2 -- SQL Injection on Login
+
+**Risk:** The Flag 4 vector establishes that `entityManager.createNativeQuery` with string concatenation is present in the codebase. If `AuthService.login` were to reuse that pattern against the `users` table, a player could bypass authentication with `' OR '1'='1` and skip Flags 1 through 3 entirely.
+
+**Mitigation:** `AuthService.login` uses `userRepository.findByUsername(String)`, a Spring Data JPA derived query that Spring binds as a prepared statement with a single `?1` positional parameter. BCrypt verification happens in Java after the lookup. The native-query surface is deliberately confined to `ResearchService.search`. Verify with `grep -R createNativeQuery src/main/java/` returning only `ResearchService`.
+
+### V3 -- Login Brute Force
+
+**Risk:** Player passwords are random six-character lowercase strings. Without rate limiting, a determined player could brute-force another player's account in the three-player deployment, skipping the audit chain and reading the target's Flag 1 through 5 directly.
+
+**Mitigation:** Bucket4j enforces the D7 rate limiter: 5 failed attempts per 2-minute sliding window per source IP on `POST /login` and `POST /staff-login`. Successful logins do not consume tokens. The limiter is per-IP; multi-source attacks are out of scope for a single-node CTF deployment. Verify by posting 6 bad passwords back-to-back and observing HTTP 429 on the sixth.
+
+### V4 -- Direct HTTP Access to `/data/vault/`
+
+**Risk:** The encrypted release envelopes live at `/data/vault/<username>.enc` inside the container. If Spring's static resource handler were mapped to `/data/**`, a player could fetch the `.enc` file at `http://host:3003/data/vault/<username>.enc` directly, skipping the directory-traversal step (Flag 2 vector).
+
+**Mitigation:** `spring.mvc.static-path-pattern` is left at the default `/static/**`, which maps to `classpath:/static/` only. `/data/vault/` is outside the classpath and outside every configured resource handler. The `.enc` file is reachable only through the traversal payload on `/api/files/download`, which is itself gated by the JWT filter. Verify that `curl http://localhost:3003/data/vault/abcd12.enc` returns HTTP 404, not 200.
+
+### V5 -- JWT `alg: none` Bypass
+
+**Risk:** Flag 3 requires `JwtService.verifyToken` to honour the `alg` header for HS256 forgeries. A more liberal implementation might also honour `alg: none`, which would let a player mint unsigned tokens and skip the public-key traversal step.
+
+**Mitigation:** `JwtService.verifyToken` has an explicit `if ("none".equalsIgnoreCase(alg)) { throw new JwtException("unsigned tokens rejected"); }` branch before the HS256 / RS256 dispatch. Verify with a forged token whose `alg` is `none`: the filter must return 401, not 200.
+
+### V6 -- Private Key Read via Directory Traversal
+
+**Risk:** Flag 2's traversal vector reads arbitrary filesystem paths. If the JWT private key lived at `/app/keys/private.pem`, the player could read it directly, forge RS256 tokens legitimately, and skip the algorithm-confusion technique that Flag 3 is designed to teach.
+
+**Mitigation:** The Dockerfile copies only `public.pem` into the image. The private key is loaded at boot via `JWT_PRIVATE_KEY` environment variable, injected by `docker-compose.yml` (Q4). The traversal returns 404 for any path that attempts to reach a private key because the file is not present on the filesystem. Verify with `docker exec trialvault-web ls /app/keys/` showing only `public.pem`.
+
+### V7 -- Cross-User Flag 4 Extraction via SQLi
+
+**Risk:** Flag 4's blind SQLi runs against a single shared endpoint. A player could extract another player's per-user flag by naming the other player's `secret_key` in the payload, bypassing attribution.
+
+**Mitigation:** The per-user Flag 4 row is keyed `flag4_<username>`. Any extraction attempt must reference the target key by name, so the blind SQLi payload for another player's flag names that player's username explicitly and would be detectable in access logs if logs were being inspected. This mirrors the CTF7 per-user file-path attribution pattern. Legitimate attribution is not compromised because `/api/research/search` is itself gated by a valid JWT (not forgeable to another player's identity without also completing Flag 3 first), and the research log records the viewer identity. Verify the log format captures `viewer=<username>` on every search request.
+
+### V8 -- SSRF via Actuator Gateway
+
+**Risk:** Some Spring Boot Actuator configurations expose a `/actuator/gateway/routes` endpoint that, combined with Spring Cloud Gateway filters, can be abused for SSRF to internal services (Redis, Postgres).
+
+**Mitigation:** Spring Cloud Gateway is not on the classpath. `pom.xml` includes only `spring-boot-starter-actuator` plus web/security/data-jpa/thymeleaf/data-redis starters. The Actuator endpoints actually exposed are the ones in `application.properties`: `info`, `env`, `health`, `logfile`, `mappings`, `beans`, `configprops`. None of these provide a request-forwarding surface. Verify with `curl http://localhost:3003/actuator | jq '._links | keys'` and confirm `gateway` is absent.
+
+---
 
 ---
 

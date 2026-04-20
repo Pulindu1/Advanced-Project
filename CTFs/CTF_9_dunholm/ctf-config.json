@@ -1,0 +1,40 @@
+{
+  "id": "ctf9-dunholm-trialvault",
+  "title": "Dunholm Research: TrialVault",
+  "category": "web",
+  "difficulty": "advanced",
+  "flags": 6,
+  "flagFormats": [
+    "durham-drflag1{.*}",
+    "durham-drflag2{.*}",
+    "durham-drflag3{.*}",
+    "durham-drflag4{.*}",
+    "durham-drflag5{.*}",
+    "durham-drflag6{.*}"
+  ],
+  "points": 900,
+  "owasp": [
+    "A01:2021",
+    "A02:2021",
+    "A03:2021",
+    "A05:2021",
+    "A07:2021",
+    "A09:2021"
+  ],
+  "techStack": "Java 17 / Spring Boot 3.2 / PostgreSQL 16 / Redis 7",
+  "deployment": {
+    "port": 3003,
+    "command": "docker compose up --build",
+    "containers": 3
+  },
+  "description": "A Durham-based clinical research startup is under external audit after a competitor published three paragraphs of the NIMMOD-2 Phase 2 dossier verbatim. Players act as the external auditor and chain six weaknesses through the TrialVault platform: unauthenticated Spring Boot Actuator exposure, directory traversal through a filter-strip sanitiser, JWT algorithm confusion via a trust-alg-header verifier, blind boolean SQL injection on a raw-concat search endpoint, RSA-512 + AES-256-GCM hybrid decryption combining per-user and shared key material, and plaintext credential leak through DEBUG request-body logging.",
+  "learningObjectives": [
+    "Recognise unrestricted Spring Boot Actuator exposure as a production-grade misconfiguration and understand the differing blast radius of env, info, and logfile",
+    "Identify filter-strip traversal patterns that survive naive replace(\"../\", \"\") sanitisation and reason about the interaction between Spring URL decoding and filter order",
+    "Understand why trusting the alg header of an incoming JWT is equivalent to leaking the signing key, and reproduce the public-key-as-HMAC-secret forgery",
+    "Walk a full boolean blind SQL injection end to end against a single count-returning endpoint, including extraction length and characterwise probing with Hibernate JDBC-escape-syntax awareness",
+    "Combine an asymmetric weakness (short RSA modulus) with a symmetric recovery path (shared-secret composition) and observe that each half alone is insufficient",
+    "Recognise that DEBUG request-body logging in production is an A09 finding that yields credentials directly, not a privacy oversight",
+    "Map vulnerabilities to OWASP A01, A02, A03, A05, A07, A09 (2021)"
+  ]
+}

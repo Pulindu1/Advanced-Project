@@ -13,6 +13,10 @@ files changed (optional)
 
 
 
+### Tests, docs and polishes - 20/04/26 - CTF9
+- README.md, SOLUTIONS.md, STORY.md, ctf-config.json, V1-V8 unintended-vulnerability audit appended to workflow.md.
+- Verified end-to-end in Docker: all six flags recovered via the intended chain.
+
 ### Phase 2 done and updated methodology  - 19/04/26 - CTF9
 - Flag implementation done.
 - Methodology updated to include CTFs 8 and 9.
