@@ -11,6 +11,7 @@ jobs:
   basic_1_nodejs:
     name: Basic_1 — Node.js (Jest + Supertest)
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     defaults:
       run:
         working-directory: CTFs/Basic_1_Nodejs
@@ -22,11 +23,12 @@ jobs:
           cache: npm
           cache-dependency-path: CTFs/Basic_1_Nodejs/package-lock.json
       - run: npm ci
-      - run: npm test -- --ci
+      - run: npm test -- --ci --forceExit
 
   ctf_2_pswd_manager:
     name: CTF2 — Node.js (Jest + Supertest)
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     defaults:
       run:
         working-directory: CTFs/CTF_2_pswd_manager
@@ -38,11 +40,12 @@ jobs:
           cache: npm
           cache-dependency-path: CTFs/CTF_2_pswd_manager/package-lock.json
       - run: npm ci
-      - run: npm test -- --ci
+      - run: npm test -- --ci --forceExit
 
   ctf_3_hr_system:
     name: CTF3 — PHP/Laravel (PHPUnit)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: CTFs/CTF_3_HR-system/backend
@@ -50,7 +53,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.2"
+          php-version: "8.4"
           extensions: mbstring, pdo, pdo_sqlite, sqlite3, openssl, tokenizer, xml, ctype, json
           tools: composer
           coverage: none
@@ -62,6 +65,7 @@ jobs:
   ctf_4_corporate_helpdesk:
     name: CTF4 — TypeScript/Express (ts-jest)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: CTFs/CTF_4_corporate_helpdesk/apps/api
@@ -78,6 +82,7 @@ jobs:
   ctf_5_internal_blog:
     name: CTF5 — Python/Flask (pytest)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: CTFs/CTF_5_internal_blog
@@ -98,6 +103,7 @@ jobs:
   ctf_6_veridian:
     name: CTF6 — Rust/Actix (cargo test)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: CTFs/CTF_6_veridian
@@ -113,6 +119,7 @@ jobs:
   ctf_7_notes_app:
     name: CTF7 — Node.js (Jest + Supertest)
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     defaults:
       run:
         working-directory: CTFs/CTF_7_notes_app
@@ -124,11 +131,12 @@ jobs:
           cache: npm
           cache-dependency-path: CTFs/CTF_7_notes_app/package-lock.json
       - run: npm ci
-      - run: npm test -- --ci
+      - run: npm test -- --ci --forceExit
 
   ctf_8_gazette:
     name: CTF8 — Go/Gin (go test)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: CTFs/CTF_8_gazette
@@ -144,6 +152,7 @@ jobs:
   ctf_9_dunholm:
     name: CTF9 — Java/Spring Boot (Maven + JUnit 5)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: CTFs/CTF_9_dunholm

@@ -99,7 +99,11 @@ class JwtServiceTest {
             .encodeToString("{\"alg\":\"none\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
         String payload = Base64.getUrlEncoder().withoutPadding()
             .encodeToString("{\"sub\":\"abcd12\",\"role\":\"cto_admin\"}".getBytes(StandardCharsets.UTF_8));
-        String unsigned = header + "." + payload + ".";
+        // A real alg=none token has an empty third segment (header.payload.), but
+        // String#split("\\.") drops trailing empties so the parser would report
+        // "Malformed token" instead of reaching the alg=none check. Use a
+        // placeholder signature so we exercise the alg=none rejection branch.
+        String unsigned = header + "." + payload + ".sig";
 
         IllegalArgumentException ex = assertThrows(
             IllegalArgumentException.class,
