@@ -1,0 +1,10 @@
+/Users/pulindufonseka/Documents/GitHub/Advanced-Project/CTFs/CTF_6_veridian/target/debug/deps/globset-da0aa88ef03ea0c7.d: /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/lib.rs /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/fnv.rs /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/glob.rs /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/pathutil.rs
+
+/Users/pulindufonseka/Documents/GitHub/Advanced-Project/CTFs/CTF_6_veridian/target/debug/deps/libglobset-da0aa88ef03ea0c7.rlib: /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/lib.rs /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/fnv.rs /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/glob.rs /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/pathutil.rs
+
+/Users/pulindufonseka/Documents/GitHub/Advanced-Project/CTFs/CTF_6_veridian/target/debug/deps/libglobset-da0aa88ef03ea0c7.rmeta: /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/lib.rs /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/fnv.rs /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/glob.rs /Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/pathutil.rs
+
+/Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/lib.rs:
+/Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/fnv.rs:
+/Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/glob.rs:
+/Users/pulindufonseka/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/globset-0.4.18/src/pathutil.rs:

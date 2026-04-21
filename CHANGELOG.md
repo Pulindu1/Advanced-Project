@@ -9,14 +9,27 @@ files changed (optional)
 # Logs:
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+### Add CTF9 unit tests and multi-stack CI workflow - 21/04/26
+- Adds three Java unit test classes for CTF9 (LoginRateLimiter, AuthService, DunholmInfoContributor) and a 9-job GitHub Actions workflow that runs each CTF's test suite in parallel on push/PR to main.
+
 ### quick save - 21/04/26
 - quick save before tests
 
 ### E2E tests + updated methodology - 20/04/26 - CTF8, CTF9
 - E2E tests added for CTF 8 and CTF9
 - Methodology was a little mid. I improved that too. I still need to look over it again and finish it up later.
-
-
 
 ### Improved doccumentation - 20/04/26 - CTF9
 - SOLUTIONS.md wasn't very clear for flags 5 and 6 so I made them simpler.

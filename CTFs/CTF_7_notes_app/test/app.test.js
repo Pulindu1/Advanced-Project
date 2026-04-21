@@ -95,4 +95,23 @@ describe('NorthSide Notes', () => {
 
     expect(res.status).toBe(400);
   });
+
+  test('POST /login with correct credentials redirects to /home and sets profile cookie', async () => {
+    const { username, password } = getFirstUser();
+    const res = await request(app)
+      .post('/login')
+      .type('form')
+      .send({ username, password });
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe('/home');
+    const setCookie = (res.headers['set-cookie'] || []).join(';');
+    expect(setCookie).toMatch(/profile=/);
+  });
+
+  test('GET /home with malformed profile cookie does not crash', async () => {
+    const res = await request(app)
+      .get('/home')
+      .set('Cookie', 'profile=not-valid-base64%%%');
+    expect([200, 302, 400]).toContain(res.status);
+  });
 });

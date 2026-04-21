@@ -2,18 +2,24 @@ use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
-/// Fetch a URL, supporting http/https via reqwest and dict:// via raw TCP.
-/// This is the intentionally vulnerable handler -- no scheme or host restrictions.
-pub async fn fetch_url(url: &str) -> Result<String, String> {
+/// Returns the URL rewritten for internal delivery, or an Err if the scheme
+/// is explicitly blocked. Exposes the narrow pre-dispatch logic of
+/// `fetch_url` so it can be exercised in isolation.
+pub fn sanitize_url(url: &str) -> Result<String, String> {
     if url.starts_with("file://") {
         return Err("Unsupported URL scheme".to_string());
     }
+    Ok(url.replace("169.254.169.254", "metadata"))
+}
 
+/// Fetch a URL, supporting http/https via reqwest and dict:// via raw TCP.
+/// This is the intentionally vulnerable handler -- no scheme or host restrictions.
+pub async fn fetch_url(url: &str) -> Result<String, String> {
     // Rewrite the link-local metadata IP to the internal Docker hostname.
     // Players submit 169.254.169.254 (the real AWS metadata address) but
     // Docker cannot route to link-local IPs across containers. The metadata
     // service is reachable by its Docker Compose service name instead.
-    let url = url.replace("169.254.169.254", "metadata");
+    let url = sanitize_url(url)?;
     let url = url.as_str();
 
     if url.starts_with("dict://") {
@@ -106,4 +112,28 @@ async fn fetch_dict(url: &str) -> Result<String, String> {
     }
 
     Ok(String::from_utf8_lossy(&buf).to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sanitize_url_rejects_file_scheme() {
+        assert!(sanitize_url("file:///etc/passwd").is_err());
+    }
+
+    #[test]
+    fn sanitize_url_rewrites_aws_metadata_ip() {
+        let out = sanitize_url("http://169.254.169.254/latest/meta-data/").unwrap();
+        assert_eq!(out, "http://metadata/latest/meta-data/");
+    }
+
+    #[test]
+    fn sanitize_url_preserves_benign_urls() {
+        assert_eq!(
+            sanitize_url("https://example.com/index").unwrap(),
+            "https://example.com/index"
+        );
+    }
 }

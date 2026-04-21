@@ -250,3 +250,52 @@ pub async fn admin_panel(
         Err(e) => HttpResponse::InternalServerError().body(format!("Template error: {}", e)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_session::storage::CookieSessionStore;
+    use actix_session::SessionMiddleware;
+    use actix_web::{cookie::Key, http::StatusCode, test, web, App};
+    use std::collections::HashMap;
+
+    fn build_state() -> web::Data<AppState> {
+        let db = Database::new(":memory:").expect("in-memory db");
+        let tera = Tera::default();
+        let flags: FlagsMap = HashMap::new();
+        web::Data::new(AppState { tera, db, flags })
+    }
+
+    #[actix_web::test]
+    async fn api_preview_requires_session() {
+        let key = Key::generate();
+        let app = test::init_service(
+            App::new()
+                .wrap(SessionMiddleware::new(CookieSessionStore::default(), key.clone()))
+                .app_data(build_state())
+                .route("/api/preview", web::post().to(api_preview)),
+        )
+        .await;
+        let req = test::TestRequest::post()
+            .uri("/api/preview")
+            .set_json(serde_json::json!({ "url": "http://example.com" }))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[actix_web::test]
+    async fn admin_panel_rejects_missing_session_token() {
+        let key = Key::generate();
+        let app = test::init_service(
+            App::new()
+                .wrap(SessionMiddleware::new(CookieSessionStore::default(), key.clone()))
+                .app_data(build_state())
+                .route("/admin", web::get().to(admin_panel)),
+        )
+        .await;
+        let req = test::TestRequest::get().uri("/admin").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+    }
+}

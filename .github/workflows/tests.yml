@@ -1,0 +1,158 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  basic_1_nodejs:
+    name: Basic_1 — Node.js (Jest + Supertest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CTFs/Basic_1_Nodejs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: CTFs/Basic_1_Nodejs/package-lock.json
+      - run: npm ci
+      - run: npm test -- --ci
+
+  ctf_2_pswd_manager:
+    name: CTF2 — Node.js (Jest + Supertest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CTFs/CTF_2_pswd_manager
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: CTFs/CTF_2_pswd_manager/package-lock.json
+      - run: npm ci
+      - run: npm test -- --ci
+
+  ctf_3_hr_system:
+    name: CTF3 — PHP/Laravel (PHPUnit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CTFs/CTF_3_HR-system/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, pdo, pdo_sqlite, sqlite3, openssl, tokenizer, xml, ctype, json
+          tools: composer
+          coverage: none
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Run PHPUnit
+        run: vendor/bin/phpunit --colors=never
+
+  ctf_4_corporate_helpdesk:
+    name: CTF4 — TypeScript/Express (ts-jest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CTFs/CTF_4_corporate_helpdesk/apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Run Jest
+        run: npm test -- --ci
+
+  ctf_5_internal_blog:
+    name: CTF5 — Python/Flask (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CTFs/CTF_5_internal_blog
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: CTFs/CTF_5_internal_blog/requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run pytest
+        run: pytest -q
+
+  ctf_6_veridian:
+    name: CTF6 — Rust/Actix (cargo test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CTFs/CTF_6_veridian
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: CTFs/CTF_6_veridian
+      - name: Run cargo test
+        run: cargo test
+
+  ctf_7_notes_app:
+    name: CTF7 — Node.js (Jest + Supertest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CTFs/CTF_7_notes_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: CTFs/CTF_7_notes_app/package-lock.json
+      - run: npm ci
+      - run: npm test -- --ci
+
+  ctf_8_gazette:
+    name: CTF8 — Go/Gin (go test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CTFs/CTF_8_gazette
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+          cache-dependency-path: CTFs/CTF_8_gazette/go.sum
+      - name: Run contract + integration tests
+        run: go test ./test/... -v
+
+  ctf_9_dunholm:
+    name: CTF9 — Java/Spring Boot (Maven + JUnit 5)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CTFs/CTF_9_dunholm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - name: Run Maven unit tests
+        run: mvn -B -q -Dsurefire.useFile=false test

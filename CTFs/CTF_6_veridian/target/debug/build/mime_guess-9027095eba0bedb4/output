@@ -1,0 +1,1 @@
+cargo:rustc-env=MIME_TYPES_GENERATED_PATH=/Users/pulindufonseka/Documents/GitHub/Advanced-Project/CTFs/CTF_6_veridian/target/debug/build/mime_guess-9027095eba0bedb4/out/mime_types_generated.rs

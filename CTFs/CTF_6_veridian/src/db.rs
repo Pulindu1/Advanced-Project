@@ -45,3 +45,44 @@ impl Database {
         .ok()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::UserCredential;
+    use std::collections::HashMap;
+
+    fn build_creds() -> CredsMap {
+        let mut creds: CredsMap = HashMap::new();
+        creds.insert(
+            "abcd12".to_string(),
+            UserCredential {
+                password: "passw0rd".to_string(),
+                role: "analyst".to_string(),
+            },
+        );
+        creds
+    }
+
+    #[test]
+    fn seed_and_verify_accepts_correct_credentials() {
+        let db = Database::new(":memory:").unwrap();
+        db.seed_users(&build_creds()).unwrap();
+        assert_eq!(db.verify_user("abcd12", "passw0rd"), Some("abcd12".into()));
+    }
+
+    #[test]
+    fn verify_rejects_wrong_password() {
+        let db = Database::new(":memory:").unwrap();
+        db.seed_users(&build_creds()).unwrap();
+        assert!(db.verify_user("abcd12", "wrong").is_none());
+    }
+
+    #[test]
+    fn seed_is_idempotent_on_duplicate_username() {
+        let db = Database::new(":memory:").unwrap();
+        db.seed_users(&build_creds()).unwrap();
+        db.seed_users(&build_creds()).unwrap();
+        assert_eq!(db.verify_user("abcd12", "passw0rd"), Some("abcd12".into()));
+    }
+}
