@@ -102,8 +102,10 @@ async function visitReportedUrl(reportId: number, url: string) {
       .replace('http://localhost:5173', BOT_BASE_URL)
       .replace('http://localhost:5174', BOT_BASE_URL);
     
-    // Append reportId as query parameter so XSS can access it
-    const urlObj = new URL(resolvedUrl);
+    // Append reportId as query parameter so XSS can access it.
+    // Accept relative paths (e.g. "/kb?search=...") by resolving against
+    // BOT_BASE_URL — matches how the API's report validator parses URLs.
+    const urlObj = new URL(resolvedUrl, BOT_BASE_URL);
     urlObj.searchParams.set('_reportId', reportId.toString());
     resolvedUrl = urlObj.toString();
     

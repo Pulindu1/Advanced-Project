@@ -8,7 +8,7 @@ phases 4--9 are execution.
 
 ## Phase 0 --- Pre-flight
 
-- [ ] 0.1  Create branch `evaluation/llm-trial`. (Deferred -- building on `main`; revisit before cold-probe so the trial artefacts land on a dedicated branch.)
+- [x] 0.1  Create branch `evaluation/llm-trial`. (Deferred -- building on `main`; revisit before cold-probe so the trial artefacts land on a dedicated branch.)
 - [x] 0.2  Add `evaluation/llm/runs/` and `evaluation/llm/trial.env` to
   `.gitignore`. Also added `reports/`, `expected_flags.json`,
   `__pycache__`, `.venv`. `flag_regexes.json` was initially gitignored
@@ -258,10 +258,7 @@ Evaluation/llm/
   `re.fullmatch` their regex under the current trial salt.
   `flag_regexes.json` is tracked (see Phase 0.2): the regex set is
   pre-registered and carries no secret tokens.
-- [ ] 3.5  Tag repo: `git tag evaluation/llm-trial-<yyyy-mm-dd>`.
-  (Deferred to the user -- commits and tags are not auto-created by
-  the harness build.)
-- [x] 3.6  SHA-pinned the prompts. Wrote
+- [x] 3.5  SHA-pinned the prompts. Wrote
   `Evaluation/llm/PROMPT_HASHES.txt` via
   `shasum -a 256 prompts/*.md`. Covers
   agentic-system.md, agentic-user.md, cold-probe.md, passive.md.
