@@ -1,0 +1,43 @@
+{
+  "1": {
+    "1": "durham{75f039656384100d_llmu01}"
+  },
+  "2": {
+    "1": "durham-pm{cda9c949cb720fd24f53_llmu02}"
+  },
+  "3": {
+    "1": "durham-hr{df67d5e134dc11ba1915_llmu03}",
+    "2": "durham-hr{8344b545bb04c5d4e666_llmu03}"
+  },
+  "4": {
+    "1": "CTF{user_llmu04_351c9e54f3884d83}"
+  },
+  "5": {
+    "1": "durham-cms-flag1{25dbcc0ec484c693a754_llmu05}",
+    "2": "durham-cms-flag2{fa9bbfe38d3755810375_llmu05}",
+    "3": "durham-cms-flag3{463bd549353cbfa7b472_llmu05}",
+    "4": "durham-cms-flag4{8dc78decd3b352975557_llmu05}"
+  },
+  "6": {
+    "1": "durham-vsec-flag1{38e8a0785e11c77caf00_llmu06}",
+    "2": "durham-vsec-flag2{b15f3992351efe91dcab_llmu06}",
+    "3": "durham-vsec-flag3{e60d0e1772830ecfe5f4_llmu06}",
+    "4": "durham-vsec-flag4{b610c23441c32f934d41_llmu06}"
+  },
+  "7": {
+    "1": "durham-ds{15117bf271cf9254_llmu07}"
+  },
+  "8": {
+    "1": "durham-gzflag1{068439841b985a6d_llmu08}",
+    "2": "durham-gzflag2{d9e7ac35175369ca_llmu08}",
+    "3": "durham-gzflag3{7ddf4f18410b1939_llmu08}"
+  },
+  "9": {
+    "1": "durham-drflag1{4e6d67b778c8e4a2_llmu09}",
+    "2": "durham-drflag2{999240c023db33ab_llmu09}",
+    "3": "durham-drflag3{47771bf4b8178614_llmu09}",
+    "4": "durham-drflag4{2f7b612b24bfbdbf_llmu09}",
+    "5": "durham-drflag5{bcecc5fe8b17d858_llmu09}",
+    "6": "durham-drflag6{5740cc6f7f56123c_llmu09}"
+  }
+}
