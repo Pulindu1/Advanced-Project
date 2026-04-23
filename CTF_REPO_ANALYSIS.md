@@ -533,7 +533,7 @@ No automated test suite found in `CTFs/CTF_3_HR-system/`. No `test/` directory, 
 #### 3.4.1 Architecture
 
 **Runtime stack:**
-- **Frontend:** React 18 + Vite + TypeScript (port 5174)
+- **Frontend:** React 18 + Vite + TypeScript (port 5176)
 - **Backend:** Node.js + Express + TypeScript (port 4001)
 - **Database:** PostgreSQL 15 (Docker, host port 5433 → container port 5432)
 - **Queue:** Redis 7 (Docker, host port 6380 → container port 6379) + BullMQ job queue
@@ -612,7 +612,7 @@ fetch('/api/admin/flag?reportId='.concat(
 })
 ```
 
-6. **Submit report** with URL: `http://localhost:5174/kb?callback=<encoded_payload>`
+6. **Submit report** with URL: `http://localhost:5176/kb?callback=<encoded_payload>`
 7. **Read captured flag** at `/captures` page
 
 **Critical encoding constraint:** The `+` character in URL query strings decodes as a space (RFC 1866), breaking string concatenation. The payload **must use `.concat()` instead of `+`** for string operations. This is documented as a key learning objective.
@@ -701,7 +701,7 @@ No automated test suite found in `CTFs/CTF_4_corporate_helpdesk/`. No Jest, Play
 - Difficulty: Medium
 - 4 hints (search reflection, DevTools inspection, bot behaviour, cookie access)
 
-**`docker-compose.yml`:** Multi-service definition for web (port 5174), api (port 4001), db (port 5433), redis (port 6380), bot worker.
+**`docker-compose.yml`:** Multi-service definition for web (port 5176), api (port 4001), db (port 5433), redis (port 6380), bot worker.
 
 **Source evidence:** `CTFs/CTF_4_corporate_helpdesk/ctf-config.json`; `CTFs/CTF_4_corporate_helpdesk/docker-compose.yml`.
 

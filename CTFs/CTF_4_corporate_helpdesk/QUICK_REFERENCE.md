@@ -8,7 +8,7 @@ docker compose up --build
 
 ## 🔗 Access Points
 
-- **Frontend**: http://localhost:5174
+- **Frontend**: http://localhost:5176
 - **API**: http://localhost:4001
 - **Database**: localhost:5433
 - **Redis**: localhost:6380
@@ -20,11 +20,11 @@ docker compose up --build
 
 ## 🎯 Key URLs
 
-- Login: http://localhost:5174/login
-- Register: http://localhost:5174/register
-- Dashboard: http://localhost:5174/dashboard
-- Knowledge Base: http://localhost:5174/kb
-- Report: http://localhost:5174/report
+- Login: http://localhost:5176/login
+- Register: http://localhost:5176/register
+- Dashboard: http://localhost:5176/dashboard
+- Knowledge Base: http://localhost:5176/kb
+- Report: http://localhost:5176/report
 
 ## 🐛 The Vulnerability
 
@@ -132,7 +132,7 @@ docker compose restart bot
 ### Port already in use
 ```bash
 # Find process using port
-lsof -ti:5174 | xargs kill -9
+lsof -ti:5176 | xargs kill -9
 lsof -ti:4001 | xargs kill -9
 ```
 
@@ -170,7 +170,7 @@ docker compose restart bot
 
 3. **Search KB**
    ```
-   GET http://localhost:5174/kb?search=<b>test</b>
+   GET http://localhost:5176/kb?search=<b>test</b>
    ```
 
 4. **Craft Exploit**
@@ -181,7 +181,7 @@ docker compose restart bot
 5. **Submit Report**
    ```
    POST http://localhost:4001/api/report
-   Body: { "url": "http://localhost:5174/kb?search=..." }
+   Body: { "url": "http://localhost:5176/kb?search=..." }
    ```
 
 6. **Check Logs**

@@ -20,7 +20,7 @@ echo ""
 # Check services
 echo "🌐 Service Health:"
 curl -s http://localhost:4001/health > /dev/null && echo "✅ API (4001)" || echo "❌ API (4001) not responding"
-curl -s http://localhost:5174 > /dev/null && echo "✅ Web (5174)" || echo "❌ Web (5174) not responding"
+curl -s http://localhost:5176 > /dev/null && echo "✅ Web (5176)" || echo "❌ Web (5176) not responding"
 echo ""
 
 # Database stats

@@ -646,20 +646,43 @@ reach it.
 \subsubsection{LLM and Human Evaluation Tracks}
 
 Two evaluation tracks supplement the automated regime.
-Multiple LLMs are prompted with each challenge's public
-surface and asked to produce a working exploit under
-passive and agentic scaffolding; a model is recorded as
-having solved a challenge only if the transcript culminates
-in a command that, executed against the stack, yields the
-player's personalised flag---a condition the HMAC
-construction of equation~(\ref{eq:hmac-flag}) makes
-impossible to satisfy by text generation alone, so a model
-that fails a script-soluble challenge has failed on
-reasoning rather than environmental accessibility. A
-small-scale human walkthrough with participants of varying
-skill captures the process evidence (narrated screen
-recordings, time-per-flag, intermediate artefacts such as
-decrypted blobs and forged JWTs) that Meinsma et
+The LLM track exercises a five-model panel across three
+vendors and two capability tiers: Anthropic
+\texttt{claude-sonnet-4-6} and \texttt{claude-haiku-4-5},
+OpenAI \texttt{gpt-5-mini}, and Google
+\texttt{gemini-2.5-pro} alongside \texttt{gemini-2.5-flash}
+on its free tier. The panel deliberately omits flagship
+Opus-class and full GPT-5 models: at \textasciitilde{}\$9
+per full nine-CTF run for Opus 4.7, a multi-seed evaluation
+would exceed the dissertation's hard \pounds20 API budget,
+and the recorded outcome of a panel that excludes the
+largest available models is itself a legitimate finding
+rather than a gap. Access is via each vendor's HTTP API so
+that no project-level context or persistent memory from
+the author's consumer subscriptions contaminates the runs;
+a single spot-check row on \texttt{gpt-5} is included as
+budget headroom permits. Each model is evaluated under two
+scaffoldings: \textit{passive} (a single-shot prompt
+containing the challenge's public surface, with the model
+producing an exploit plan that a separate runner executes
+against the stack), and \textit{agentic} (the model is
+given a constrained shell tool and iterates against a live
+container, capped at fifteen turns and a per-challenge
+token budget). Two seeds per model are run for statistical
+stability; prompt caching is enabled on the public-surface
+packet to keep input cost within budget. A model is
+recorded as having solved a challenge only if the
+transcript culminates in a command that, executed against
+the stack, yields the player's personalised flag---a
+condition the HMAC construction of
+equation~(\ref{eq:hmac-flag}) makes impossible to satisfy
+by text generation alone, so a model that fails a
+script-soluble challenge has failed on reasoning rather
+than environmental accessibility. A small-scale human
+walkthrough with participants of varying skill captures
+the process evidence (narrated screen recordings,
+time-per-flag, intermediate artefacts such as decrypted
+blobs and forged JWTs) that Meinsma et
 al.~\cite{Meinsma2022} identify as absent from solver-count
 logging. Institutional ethics guidance was followed:
 participation was voluntary, data was anonymised at

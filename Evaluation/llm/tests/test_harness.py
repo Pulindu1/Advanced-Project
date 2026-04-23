@@ -159,13 +159,15 @@ class TestAgenticLoop:
         assert info.reason == "submitted"
         assert info.tool_calls == 2
 
-    def test_truncation_at_cap(self, run_dir, exec_ctx):
+    def test_truncation_at_turn_cap(self, run_dir, exec_ctx):
+        """Three responses, each with one tool call; cap = 2 turns.
+        The loop executes turn 1 and turn 2 (issuing a tool call each),
+        then refuses to enter turn 3 and returns truncated."""
         def tool(i):
             return {
                 "id": f"t{i}", "name": "http_request",
                 "arguments": {"method": "GET", "url": "http://localhost:3001/"},
             }
-        # 3 responses each with one tool call; cap = 2.
         client = FakeClient([
             _r(tool_uses=[tool(1)], stop="tool_use"),
             _r(tool_uses=[tool(2)], stop="tool_use"),
@@ -177,12 +179,40 @@ class TestAgenticLoop:
             with TranscriptWriter(path, run_dir=run_dir) as w:
                 w.meta(run_id="x", ctf="1")
                 info = run_agentic_loop(
-                    client, w, exec_ctx, "go", max_tool_calls=2,
+                    client, w, exec_ctx, "go", max_turns=2,
                 )
                 w.end(reason=info.reason)
         validate(path)
         assert info.reason == "truncated"
+        assert info.turns == 2
         assert info.tool_calls == 2
+
+    def test_truncation_counts_turns_not_tool_calls(self, run_dir, exec_ctx):
+        """One turn that issues three parallel tool calls counts as ONE
+        turn, not three. With `max_turns=1` the loop runs the turn in
+        full then truncates before turn 2."""
+        def tool(i):
+            return {
+                "id": f"t{i}", "name": "http_request",
+                "arguments": {"method": "GET", "url": "http://localhost:3001/"},
+            }
+        client = FakeClient([
+            _r(tool_uses=[tool(1), tool(2), tool(3)], stop="tool_use"),
+            _r(text="would continue"),
+        ])
+        fake_resp = MagicMock(status_code=200, headers={}, text="ok")
+        path = run_dir / "transcript.jsonl"
+        with patch("lib.executors.requests.request", return_value=fake_resp):
+            with TranscriptWriter(path, run_dir=run_dir) as w:
+                w.meta(run_id="x", ctf="1")
+                info = run_agentic_loop(
+                    client, w, exec_ctx, "go", max_turns=1,
+                )
+                w.end(reason=info.reason)
+        validate(path)
+        assert info.reason == "truncated"
+        assert info.turns == 1
+        assert info.tool_calls == 3
 
 
 class TestSubstitute:

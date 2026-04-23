@@ -56,6 +56,6 @@ The script will:
 
 ## Login
 
-All users log in at: http://localhost:5174/login
+All users log in at: http://localhost:5176/login
 
 **Note**: Registration is disabled. Only pre-created users can access the system.

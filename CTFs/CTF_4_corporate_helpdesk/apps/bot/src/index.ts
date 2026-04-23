@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const BOT_BASE_URL = process.env.BOT_BASE_URL || 'http://localhost:5174';
+const BOT_BASE_URL = process.env.BOT_BASE_URL || 'http://localhost:5176';
 const BOT_API_URL = process.env.BOT_API_URL || 'http://localhost:4001';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin_secure_password_123';
@@ -100,7 +100,7 @@ async function visitReportedUrl(reportId: number, url: string) {
     // Replace localhost URLs with internal service name
     resolvedUrl = url
       .replace('http://localhost:5173', BOT_BASE_URL)
-      .replace('http://localhost:5174', BOT_BASE_URL);
+      .replace('http://localhost:5176', BOT_BASE_URL);
     
     // Append reportId as query parameter so XSS can access it.
     // Accept relative paths (e.g. "/kb?search=...") by resolving against

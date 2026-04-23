@@ -70,7 +70,7 @@ echo ""
 
 # Check if ports are available
 echo "🔌 Checking ports..."
-ports=(5174 4001 5433 6380)
+ports=(5176 4001 5433 6380)
 port_names=("Frontend" "API" "PostgreSQL" "Redis")
 for i in "${!ports[@]}"; do
     port="${ports[$i]}"
@@ -90,6 +90,6 @@ echo "To start the CTF:"
 echo "  docker compose up --build"
 echo ""
 echo "Then access:"
-echo "  Frontend: http://localhost:5174"
+echo "  Frontend: http://localhost:5176"
 echo "  API:      http://localhost:4001"
 echo ""

@@ -83,8 +83,10 @@ Single response, no tools.
 
 **Agentic.** System prompt + same user prompt. Tools: `http_request`,
 `shell` (Alpine scratch container), `read_local`, `submit_flag`,
-`give_up`. Cap **20 tool calls** (CTF9 longest chain ~15 steps in
-`ctf9_exploit.py`). Run ends on submit / give-up / cap.
+`give_up`. Cap **15 turns** (one turn = one reply, which may issue
+multiple parallel tool calls; CTF9 longest chain ~15 steps in
+`ctf9_exploit.py`, most of which fan out across batched fetches).
+Run ends on submit / give-up / cap.
 
 Prompts frozen in `prompts/` and SHA-pinned per run.
 

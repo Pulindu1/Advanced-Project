@@ -15,7 +15,9 @@ phases 4--9 are execution.
   but the rule was removed in Phase 3.4 so the regex set stays
   pre-registered and reviewable (it carries no secret tokens).
 - [x] 0.3  Install Python 3.11 locally; confirm `python3 --version`.
-- [x] 0.4  Export API keys: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`.
+- [x] 0.4  Export API keys: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
+  `GOOGLE_API_KEY`. (Google key added when the trial moved to a
+  three-vendor panel; see PLAN.md revision note.)
 - [x] 0.5  Confirm Docker Desktop is running; `docker compose version` prints.
 
 ---
@@ -34,7 +36,7 @@ Evaluation/llm/
 │   ├── transcripts.py        JSONL writer + validator
 │   ├── tools.py              tool schema (identical across vendors)
 │   ├── executors.py          http_request, shell, read_local, submit_flag, give_up
-│   ├── models.py             vendor abstraction (Anthropic + OpenAI)
+│   ├── models.py             vendor abstraction (Anthropic + OpenAI + Google)
 │   ├── scoring.py            regex + byte-match + failure sub-code hint
 │   └── aggregate.py          build results.csv + flag_results.csv
 ├── requirements.txt
@@ -51,7 +53,7 @@ Evaluation/llm/
 - [x] 1.A.3  `guarded_url(url)` accepts only `http://localhost:<PORT>`
   for the current run's port; rejects everything else. Extended to
   accept an allowed-port *set* so multi-port CTFs (CTF3: 5174+8004;
-  CTF4: 5174+4001) pass primary + extras.
+  CTF4: 5176+4001) pass primary + extras.
 - [x] 1.A.4  Unit test: reject `../../src/...`, `SOLUTIONS.md`,
   `flags.json`, `workflow.md`, any absolute path outside allow-list,
   any host besides localhost on the configured port. Plus coverage
@@ -99,15 +101,28 @@ Evaluation/llm/
   max_tokens) -> ModelResponse` where `ModelResponse` carries either
   a final `text` or a list of `tool_calls`.
 - [x] 1.D.2  `AnthropicClient`: wraps `anthropic.Messages.create`;
-  uses `tool_use` + `tool_result` blocks; extended thinking 4096
-  (Opus only, via `--extended-thinking-budget`); prompt caching on
-  the system prompt and the curated doc pack via
+  uses `tool_use` + `tool_result` blocks; supports extended thinking
+  4096 via `--extended-thinking-budget` (originally motivated by
+  flagship Opus spot-checks; Opus was dropped from the final matrix
+  on budget grounds, so the flag is inert under the active panel but
+  the code path is retained for optional spot-checks); prompt caching
+  on the system prompt and the curated doc pack via
   `cache_control: {"type": "ephemeral"}`. Omits `temperature` when
-  extended thinking is on (API constraint).
+  extended thinking is on (API constraint). Covers both Sonnet 4.6
+  and Haiku 4.5 via `model_id`.
 - [x] 1.D.3  `OpenAIClient`: wraps `openai.chat.completions.create`
   with function-calling; uses `max_completion_tokens` and surfaces
-  `prompt_tokens_details.cached_tokens`.
-- [x] 1.D.4  Both clients record token counts and any cache-hit
+  `prompt_tokens_details.cached_tokens`. Target model is `gpt-5-mini`;
+  a budget-permitting `gpt-5` spot-check row is supported by
+  `model_id` swap alone.
+- [x] 1.D.4  `GoogleClient`: wraps `google-genai.models.generate_content`
+  with function calling (`types.Tool` / `types.FunctionDeclaration`);
+  supports both `gemini-2.5-pro` and `gemini-2.5-flash` via
+  `model_id`; records `usage_metadata.cached_content_token_count`
+  into cache-hit metadata. Synthesises `gemini_<turn>_<part>` ids so
+  `ModelResponse.tool_uses` remains vendor-neutral. Added
+  `--seed` pass-through for the `GenerateContentConfig.seed` kwarg.
+- [x] 1.D.5  All clients record token counts and any cache-hit
   metadata onto the `ToolResult` / `AssistantMessage` events.
 
 ### 1.E  `scoring.py`
@@ -148,8 +163,11 @@ Evaluation/llm/
     run (`end_reason = submitted` if it contained a
     `submit_flag` call earlier, otherwise `gave_up`). If response
     is tool calls, execute each, append tool_result, loop.
-  - Enforce 20 tool-call cap; on breach, end with
-    `end_reason = truncated`.
+  - Enforce 15-turn cap (one turn = one assistant-message round,
+    which may issue multiple parallel tool calls); on breach, end
+    with `end_reason = truncated`. Tightened from the original
+    20 tool-call cap to match the methodology's budget discipline;
+    `MAX_TURNS = 15` in `harness.py`.
 - [x] 1.F.6  On run end: score, write `flag_verdicts` sidecar, call
   `TranscriptWriter.validate`, exit 0 / non-zero.
 - [x] 1.F.7  Runner script `run_matrix.py` iterates the full matrix
@@ -177,9 +195,17 @@ Evaluation/llm/
   transcripts (byte match, regex-only match, no match) -- 20 tests.
 - [x] 1.H.3  `tests/test_transcripts.py`: round-trip write + validate.
 - [x] 1.H.4  Run: `pytest tests/` --- all pass before moving to
-  phase 2. (Current: 102 tests green across test_guard,
+  phase 2. (Current: 113 tests green across test_guard,
   test_scoring, test_transcripts, test_tools, test_executors,
-  test_models, test_harness, test_aggregate.)
+  test_models, test_harness, test_aggregate. Up from 102 after the
+  panel revision -- adds `TestGoogle` class, a `seed` pass-through
+  for OpenAI, and a turn-vs-tool-call truncation test.)
+- [x] 1.H.5  Extended `tests/test_models.py` with a `TestGoogle`
+  class (9 cases): tool-schema translation, user/tool content
+  append, config kwargs, seed pass-through, plain-text parse,
+  tool-use parse with synthesised ids, cache-hit tokens from
+  `usage_metadata.cached_content_token_count`, tool-result
+  round-trip, and model-turn history appending.
 
 ---
 
@@ -263,6 +289,44 @@ Evaluation/llm/
   `shasum -a 256 prompts/*.md`. Covers
   agentic-system.md, agentic-user.md, cold-probe.md, passive.md.
 
+### 3.7  Panel revision follow-ups (opened after Phase 3)
+
+These items were opened when the trial moved from the original
+two-vendor / three-model panel (Sonnet 4.6, gpt-5-mini,
+Opus 4.7 flagship) to the current three-vendor / five-model panel
+(Sonnet 4.6, Haiku 4.5, gpt-5-mini, Gemini 2.5 Pro,
+Gemini 2.5 Flash) imposed by the GBP20 API budget. They complete
+the work already checked in Phases 1-3.
+
+- [x] 3.7.1  Implemented `lib/models.py::GoogleClient` and wired it
+  into `harness.py::build_client` via a `gemini-*` model-id prefix
+  branch.
+- [x] 3.7.2  Extended `MODELS` in `run_matrix.py` to include
+  `haiku`, `gemini-pro`, `gemini-flash`, and a budget-permitting
+  `gpt5`. Introduced a `PANEL` tuple for the 5-model active roster,
+  renamed the `flagship` phase to `spot-check`, and retargeted it
+  at `gpt-5` on {CTF1, CTF5} agentic. `null-prompt` now uses
+  Sonnet 4.6 since Opus was removed from the panel.
+- [x] 3.7.3  Added a `--seed` CLI flag to `harness.py`, threaded it
+  through `build_client` into `OpenAIClient` (`seed` kwarg) and
+  `GoogleClient` (`GenerateContentConfig.seed`). Anthropic has no
+  seed parameter so the value is accepted and ignored there.
+  `Cell.seed` + `PRIMARY_SEEDS = (1, 2)` expand the `primary` phase
+  to 180 cells (5 x 9 x 2 x 2); seed appears in both the run-id
+  suffix (`_s1`, `_s2`) and `usage.json`.
+- [x] 3.7.4  Tightened the agentic loop: `MAX_TURNS = 15`,
+  `run_agentic_loop(..., max_turns=...)`, gate the outer while-loop
+  on the turn counter rather than the per-call tool counter. Both
+  counters are reported in `usage.json`. Updated companion docs:
+  `prompts/agentic-system.md`, `PLAN.md`, `RUBRIC.md`, `README.md`.
+  Regenerated `PROMPT_HASHES.txt` since the agentic system prompt
+  changed.
+- [x] 3.7.5  Added `TestGoogle` in `tests/test_models.py` (9 cases)
+  plus a seed-pass-through case in `TestOpenAI`. The new
+  turn-cap semantics are covered by `test_truncation_at_turn_cap`
+  and `test_truncation_counts_turns_not_tool_calls` in
+  `tests/test_harness.py`.
+
 ---
 
 ## Phase 4 --- Upper-bound baseline
@@ -277,19 +341,20 @@ Evaluation/llm/
 
 ---
 
-## Phase 5 --- Cold probe (27 runs, no stack)
+## Phase 5 --- Cold probe (45 runs, no stack)
 
 - [ ] 5.1  `python run_matrix.py --phase cold-probe`. This iterates
-  3 models x 9 CTFs passive.
+  the 5-model panel (Sonnet 4.6, Haiku 4.5, gpt-5-mini,
+  Gemini 2.5 Pro, Gemini 2.5 Flash) x 9 CTFs passive, one seed.
 - [ ] 5.2  Aggregate: `python aggregate.py --phase cold-probe`.
-- [ ] 5.3  Inspect: expected 0 byte-matches across all 27 runs.
+- [ ] 5.3  Inspect: expected 0 byte-matches across all 45 runs.
 - [ ] 5.4  Any byte-match: stop. Investigate whether the model has
   seen the flag through training data or whether the anti-leak guard
   has a bug. Trial is blocked until resolved.
 
 ---
 
-## Phase 6 --- Pilot (6 runs, ~USD 2)
+## Phase 6 --- Pilot (6 runs, ~GBP 1)
 
 - [ ] 6.1  `python run_matrix.py --phase pilot` --- Sonnet 4.6 x
   {CTF1, CTF5, CTF9} x {passive, agentic}.
@@ -302,14 +367,23 @@ Evaluation/llm/
 
 ## Phase 7 --- Full run
 
-- [ ] 7.1  Null-prompt sanity: 1 Opus run on CTF1 with README stripped
-  to a bare placeholder. Expected failure.
-- [ ] 7.2  `python run_matrix.py --phase primary` --- 36 runs.
-- [ ] 7.3  `python run_matrix.py --phase flagship` --- 6 runs (Opus
-  on CTF1/5/9 x 2 conditions).
+- [ ] 7.1  Null-prompt sanity: 1 Sonnet 4.6 run on CTF1 with README
+  stripped to a bare placeholder. Expected failure.
+  (Originally scoped for Opus; Sonnet substitutes after the
+  Opus/flagship tier was cut for budget.)
+- [ ] 7.2  `python run_matrix.py --phase primary` --- 180 runs:
+  5 models x 9 CTFs x {passive, agentic} x 2 seeds. Seeds are
+  recorded in the run-id suffix for reproducibility.
+- [ ] 7.3  `python run_matrix.py --phase spot-check` --- optional
+  1-2 runs on `gpt-5` against CTF1 and/or CTF5 agentic, run only if
+  cumulative spend leaves headroom under the GBP20 hard cap.
+  Replaces the former Opus `flagship` phase, which was dropped when
+  a multi-seed Opus pass was estimated at ~GBP7 per full nine-CTF
+  traversal.
 - [ ] 7.4  Each run does `docker compose down -v && up` between
   runs against the same CTF. Wall clock: several hours; mostly
-  unattended.
+  unattended. Flash runs use the free tier where available;
+  Haiku, gpt-5-mini, and Gemini Pro dominate paid spend.
 
 ---
 
@@ -330,8 +404,9 @@ Evaluation/llm/
 
 - [ ] 9.1  `python aggregate.py --tables` produces the Markdown
   tables.
-- [ ] 9.2  Paste the primary table (9 CTFs x 3 models, passive and
-  agentic) with Clopper-Pearson CIs into `resultsAndEval.tex`.
+- [ ] 9.2  Paste the primary table (9 CTFs x 5 models, passive and
+  agentic, two seeds collapsed) with Clopper-Pearson CIs into
+  `resultsAndEval.tex`.
 - [ ] 9.3  Write the integrity paragraph (cold-probe + hallucination
   sub-code fraction).
 - [ ] 9.4  Write 1--2 qualitative paragraphs per CTF based on the

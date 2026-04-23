@@ -43,13 +43,13 @@ cd CTFs/e2e && python3 -m pytest ctf5_exploit.py -v
 cd CTFs/e2e && ./run_all.sh
 ```
 
-Or run them individually in sequence (CTF3 and CTF4 share port 5174, so they cannot run simultaneously):
+Or run them individually in sequence:
 
 ```bash
 python3 -m pytest ctf1_exploit.py -v    # requires port 3000
 python3 -m pytest ctf2_exploit.py -v    # requires ports 4000, 5173
 python3 -m pytest ctf3_exploit.py -v    # requires ports 8004, 5174
-python3 -m pytest ctf4_exploit.py -v    # requires ports 4001, 5174
+python3 -m pytest ctf4_exploit.py -v    # requires ports 4001, 5176
 python3 -m pytest ctf5_exploit.py -v    # requires port 5175
 python3 -m pytest ctf6_exploit.py -v    # requires port 5180
 python3 -m pytest ctf7_exploit.py -v    # requires port 3001
@@ -64,14 +64,12 @@ python3 -m pytest ctf9_exploit.py -v    # requires port 3003
 | CTF1 | Node.js app | 3000 |
 | CTF2 | API / Frontend | 4000 / 5173 |
 | CTF3 | Laravel API / React frontend / PostgreSQL | 8004 / 5174 / 5434 |
-| CTF4 | Express API / React frontend / PostgreSQL / Redis | 4001 / 5174 / 5433 / 6380 |
+| CTF4 | Express API / React frontend / PostgreSQL / Redis | 4001 / 5176 / 5433 / 6380 |
 | CTF5 | Flask app | 5175 |
 | CTF6 | Rust/Actix-web app (+ internal metadata, Redis) | 5180 |
 | CTF7 | Node.js notes app | 3001 |
 | CTF8 | Go/Gin pressroom + SQLite | 3002 |
 | CTF9 | Java/Spring Boot + PostgreSQL 16 + Redis 7 | 3003 |
-
-**Conflict:** CTF3 and CTF4 both bind to port 5174. Stop one before starting the other.
 
 ## Credential Handling
 
@@ -94,7 +92,6 @@ Each script includes a `wait_for_service()` fixture that polls the target URL un
 | `KeyError` on credentials | `credentials.json` out of sync with DB | Rebuild: `docker compose down -v && docker compose up -d --build` |
 | CTF2 PoW takes >30s | Unexpected difficulty level | Check `GET /api/challenge`; difficulty=4 solves in <5s |
 | CTF4 flag not in captures | Bot can't reach `web:5173` | Check `docker compose logs bot` |
-| CTF4 port conflict | CTF3 still running on 5174 | `cd CTF_3_HR-system && docker compose down` |
 | CTF5 "Blocked" on flag3/4 | Double-escaped hex in payload | Test payload manually with `curl` |
 | CTF6 metadata returns error | Metadata container not started | Check `docker compose logs metadata` |
 | CTF6 dict:// returns empty | Redis keys not seeded | Rebuild: `docker compose down -v && docker compose up --build` |

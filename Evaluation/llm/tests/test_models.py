@@ -2,7 +2,7 @@ import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from lib.models import AnthropicClient, OpenAIClient, ToolResult
+from lib.models import AnthropicClient, GoogleClient, OpenAIClient, ToolResult
 from lib.tools import TOOL_SCHEMAS
 
 
@@ -354,3 +354,212 @@ class TestOpenAI:
         c.set_user("hi")
         r = c.send()
         assert r.tool_uses[0]["arguments"] == {"_raw": "not-json"}
+
+    def test_seed_passed_through(self):
+        fake = MagicMock()
+        c = OpenAIClient(
+            model_id="gpt-5-mini",
+            system_prompt="sys",
+            tools=TOOL_SCHEMAS,
+            seed=42,
+            client=fake,
+        )
+        fake.chat.completions.create.return_value = openai_text_response()
+        c.set_user("hi")
+        c.send()
+        kwargs = fake.chat.completions.create.call_args.kwargs
+        assert kwargs["seed"] == 42
+
+
+# ---- Google (Gemini) fixtures ----
+
+
+class FakeTypes:
+    """Minimal stand-in for `google.genai.types`. Each class records
+    the kwargs it was constructed with so the test can assert on the
+    shape of the outbound request."""
+
+    class Content:
+        def __init__(self, role=None, parts=None):
+            self.role = role
+            self.parts = parts or []
+
+    class Part:
+        def __init__(self, text=None, function_call=None, function_response=None):
+            self.text = text
+            self.function_call = function_call
+            self.function_response = function_response
+
+    class FunctionDeclaration:
+        def __init__(self, name=None, description=None, parameters=None):
+            self.name = name
+            self.description = description
+            self.parameters = parameters
+
+    class Tool:
+        def __init__(self, function_declarations=None):
+            self.function_declarations = function_declarations or []
+
+    class FunctionResponse:
+        def __init__(self, name=None, response=None):
+            self.name = name
+            self.response = response
+
+    class GenerateContentConfig:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+
+def google_text_response(
+    text: str = "hi",
+    prompt_tokens: int = 100,
+    candidates_tokens: int = 50,
+    cached: int = 0,
+    finish_reason: str = "STOP",
+):
+    part = SimpleNamespace(text=text, function_call=None)
+    content = FakeTypes.Content(role="model", parts=[part])
+    candidate = SimpleNamespace(content=content, finish_reason=finish_reason)
+    usage = SimpleNamespace(
+        prompt_token_count=prompt_tokens,
+        candidates_token_count=candidates_tokens,
+        cached_content_token_count=cached,
+    )
+    return SimpleNamespace(candidates=[candidate], usage_metadata=usage)
+
+
+def google_tool_response(
+    name: str = "http_request",
+    args: dict | None = None,
+):
+    args = args or {"method": "GET", "url": "http://localhost:3001/"}
+    fc = SimpleNamespace(name=name, args=args)
+    text_part = SimpleNamespace(text="let me try", function_call=None)
+    tool_part = SimpleNamespace(text=None, function_call=fc)
+    content = FakeTypes.Content(role="model", parts=[text_part, tool_part])
+    candidate = SimpleNamespace(content=content, finish_reason="STOP")
+    usage = SimpleNamespace(
+        prompt_token_count=100,
+        candidates_token_count=50,
+        cached_content_token_count=0,
+    )
+    return SimpleNamespace(candidates=[candidate], usage_metadata=usage)
+
+
+class TestGoogle:
+    def _make(self, seed=None):
+        fake = MagicMock()
+        c = GoogleClient(
+            model_id="gemini-2.5-pro",
+            system_prompt="You are an auditor.",
+            tools=TOOL_SCHEMAS,
+            seed=seed,
+            client=fake,
+            types_module=FakeTypes,
+        )
+        return c, fake
+
+    def test_tools_translated_to_gemini_schema(self):
+        c, _ = self._make()
+        assert c.tool_config is not None
+        decls = c.tool_config[0].function_declarations
+        names = [d.name for d in decls]
+        assert set(names) == {
+            "http_request", "shell", "read_local", "submit_flag", "give_up",
+        }
+
+    def test_set_user_appends_user_content(self):
+        c, _ = self._make()
+        c.set_user("hello")
+        assert len(c.contents) == 1
+        msg = c.contents[-1]
+        assert msg.role == "user"
+        assert msg.parts[0].text == "hello"
+
+    def test_send_passes_expected_config(self):
+        c, fake = self._make()
+        fake.models.generate_content.return_value = google_text_response()
+        c.set_user("hi")
+        c.send()
+        kwargs = fake.models.generate_content.call_args.kwargs
+        assert kwargs["model"] == "gemini-2.5-pro"
+        assert kwargs["contents"] is c.contents
+        cfg_kwargs = kwargs["config"].kwargs
+        assert cfg_kwargs["system_instruction"] == "You are an auditor."
+        assert cfg_kwargs["temperature"] == 0.0
+        assert cfg_kwargs["max_output_tokens"] == 4096
+        assert "tools" in cfg_kwargs
+        assert "seed" not in cfg_kwargs
+
+    def test_seed_threaded_into_config(self):
+        c, fake = self._make(seed=7)
+        fake.models.generate_content.return_value = google_text_response()
+        c.set_user("hi")
+        c.send()
+        cfg_kwargs = fake.models.generate_content.call_args.kwargs["config"].kwargs
+        assert cfg_kwargs["seed"] == 7
+
+    def test_response_parsing_plain_text(self):
+        c, fake = self._make()
+        fake.models.generate_content.return_value = google_text_response(
+            text="hi there"
+        )
+        c.set_user("hi")
+        r = c.send()
+        assert r.text == "hi there"
+        assert r.tool_uses == []
+        assert r.tokens_input == 100
+        assert r.tokens_output == 50
+
+    def test_response_parsing_tool_use(self):
+        c, fake = self._make()
+        fake.models.generate_content.return_value = google_tool_response()
+        c.set_user("hi")
+        r = c.send()
+        assert len(r.tool_uses) == 1
+        tu = r.tool_uses[0]
+        assert tu["name"] == "http_request"
+        assert tu["arguments"] == {
+            "method": "GET", "url": "http://localhost:3001/",
+        }
+        assert tu["id"].startswith("gemini_")
+
+    def test_cache_hit_tokens_reported(self):
+        c, fake = self._make()
+        fake.models.generate_content.return_value = google_text_response(
+            cached=250
+        )
+        c.set_user("hi")
+        r = c.send()
+        assert r.cache_hit_tokens == 250
+
+    def test_tool_results_round_trip(self):
+        c, fake = self._make()
+        fake.models.generate_content.return_value = google_tool_response()
+        c.set_user("hi")
+        r = c.send()
+        tu_id = r.tool_uses[0]["id"]
+
+        c.set_tool_results(
+            [ToolResult(tool_use_id=tu_id, content='{"status":200}')]
+        )
+        # Last content is the tool-result user message with a
+        # function_response part whose name is the original function.
+        last = c.contents[-1]
+        assert last.role == "user"
+        fr = last.parts[0].function_response
+        assert fr.name == "http_request"
+        assert fr.response == {"content": '{"status":200}'}
+
+    def test_model_content_appended_to_history(self):
+        c, fake = self._make()
+        fake.models.generate_content.return_value = google_text_response(
+            text="first"
+        )
+        c.set_user("hi")
+        c.send()
+        # Before send: just the user message (len=1). After send: user +
+        # model message (len=2).
+        assert len(c.contents) == 2
+        assert c.contents[0].role == "user"
+        assert c.contents[1].role == "model"

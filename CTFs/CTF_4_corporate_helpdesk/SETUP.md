@@ -25,12 +25,12 @@
 
 4. **Wait for all services to start:**
    - API: http://localhost:4001
-   - Frontend: http://localhost:5174
+   - Frontend: http://localhost:5176
    - Database: localhost:5433
    - Redis: localhost:6380
 
 5. **Access the application:**
-   Open http://localhost:5174 in your browser
+   Open http://localhost:5176 in your browser
 
 ## Local Development (Without Docker)
 
@@ -105,7 +105,7 @@ npm run dev
 ## Testing the Challenge
 
 1. **Register a new user:**
-   - Go to http://localhost:5174/register
+   - Go to http://localhost:5176/register
    - Create an account
 
 2. **Explore the Knowledge Base:**

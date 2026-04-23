@@ -23,7 +23,7 @@ export function createApp() {
     contentSecurityPolicy: false, // Disabled for CTF purposes
   }));
   app.use(cors({
-    origin: ['http://localhost:5174', 'http://localhost:5173'],
+    origin: ['http://localhost:5176', 'http://localhost:5173'],
     credentials: true
   }));
   app.use(morgan('dev'));

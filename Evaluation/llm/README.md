@@ -115,7 +115,9 @@ with both filled contribute to the unweighted kappa.
   `--memory 256m --cpus 1`, read-write mount at `/scratch`, and
   `host.docker.internal` mapped to the host gateway so containers on
   all platforms reach the target.
-- 20 tool-call cap per run (enforced in `harness.run_agentic_loop`).
+- 15-turn cap per run (one turn = one assistant-message round,
+  which may issue multiple parallel tool calls; enforced in
+  `harness.run_agentic_loop`).
 - Transcripts are append-only and flushed per event; mid-crash runs
   are partially readable.
 

@@ -4,13 +4,13 @@ Each cell is a (model, ctf, condition) tuple realised by invoking
 `harness.py` in a fresh subprocess. Between runs that share a CTF we
 reset that CTF's docker stack (`docker compose down -v && up -d`).
 
-Phases (from PLAN.md Section 2):
+Phases (aligned with WORKFLOW.md after the panel revision):
 
-- `cold-probe`   --- 3 models x 9 CTFs passive, no stack  (27 runs)
-- `pilot`        --- Sonnet x {1,5,9} x {passive, agentic}  (6)
-- `primary`      --- {Sonnet, GPT-5-mini} x 9 x {passive, agentic}  (36)
-- `flagship`     --- Opus x {1,5,9} x {passive, agentic}  (6)
-- `null-prompt`  --- Opus x CTF1 passive, empty doc pack  (1)
+- `cold-probe`   --- 5 models x 9 CTFs passive, no stack, 1 seed (45)
+- `pilot`        --- Sonnet x {1,5,9} x {passive, agentic}         (6)
+- `primary`      --- 5 models x 9 x {passive, agentic} x 2 seeds  (180)
+- `spot-check`   --- gpt-5 x {1,5} agentic, 1 seed                  (2)
+- `null-prompt`  --- Sonnet x CTF1 passive, empty doc pack          (1)
 
 Usage:
   python run_matrix.py --phase cold-probe
@@ -50,7 +50,7 @@ CTF_SPECS: dict[int, CtfSpec] = {
     1: CtfSpec(1, "Basic_1_Nodejs", (3000,), "llmu01"),
     2: CtfSpec(2, "CTF_2_pswd_manager", (4000,), "llmu02"),
     3: CtfSpec(3, "CTF_3_HR-system", (5174, 8004), "llmu03"),
-    4: CtfSpec(4, "CTF_4_corporate_helpdesk", (5174, 4001), "llmu04"),
+    4: CtfSpec(4, "CTF_4_corporate_helpdesk", (5176, 4001), "llmu04"),
     5: CtfSpec(5, "CTF_5_internal_blog", (5175,), "llmu05"),
     6: CtfSpec(6, "CTF_6_veridian", (5180,), "llmu06"),
     7: CtfSpec(7, "CTF_7_notes_app", (3001,), "llmu07"),
@@ -61,12 +61,19 @@ CTF_SPECS: dict[int, CtfSpec] = {
 
 MODELS = {
     "sonnet": "claude-sonnet-4-6",
+    "haiku": "claude-haiku-4-5",
     "gpt5mini": "gpt-5-mini",
+    "gemini-pro": "gemini-2.5-pro",
+    "gemini-flash": "gemini-2.5-flash",
+    # Retained for optional spot-check rows; not part of the active panel.
+    "gpt5": "gpt-5",
     "opus": "claude-opus-4-7",
 }
 
-
-FLAGSHIP_CTFS = (1, 5, 9)
+PANEL = ("sonnet", "haiku", "gpt5mini", "gemini-pro", "gemini-flash")
+PILOT_CTFS = (1, 5, 9)
+SPOT_CHECK_CTFS = (1, 5)
+PRIMARY_SEEDS = (1, 2)
 
 
 # --- Phase enumeration ------------------------------------------------------
@@ -79,34 +86,39 @@ class Cell:
     condition: str      # passive | agentic | cold-probe
     tag: str            # label for run_id
     needs_stack: bool
+    seed: int | None = None
 
 
 def phase_cells(phase: str) -> list[Cell]:
     cells: list[Cell] = []
 
     if phase == "cold-probe":
-        for mk in MODELS:
+        for mk in PANEL:
             for ctf in range(1, 10):
                 cells.append(Cell(mk, ctf, "cold-probe", "cold", False))
 
     elif phase == "pilot":
-        for ctf in FLAGSHIP_CTFS:
+        for ctf in PILOT_CTFS:
             for cond in ("passive", "agentic"):
                 cells.append(Cell("sonnet", ctf, cond, "pilot", True))
 
     elif phase == "primary":
-        for mk in ("sonnet", "gpt5mini"):
+        for mk in PANEL:
             for ctf in range(1, 10):
                 for cond in ("passive", "agentic"):
-                    cells.append(Cell(mk, ctf, cond, "primary", True))
+                    for seed in PRIMARY_SEEDS:
+                        cells.append(
+                            Cell(mk, ctf, cond, "primary", True, seed=seed)
+                        )
 
-    elif phase == "flagship":
-        for ctf in FLAGSHIP_CTFS:
-            for cond in ("passive", "agentic"):
-                cells.append(Cell("opus", ctf, cond, "flagship", True))
+    elif phase == "spot-check":
+        # Replaces the former Opus `flagship` phase. Optional -- run only
+        # if GBP20 budget has headroom. Single seed, agentic only.
+        for ctf in SPOT_CHECK_CTFS:
+            cells.append(Cell("gpt5", ctf, "agentic", "spot", True))
 
     elif phase == "null-prompt":
-        cells.append(Cell("opus", 1, "passive", "null", True))
+        cells.append(Cell("sonnet", 1, "passive", "null", True))
 
     else:
         raise ValueError(f"unknown phase: {phase}")
@@ -170,6 +182,8 @@ def run_cell(
     ]
     if cell.model_key == "opus" and extended_thinking_budget:
         cmd += ["--extended-thinking-budget", str(extended_thinking_budget)]
+    if cell.seed is not None:
+        cmd += ["--seed", str(cell.seed)]
 
     _log(f"[cell] {run_id}")
     if dry_run:
@@ -183,8 +197,10 @@ def _mint_run_id(cell: Cell, spec: CtfSpec, model_id: str) -> str:
     ts = time.strftime("%Y%m%d-%H%M%S")
     short = uuid.uuid4().hex[:6]
     safe_model = model_id.replace(".", "-")
+    seed_part = f"_s{cell.seed}" if cell.seed is not None else ""
     return (
-        f"{cell.tag}_ctf{spec.ctf:02d}_{cell.condition}_{safe_model}_{ts}_{short}"
+        f"{cell.tag}_ctf{spec.ctf:02d}_{cell.condition}_"
+        f"{safe_model}{seed_part}_{ts}_{short}"
     )
 
 
@@ -195,7 +211,9 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--phase", required=True,
-        choices=["cold-probe", "pilot", "primary", "flagship", "null-prompt"],
+        choices=[
+            "cold-probe", "pilot", "primary", "spot-check", "null-prompt",
+        ],
     )
     ap.add_argument("--runs-dir", default=str(HERE / "runs"))
     ap.add_argument("--dry-run", action="store_true")

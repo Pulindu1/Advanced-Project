@@ -27,6 +27,7 @@ from lib.executors import ExecutorContext, run_tool
 from lib.guard import Guard, default_guard
 from lib.models import (
     AnthropicClient,
+    GoogleClient,
     ModelClient,
     ModelResponse,
     OpenAIClient,
@@ -41,7 +42,7 @@ from lib.tools import TOOL_SCHEMAS
 from lib.transcripts import TranscriptWriter, utc_now_iso, validate
 
 
-MAX_TOOL_CALLS = 20
+MAX_TURNS = 15
 
 HERE = Path(__file__).resolve().parent
 
@@ -50,6 +51,7 @@ HERE = Path(__file__).resolve().parent
 class EndInfo:
     reason: str                   # submitted | gave_up | truncated | error
     tool_calls: int = 0
+    turns: int = 0
     submitted_flag: str | None = None
     submit_accepted: bool | None = None
     tokens_input: int = 0
@@ -147,15 +149,23 @@ def run_agentic_loop(
     writer: TranscriptWriter,
     ctx: ExecutorContext,
     user_prompt: str,
-    max_tool_calls: int = MAX_TOOL_CALLS,
+    max_turns: int = MAX_TURNS,
 ) -> EndInfo:
+    """One turn = one assistant-message round (one `client.send()` call),
+    which may issue multiple parallel tool calls. Truncation is gated on
+    the turn counter, matching the methodology's 15-turn cap."""
     writer.user_message(user_prompt)
     client.set_user(user_prompt)
 
     info = EndInfo(reason="truncated")
 
     while True:
+        if info.turns >= max_turns:
+            info.reason = "truncated"
+            return info
+
         resp = client.send()
+        info.turns += 1
         info.tokens_input += resp.tokens_input
         info.tokens_output += resp.tokens_output
         info.cache_hit_tokens += resp.cache_hit_tokens
@@ -167,9 +177,6 @@ def run_agentic_loop(
 
         tool_results: list[ToolResult] = []
         for tu in resp.tool_uses:
-            if info.tool_calls >= max_tool_calls:
-                info.reason = "truncated"
-                return info
             info.tool_calls += 1
             call_id = tu["id"]
             name = tu["name"]
@@ -206,6 +213,7 @@ def build_client(
     system_prompt: str,
     tools_enabled: bool,
     extended_thinking_budget: int | None = None,
+    seed: int | None = None,
 ) -> ModelClient:
     tools = TOOL_SCHEMAS if tools_enabled else []
     mid = model_id.lower()
@@ -215,12 +223,21 @@ def build_client(
             system_prompt=system_prompt,
             tools=tools,
             extended_thinking_budget=extended_thinking_budget,
+            seed=seed,
+        )
+    if mid.startswith("gemini-"):
+        return GoogleClient(
+            model_id=model_id,
+            system_prompt=system_prompt,
+            tools=tools,
+            seed=seed,
         )
     if mid.startswith("gpt-") or mid.startswith("o"):
         return OpenAIClient(
             model_id=model_id,
             system_prompt=system_prompt,
             tools=tools,
+            seed=seed,
         )
     raise ValueError(f"cannot infer vendor for model_id: {model_id}")
 
@@ -255,6 +272,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--extended-thinking-budget", type=int, default=None,
         help="Anthropic only; enables extended thinking at N tokens.",
+    )
+    ap.add_argument(
+        "--seed", type=int, default=None,
+        help=(
+            "Optional sampler seed. Honored by OpenAI (`seed` kwarg) "
+            "and Google (Gemini `seed` in GenerateContentConfig); "
+            "Anthropic accepts no seed parameter and ignores this."
+        ),
     )
     ap.add_argument(
         "--image-tag", default="llm-trial-shell:latest",
@@ -310,6 +335,7 @@ def main(argv: list[str] | None = None) -> int:
         system_prompt=system_prompt,
         tools_enabled=tools_enabled,
         extended_thinking_budget=args.extended_thinking_budget,
+        seed=args.seed,
     )
 
     ctx = ExecutorContext(
@@ -377,6 +403,8 @@ def main(argv: list[str] | None = None) -> int:
                 "condition": args.condition,
                 "ctf": args.ctf,
                 "test_user": args.test_user,
+                "seed": args.seed,
+                "turns": info.turns,
                 "tool_calls": info.tool_calls,
                 "wall_clock_sec": round(wall_sec, 3),
                 "final_state": info.reason,

@@ -18,6 +18,9 @@ files changed (optional)
 
 
 
+### LLM tests begin - 23/04/26
+- I have begun testing CTFs on LLMs.
+
 ### LLM eval plan - 21/04/26
 
 ### Test pipeline mchanges - 21/04/26

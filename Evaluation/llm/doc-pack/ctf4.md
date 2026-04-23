@@ -21,7 +21,7 @@ docker compose up --build
 
 Docker starts 5 services: PostgreSQL, Redis, API, Web, Bot.
 
-- Frontend: http://localhost:5174
+- Frontend: http://localhost:5176
 - API: http://localhost:4001
 - PostgreSQL: localhost:5433 (for debugging)
 - Redis: localhost:6380 (for debugging)
