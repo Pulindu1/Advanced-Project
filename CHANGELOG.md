@@ -16,7 +16,8 @@ files changed (optional)
 
 
 
-
+### LLM tests 1-4 - 23/04/26
+- tested CTF1-4. no issues. doing rest after.
 
 ### LLM tests begin - 23/04/26
 - I have begun testing CTFs on LLMs.
