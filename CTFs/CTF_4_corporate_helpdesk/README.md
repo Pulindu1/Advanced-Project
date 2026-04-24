@@ -20,10 +20,10 @@ Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/). No N
 
 ```bash
 cd CTFs/CTF_4_corporate_helpdesk
-cp .env.example .env
-# Edit .env — set strong values for JWT_SECRET and SESSION_SECRET before deploying
 docker compose up --build
 ```
+
+The compose file reads `.env.example` automatically and overlays `.env` if it exists. For a default local run you don't need to create `.env`. If you want to override secrets (e.g. `JWT_SECRET`, `SESSION_SECRET`) for a real deployment, `cp .env.example .env` and edit the copy.
 
 Docker starts 5 services:
 1. **PostgreSQL** — database (schema auto-seeded from `infra/init.sql`)
