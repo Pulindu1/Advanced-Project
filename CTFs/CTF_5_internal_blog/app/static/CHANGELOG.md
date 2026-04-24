@@ -1,7 +1,7 @@
 # NovaCMS Changelog
 
 ## v2.1.0-beta (2025-01-15)
-- [SECURITY] Rotated SECRET_KEY. Old value was being used as internal auth token (flag2). Ensure new key is not committed.
+- [SECURITY] flag2 values are now staged in app.config['FLAG2_CATALOG']. Any {{config}} dump leaks the full catalog -- ensure preview input is sanitised.
 - [DEPRECATION] /preview (v1) endpoint scheduled for removal. All new posts must use /preview/v2 with WAF validation.
 - [SECURITY] Removed direct file path references from error pages. Flag files relocated to /app/secret/
 - [TODO] Audit popen/system calls in template sandbox

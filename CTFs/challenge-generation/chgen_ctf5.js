@@ -21,6 +21,17 @@ const CREDS_OUTPUT = path.join(CTF_DIR, 'credentials.json')
 
 const USERNAME_PATTERN = /^[a-z]{4}[0-9]{2}$/
 
+// Seeded for realism. The admin account is created in the database so the
+// blog posts and editorial UI have a believable author, but its password is
+// set to SYSTEM_INTERNAL here as a sentinel; app/seed.py replaces it with a
+// process-local random password at boot so no one can log in as admin.
+const STAFF_ACCOUNTS = {
+  admin: {
+    password: 'SYSTEM_INTERNAL',
+    role: 'admin',
+  },
+}
+
 function generateRandomUsername() {
   const letters = 'abcdefghijklmnopqrstuvwxyz'
   const digits = '0123456789'
@@ -74,7 +85,8 @@ function main() {
   console.log(`Generating flags and credentials for ${usernames.length} users...`)
 
   const flags = generateFlags(usernames)
-  const credentials = generateCredentials(usernames)
+  const playerCreds = generateCredentials(usernames)
+  const credentials = { ...STAFF_ACCOUNTS, ...playerCreds }
 
   fs.mkdirSync(path.dirname(FLAGS_OUTPUT), { recursive: true })
   fs.writeFileSync(FLAGS_OUTPUT, JSON.stringify(flags, null, 2))

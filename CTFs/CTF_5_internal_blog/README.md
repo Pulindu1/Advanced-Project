@@ -54,7 +54,7 @@ flask run --host=127.0.0.1 --port=5000
 | efgh34   | *(see credentials.json)* | editor |
 | ijkl56   | *(see credentials.json)* | editor |
 
-Admin account: `admin` / `NovaCMS_Adm1n!2024` (not intended for player use)
+Admin account (`admin`) is seeded for realism only — its password is set to a process-local random value at boot and cannot be authenticated through `/login`.
 
 ---
 
@@ -95,7 +95,7 @@ See [SOLUTIONS.md](SOLUTIONS.md) for the complete walkthrough (instructors/marke
 
 ## CTF Integration
 
-Per-player flags are generated via `CTFs/challenge-generation/chgen_ctf5.js` and stored in `flags.json`. Flag format: `durham-cms-flagN{<hash>_<username>}` where N is the flag number (1-4). Each player's flags are seeded into the database at startup. The RCE flag (Flag 4) is also written to `/app/secret/flag.txt` inside the container.
+Per-player flags are generated via `CTFs/challenge-generation/chgen_ctf5.js` and stored in `flags.json`. Flag format: `durham-cms-flagN{<hash>_<username>}` where N is the flag number (1-4). Each player's flags are seeded into the database at startup. Flag 3 is exposed as `WAF_FLAG3_<USERNAME>` in the process environment, and Flag 4 is written to `/app/secret/flag_<username>.txt` — one per player.
 
 ---
 

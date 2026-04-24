@@ -13,7 +13,7 @@ def health():
         'engine': 'jinja2',
         'status': 'running',
         'note': 'Debug endpoints require X-Debug-Token header',
-        'config_note': 'SECRET_KEY rotation pending -- current key may be a flag',
+        'config_note': 'FLAG2_CATALOG staged in app.config -- per-player flag2 values',
         'changelog': '/static/CHANGELOG.md',
     })
 

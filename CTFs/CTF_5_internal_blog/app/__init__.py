@@ -38,22 +38,31 @@ def create_app():
 
     # Seed database on first run
     with app.app_context():
-        from .seed import seed_database
+        from .seed import seed_database, write_flag4_files
         seed_database(app)
+        # Flag 4 files live outside the DB volume — rewrite every startup
+        # so they survive container rebuilds.
+        write_flag4_files(app)
 
-    # Load Flag 3 into os.environ so it's accessible via WAF bypass (os.environ)
-    # but NOT visible in {{config}} on the unfiltered v1 endpoint.
+    # Load flags.json once and fan out per-user flag material:
+    #   - Flag 2: a FLAG2_CATALOG dict pushed into Flask config so the SSTI
+    #     `{{config}}` leak surfaces every player's full `durham-cms-flag2{...}`
+    #     string. Players pick their own username's entry; scoring is byte-exact.
+    #   - Flag 3: WAF_FLAG3_<USERNAME> env vars for the `os.environ` dump via
+    #     the WAF-bypass exploit. Same "pick your own" pattern.
     flags_path = os.path.join(app.root_path, '..', 'flags.json')
     try:
         with open(flags_path) as f:
             flags_data = json.load(f)
-        first_flag3 = next(
-            (v['flag3'] for v in flags_data.values() if 'flag3' in v),
-            None
-        )
-        if first_flag3:
-            os.environ.setdefault('WAF_FLAG3', first_flag3)
-    except (FileNotFoundError, KeyError):
+        flag2_catalog = {}
+        for username, user_flags in flags_data.items():
+            if 'flag2' in user_flags:
+                flag2_catalog[username] = user_flags['flag2']
+            if 'flag3' in user_flags:
+                env_key = f'WAF_FLAG3_{username.upper()}'
+                os.environ.setdefault(env_key, user_flags['flag3'])
+        app.config['FLAG2_CATALOG'] = flag2_catalog
+    except FileNotFoundError:
         pass
 
     return app

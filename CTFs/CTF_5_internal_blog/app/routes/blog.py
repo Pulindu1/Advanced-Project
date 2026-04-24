@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from ..models import db, Post
 
@@ -12,17 +12,12 @@ def index():
     return redirect(url_for('auth.login'))
 
 
-@blog_bp.route('/dashboard', methods=['GET', 'POST'])
+@blog_bp.route('/dashboard')
 @login_required
 def dashboard():
-    if request.method == 'POST' and request.form.get('action') == 'dismiss_onboarding':
-        session['onboarded'] = True
-        return redirect(url_for('blog.dashboard'))
-
-    show_onboarding = not session.get('onboarded')
     posts = Post.query.filter_by(author_id=current_user.id).order_by(Post.created_at.desc()).all()
     all_published = Post.query.filter_by(published=True).order_by(Post.created_at.desc()).all()
-    return render_template('dashboard.html', posts=posts, published=all_published, show_onboarding=show_onboarding)
+    return render_template('dashboard.html', posts=posts, published=all_published)
 
 
 @blog_bp.route('/editor')

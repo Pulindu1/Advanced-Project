@@ -96,8 +96,8 @@ docker compose up --build
 | efgh34   | *(see credentials.json)* | editor |
 | ijkl56   | *(see credentials.json)* | editor |
 
-Admin account: `admin` / `NovaCMS_Adm1n!2024` (not intended for
-player use)
+Admin account (`admin`) is seeded for realism only — its password
+is randomised at boot and cannot authenticate through `/login`.
 
 ### Flag format
 

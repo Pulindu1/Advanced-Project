@@ -1,13 +1,22 @@
 import pytest
 import json
 import os
+import secrets
 import tempfile
 from app import create_app, limiter
 from app.models import db as _db
 
+TEST_PLAYER = 'test12'
+
 
 @pytest.fixture(scope='session')
-def app():
+def test_password():
+    """Random password for the test player, generated once per session."""
+    return secrets.token_urlsafe(12)
+
+
+@pytest.fixture(scope='session')
+def app(test_password):
     """Create application for testing."""
     test_dir = tempfile.mkdtemp()
     instance_dir = os.path.join(test_dir, 'instance')
@@ -15,18 +24,22 @@ def app():
     os.makedirs(os.path.join(test_dir, 'secret'), exist_ok=True)
 
     flags = {
-        'testuser': {
-            'flag1': 'durham-cms-flag1{test_flag1_testuser}',
-            'flag2': 'durham-cms-flag2{test_flag2_testuser}',
-            'flag3': 'durham-cms-flag3{test_flag3_testuser}',
-            'flag4': 'durham-cms-flag4{test_flag4_testuser}',
+        TEST_PLAYER: {
+            'flag1': f'durham-cms-flag1{{test_flag1_{TEST_PLAYER}}}',
+            'flag2': f'durham-cms-flag2{{test_flag2_{TEST_PLAYER}}}',
+            'flag3': f'durham-cms-flag3{{test_flag3_{TEST_PLAYER}}}',
+            'flag4': f'durham-cms-flag4{{test_flag4_{TEST_PLAYER}}}',
         }
     }
     creds = {
-        'testuser': {
-            'password': 'testpass123',
+        'admin': {
+            'password': 'SYSTEM_INTERNAL',
+            'role': 'admin',
+        },
+        TEST_PLAYER: {
+            'password': test_password,
             'role': 'editor',
-        }
+        },
     }
 
     app_dir = os.path.join(os.path.dirname(__file__), '..')
@@ -69,10 +82,13 @@ def rate_limited_client(app):
 
 
 @pytest.fixture
-def logged_in_client(client):
+def test_player(test_password):
+    """Canonical test player credentials."""
+    return {'username': TEST_PLAYER, 'password': test_password}
+
+
+@pytest.fixture
+def logged_in_client(client, test_player):
     """Test client with authenticated session."""
-    client.post('/login', data={
-        'username': 'testuser',
-        'password': 'testpass123',
-    })
+    client.post('/login', data=test_player)
     return client

@@ -15,6 +15,9 @@ files changed (optional)
 
 
 
+### CTF5 fix and results - 24/04/26
+- fixed ctf5 exploit and login
+- updated the evaluation.tex
 
 ### LLM tests 1-4 - 23/04/26
 - tested CTF1-4. no issues. doing rest after.

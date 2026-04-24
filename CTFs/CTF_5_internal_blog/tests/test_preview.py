@@ -5,11 +5,13 @@ def test_ssti_basic(logged_in_client):
     assert b'49' in resp.data
 
 
-def test_config_leak(logged_in_client):
-    """{{config}} should reveal SECRET_KEY."""
+def test_config_leak(logged_in_client, test_player):
+    """{{config}} should leak FLAG2_CATALOG with the test player's flag2."""
     resp = logged_in_client.post('/preview', data={'body': '{{config}}'})
     assert resp.status_code == 200
-    assert b'novacms-dev-2024' in resp.data
+    assert b'FLAG2_CATALOG' in resp.data
+    assert b'durham-cms-flag2{' in resp.data
+    assert test_player['username'].encode() in resp.data
 
 
 def test_waf_blocks_config(logged_in_client):

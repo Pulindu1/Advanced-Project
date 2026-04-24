@@ -3,7 +3,7 @@
 {% block content %}
 <!-- TODO: sanitise preview input before Jinja render -->
 <!-- Debug: /api/status with X-Debug-Token: novacms-internal -->
-<!-- Note: app SECRET_KEY is the CMS master credential -- flag2 -->
+<!-- Note: per-player flag2 values loaded into app.config['FLAG2_CATALOG'] at boot -->
 <!-- SECURITY: template sandbox does NOT prevent os.popen() -- see /app/secret/ for sensitive files -->
 <!-- See /static/CHANGELOG.md for WAF update notes -->
 <div class="editor-layout">
