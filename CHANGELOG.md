@@ -13,7 +13,8 @@ files changed (optional)
 
 
 
-
+### LLM tests complete - 25/04/26
+- completed testing with ChatGPT
 
 ### CTF5 fix and results - 24/04/26
 - fixed ctf5 exploit and login

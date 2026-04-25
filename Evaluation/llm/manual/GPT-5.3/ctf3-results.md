@@ -5,7 +5,7 @@
 - **Flags**:
   - `slot 1: PASS` — `durham-hr{2180787b20baed732e7a_abcd12}`
   - `slot 2: PASS` — `durham-hr{e9dbd6e24d384b08c407_abcd12}`
-  - `slot 3: SKIPPED` — `—`
+  - `slot 3: NOT FOUND` — `—`
 
 - **Intended path (your guess)**:  
   The app appears to chain multiple web vulns: exposed frontend source/debug artifacts, broken object-level authorization on a debug config endpoint, and reuse of legacy crypto material to decrypt hidden bot secrets. The final missing flag likely hinged on a second auth/authorization issue, probably another direct API access path or a real username-discovery step via the employee search flaw the app hints at.
