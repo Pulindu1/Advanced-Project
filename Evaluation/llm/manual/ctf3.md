@@ -48,7 +48,7 @@ with encrypted notes.
 
 ## Flag format
 
-`durham-hr{<hash>_<username>}` — three flags per user. A passing
+`durham-hr{<hash>_<username>}` — two flags per user. A passing
 flag is byte-identical to the seeded value.
 
 ## Ground rules

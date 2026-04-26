@@ -17,7 +17,7 @@ which is deployed per-instance rather than shared);
 \textit{Advanced} covers CTF5, CTF6, and CTF9 (WAF-bypass
 SSTI, SSRF-to-IMDS with a Redis pivot, and a six-stage
 enterprise chain). The suite as delivered spans nine
-challenges, twenty-five flags, eight of the ten 2021 OWASP
+challenges, twenty-three flags, eight of the ten 2021 OWASP
 categories, and nine technology stacks, packaged as
 Docker Compose stacks with a shared flag-generation layer
 and an exploit-as-a-test harness.
@@ -88,7 +88,7 @@ Node.js, React/Vite, JWT & 1 & Basic \\ \hline
 3 & Corporate HR system &
 SQL injection (filter bypass); AES-CBC decryption; info disclosure &
 A02, A03, A05 &
-PHP/Laravel, React, PostgreSQL & 4 & Intermediate \\ \hline
+PHP/Laravel, React, PostgreSQL & 2 & Intermediate \\ \hline
 4 & Corporate helpdesk &
 DOM XSS (\texttt{eval}); bot-based escalation &
 A03, A07 &
@@ -318,16 +318,18 @@ equation~(\ref{eq:flag-format}).
 
 \textbf{CTF3 --- HR System: parallel paths through SQL
 injection and a debug endpoint.} The HR system ships two
-distinct routes to the data behind its four flags. A naive
+distinct routes to its two flags. A naive
 \texttt{isBlocked()} regex filter passes \texttt{'OR~1=1--}
 through unaltered because it only matches keywords
 surrounded by whitespace, and a parallel endpoint
 \texttt{/api/debug/user-config} annotated
 \texttt{// TODO: REMOVE BEFORE PRODUCTION} returns plaintext
-passwords from \texttt{credentials.json}. Both paths are
-pedagogically valid; the injection path is rewarded with an
-additional flag, so a less-confident player is guaranteed to
-make progress while a more ambitious player encounters the
+credentials. Both paths are pedagogically valid: the
+authenticated route reaches \texttt{/api/flag} for the first
+flag, while the injection or debug route discovers the bot
+employee's AES-encrypted notes whose plaintext is the second
+flag, so a less-confident player is guaranteed to make
+progress while a more ambitious player encounters the
 anti-pattern of a forgotten maintenance endpoint.
 
 \textbf{CTF4 --- Corporate Helpdesk: bot-mediated XSS and

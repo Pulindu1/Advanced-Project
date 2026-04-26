@@ -2,13 +2,17 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { PORT } = require('./config');
 const app = require('./app');
 
 const CREDS_PATH = process.env.CREDS_PATH || '/app/credentials.json';
 const USERS_FILE = path.join(__dirname, 'data', 'users.json');
 
-// Seed users.json from mounted credentials.json before the app starts
+// Seed users.json from mounted credentials.json before the app starts.
+// Staff accounts ship with the SYSTEM_INTERNAL sentinel password; we swap
+// it for a process-local random value here so the account exists for
+// realism (role attribution, admin user shape) but no one can authenticate.
 function seedUsers() {
   let credentials = {};
   try {
@@ -22,7 +26,10 @@ function seedUsers() {
   const users = [];
   for (const [username, data] of Object.entries(credentials)) {
     const normalized = username.toLowerCase().trim();
-    const password = typeof data === 'object' ? data.password : data;
+    let password = typeof data === 'object' ? data.password : data;
+    if (password === 'SYSTEM_INTERNAL') {
+      password = crypto.randomBytes(24).toString('hex');
+    }
     const role = (typeof data === 'object' && data.role) ? data.role : 'user';
     users.push({ username: normalized, password, role });
   }

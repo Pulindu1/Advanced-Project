@@ -2,18 +2,24 @@
 const fs = require('fs');
 const path = require('path');
 
-// Load per-user flags from mounted file or fall back to local data directory
-const flagsPath = process.env.FLAGS_PATH || path.join(__dirname, '..', 'data', 'flags.json');
+// Load per-user flags. Try, in order: explicit FLAGS_PATH, the docker-mounted
+// /app/flags.json, then the local src/data/flags.json fallback.
+const flagsCandidates = [
+  process.env.FLAGS_PATH,
+  '/app/flags.json',
+  path.join(__dirname, '..', 'data', 'flags.json'),
+].filter(Boolean);
 let flagsByUser = {};
 
-try {
-  if (fs.existsSync(flagsPath)) {
-    const raw = fs.readFileSync(flagsPath, 'utf8');
-    flagsByUser = JSON.parse(raw);
+for (const candidate of flagsCandidates) {
+  try {
+    if (fs.existsSync(candidate)) {
+      flagsByUser = JSON.parse(fs.readFileSync(candidate, 'utf8'));
+      break;
+    }
+  } catch (err) {
+    console.error(`Failed to load flags from ${candidate}:`, err.message);
   }
-} catch (err) {
-  console.error('Failed to load flags.json:', err.message);
-  flagsByUser = {};
 }
 
 function getFlagForUser(username) {

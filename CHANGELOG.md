@@ -11,7 +11,9 @@ files changed (optional)
 
 
 
-
+### Manual testing (claude + gpt) complete - 26/04/26
+- we have completed testing with ChatGPT and Claude (Evaluation/llm/manual)
+- updated report methodology and eval, using the data from above.
 
 ### LLM tests complete - 25/04/26
 - completed testing with ChatGPT

@@ -22,6 +22,17 @@ const CREDS_OUTPUT = path.join(CTF_DIR, 'credentials.json')
 
 const USERNAME_PATTERN = /^[a-z]{4}[0-9]{2}$/
 
+// Seeded for realism. The admin account is created so the cookie-tampering
+// CTF has a believable target role to escalate into, but its password is
+// set to SYSTEM_INTERNAL here as a sentinel; src/server.js replaces it with
+// a process-local random value at boot so no one can log in as admin.
+const STAFF_ACCOUNTS = {
+  admin: {
+    password: 'SYSTEM_INTERNAL',
+    role: 'admin',
+  },
+}
+
 function generateRandomUsername() {
   const letters = 'abcdefghijklmnopqrstuvwxyz'
   const digits = '0123456789'
@@ -100,7 +111,8 @@ function main() {
     flags[username] = generateFlag(username)
   }
 
-  const credentials = generateCredentials(usernames)
+  const playerCreds = generateCredentials(usernames)
+  const credentials = { ...STAFF_ACCOUNTS, ...playerCreds }
 
   fs.mkdirSync(path.dirname(FLAGS_OUTPUT), { recursive: true })
   fs.writeFileSync(FLAGS_OUTPUT, JSON.stringify(flags, null, 2))

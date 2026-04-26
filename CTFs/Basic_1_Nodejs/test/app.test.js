@@ -4,9 +4,11 @@ const request = require('supertest');
 
 const usersPath = path.join(__dirname, '..', 'src', 'data', 'users.json');
 let app;
+let originalUsers;
 
 beforeAll(() => {
   fs.mkdirSync(path.dirname(usersPath), { recursive: true });
+  originalUsers = fs.existsSync(usersPath) ? fs.readFileSync(usersPath, 'utf8') : '[]\n';
   fs.writeFileSync(
     usersPath,
     JSON.stringify(
@@ -19,6 +21,10 @@ beforeAll(() => {
     )
   );
   app = require('../src/app');
+});
+
+afterAll(() => {
+  fs.writeFileSync(usersPath, originalUsers);
 });
 
 describe('Basic_1 contract tests', () => {
