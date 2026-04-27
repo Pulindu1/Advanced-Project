@@ -5,14 +5,17 @@ This dissertation set out to answer how modern web application
 vulnerabilities can be authentically modelled and pedagogically
 structured within Capture-the-Flag environments to enhance
 learning outcomes in cybersecurity education. The answer advanced
-here is a seven-challenge suite that combines broad OWASP
-coverage---including under-represented classes such as server-side
-template injection, server-side request forgery, and insecure
-deserialisation---with a deterministic-HMAC personalisation layer
-that makes flag sharing attributable and makes LLM-generated
-flags structurally invalid, packaged as self-contained Docker
-Compose stacks whose intended exploit paths are verified by an
-objective end-to-end test harness.
+here is a nine-challenge suite spanning eight of the ten
+2021 OWASP categories---including under-represented classes
+such as server-side template injection, server-side request
+forgery against simulated cloud metadata, and insecure
+deserialisation---with a deterministic-HMAC personalisation
+layer that makes flag sharing attributable and makes
+LLM-generated flags structurally invalid, packaged as
+self-contained Docker Compose stacks whose intended exploit
+paths are verified by a three-layer test apparatus (per-CTF
+unit and integration suites, an end-to-end exploit harness,
+and a nine-job CI matrix).
 
 \subsection{Main findings}
 
@@ -43,24 +46,28 @@ where methodology sharing generally still requires competence to
 act on, this is a pragmatic trade.
 
 Third, \textit{scaffolding design is the main determinant of
-pedagogical accessibility in the Advanced tier}. The LLM and human
-tracks agreed that the distinguishing feature of a successful
-Advanced-tier player was their willingness to engage with the
-breadcrumbing artefacts (CHANGELOG hints, \texttt{/health}
-metadata, WAF source disclosure) rather than to type a canonical
-public payload. This reframes the design question: the question is
-not ``how hard is the vulnerability'' but ``how visible is the
-reasoning path that solves it.''
+pedagogical accessibility on the harder challenges}. The
+human walkthrough's free-text responses repeatedly named
+breadcrumbing artefacts (Rachel's security memo on CTF9, the
+in-page HTML comments and \texttt{/static/CHANGELOG.md} on
+CTF5, the JWT cookie inspection on CTF3) as ``the artefact
+that moved me forward''---and equally, the lower learning
+ratings on the AI-assisted middle band tracked back to
+breadcrumbs participants felt were not specific enough. This
+reframes the design question: not ``how hard is the
+vulnerability'' but ``how visible is the reasoning path that
+solves it''.
 
 \subsection{Contributions}
 
 The specific contributions of this dissertation are:
 \begin{itemize}
-    \item a seven-challenge web-exploitation suite covering six
-          of the ten 2021 OWASP categories, with three distinct
-          injection sub-types and three stacks rarely
-          represented in educational CTFs (Flask/Jinja2,
-          Rust/Actix-web, React with queued admin bot);
+    \item a nine-challenge web-exploitation suite covering
+          eight of the ten 2021 OWASP categories, with three
+          distinct injection sub-types and stacks rarely
+          represented in educational CTFs
+          (Flask/Jinja2, Rust/Actix-web, Go/Gin, Spring Boot,
+          and a queue-driven admin-bot React stack);
     \item a deterministic HMAC-SHA256 flag personalisation
           scheme with per-deployment and per-flag-slot salt
           parameterisation, embedded-username attribution, and
@@ -81,35 +88,67 @@ The specific contributions of this dissertation are:
 
 \subsection{Further work}
 
-Three strands of further work are worth pursuing.
+Five strands of further work are worth pursuing.
 
-\textit{Statistical evaluation of learning gain.} The human track
-here is diagnostic rather than confirmatory. A properly powered
-pre-/post-test study, using the normalised-gain
-statistic~\cite{hake1998} over a full cohort of Networks-and-Systems
-students, would provide the measurement that both
-Meinsma et al.~\cite{Meinsma2022} and Vykopal et al.~\cite{Vykopal}
-argue the field is missing. Because the suite ships with its own
-objective solvability baseline, such a study can separate
-``challenge was solvable'' from ``student solved it'' more
-cleanly than prior platforms have permitted.
+\textit{Larger-scale human study with cohort-level
+participation.} The four-participant walkthrough reported in
+Section~\ref{sec:eval-human} is diagnostic rather than
+confirmatory; recruitment difficulty was the principal
+constraint. A properly powered study run against a full
+COMP2211 cohort, using a normalised-gain
+statistic~\cite{hake1998} and supplemented with a NASA-TLX
+workload battery~\cite{HartStaveland1988} (deferred from the
+fielded survey), would provide the measurement that
+Meinsma et al.~\cite{Meinsma2022} and
+Vykopal et al.~\cite{Vykopal} argue the field is missing.
+Modest cash or gift-card incentives are likely necessary to
+move recruitment from opt-in convenience samples to
+representative coverage; participation as an optional
+not-for-credit activity should be considered. Because the
+suite ships with its own objective solvability baseline, such a
+study can separate ``challenge was solvable'' from ``student
+solved it'' more cleanly than prior platforms have permitted.
 
-\textit{Expanded LLM agentic harnesses.} The LLM evaluation here
-uses two scaffolding conditions (passive and agentic). The space
-of agentic harnesses continues to expand~\cite{ji2025} and an
-adversarial-evolution style trial---where each iteration of the
-suite attempts to resist the best-known harness---would give the
-integrity argument a moving-target form that matches the
-real-world threat.
+\textit{Multi-model multi-seed agentic LLM evaluation.} The
+agentic harness committed at \texttt{Evaluation/llm/} is
+ready to drive a multi-condition trial
+(\textit{cold-probe}, \textit{pilot}, \textit{primary},
+\textit{flagship}, \textit{null-prompt}); execution was
+deferred on cost grounds (approximately USD~9 per nine-CTF
+flagship run, an order of magnitude over the dissertation's
+\pounds20 envelope). The natural next step is a budget-bounded
+run (e.g.\ a \pounds40--\pounds80 envelope across two or three
+seeds on a single flagship model) so that the integrity claim
+is supported by direct empirical falsification rather than by
+construction alone. The space of agentic harnesses continues to
+expand~\cite{ji2025} and an adversarial-evolution style
+trial---where each iteration of the suite attempts to resist
+the best-known harness---would give the integrity argument a
+moving-target form that matches the real-world threat.
 
-\textit{Broader OWASP coverage and environment-level
-randomisation.} Four OWASP categories (A04, A06, A08, A09) remain
-outside the current suite's coverage, either because they are
-difficult to flag-ify (A04 Insecure Design) or because they
-require infrastructure outside the web layer (A08, A09). Extending
-the personalisation layer toward SecGen-style
-environment randomisation for a subset of challenges would close
-the methodology-sharing gap without replacing the whole scheme.
+\textit{Statistical evaluation of learning gain.} A controlled
+pre-/post-test comparison against the COMP2211 status-quo
+fixed-VM baseline would convert the present
+``learning gain by construction'' argument into a
+between-groups measurement, addressing the absence of a
+control arm noted in Section~\ref{sec:eval-limits}.
+
+\textit{Broader OWASP coverage and a 2025 refresh.} Two 2021
+OWASP categories (A04 Insecure Design, A06 Vulnerable and
+Outdated Components) remain outside the current suite's
+coverage, the former because it is difficult to flag-ify and
+the latter because component-rotation challenges age out of
+scope quickly. The 2025 OWASP Top~10 introduces additional
+classes including Software Supply Chain Failures, which would
+extend the suite into a build-pipeline threat model not
+currently covered. Refreshing the suite against the 2025 list
+is an obvious follow-on.
+
+\textit{Environment-level randomisation for a subset of
+challenges.} Extending the personalisation layer toward
+SecGen-style~\cite{chothia2023} environment randomisation for a
+subset of challenges would close the methodology-sharing gap
+without replacing the whole flag-layer scheme.
 
 \subsection{Closing remark}
 

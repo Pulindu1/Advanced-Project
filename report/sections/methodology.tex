@@ -8,18 +8,29 @@ The project asks whether a web-exploitation CTF suite can be
 personalised per student without per-student image rebuilds,
 and whether the resulting artefacts can supply the
 process-level evidence that solver-count logging alone cannot.
-The answer takes the form of a three-tier deliverables ladder:
-\textit{Basic} covers CTF1, CTF2, and CTF7 (single-flag
-challenges with per-user HMAC personalisation and
-containerised deployment); \textit{Intermediate} covers CTF3,
-CTF4, and CTF8 (multi-flag or multi-stage challenges, one of
-which is deployed per-instance rather than shared);
-\textit{Advanced} covers CTF5, CTF6, and CTF9 (WAF-bypass
-SSTI, SSRF-to-IMDS with a Redis pivot, and a six-stage
-enterprise chain). The suite as delivered spans nine
-challenges, twenty-three flags, eight of the ten 2021 OWASP
-categories, and nine technology stacks, packaged as
-Docker Compose stacks with a shared flag-generation layer
+The answer takes the form of two complementary structures.
+The deliverables ladder of
+Section~\ref{sec:research-question} defines \emph{engineering
+scope} (Basic = baseline CTF set with per-user HMAC
+personalisation and Docker Compose; Intermediate = full
+nine-CTF, eight-OWASP suite with multi-stage chains;
+Advanced = three-layer test apparatus, CI matrix, LLM
+solvability trial, and human walkthrough). Orthogonally,
+each individual CTF carries a per-challenge
+\emph{difficulty band}: \textit{Easy} for CTF1, CTF2, and
+CTF7 (single-flag challenges); \textit{Medium} for CTF3,
+CTF4, and CTF8 (each either multi-flag or single-flag with a
+multi-step exploit chain); and
+\textit{Hard} for CTF5, CTF6, and CTF9 (WAF-bypass SSTI,
+SSRF-to-IMDS with a Redis pivot, and a six-stage enterprise
+chain). The two axes are reported separately throughout:
+deliverable tier governs the project plan, while difficulty
+band describes a property of the challenge artefact that the
+LLM and human evaluations can calibrate against
+(Section~\ref{sec:eval-difficulty}). The suite as delivered
+spans nine challenges, twenty-three flags, eight of the ten
+2021 OWASP categories, and nine technology stacks, packaged
+as Docker Compose stacks with a shared flag-generation layer
 and an exploit-as-a-test harness.
 
 \subsection{Design Philosophy}
@@ -76,43 +87,43 @@ genuinely vulnerable dependencies into the distributable.
 \label{tab:suite-summary}
 \begin{tabular}{|c|p{2.4cm}|p{3.6cm}|p{1.8cm}|p{3.0cm}|c|c|}
 \hline
-\textbf{CTF} & \textbf{Scenario} & \textbf{Vulnerability Classes} & \textbf{OWASP} & \textbf{Stack} & \textbf{Flags} & \textbf{Tier} \\ \hline
+\textbf{CTF} & \textbf{Scenario} & \textbf{Vulnerability Classes} & \textbf{OWASP} & \textbf{Stack} & \textbf{Flags} & \textbf{Difficulty} \\ \hline
 1 & Module portal &
 Unsigned session cookie; privilege escalation &
 A01, A02 &
-Node.js, Express, EJS & 1 & Basic \\ \hline
+Node.js, Express, EJS & 1 & Easy \\ \hline
 2 & Password manager &
 Weak JWT secret via PoW; JWT forgery &
 A02, A07 &
-Node.js, React/Vite, JWT & 1 & Basic \\ \hline
+Node.js, React/Vite, JWT & 1 & Easy \\ \hline
 3 & Corporate HR system &
 SQL injection (filter bypass); AES-CBC decryption; info disclosure &
 A02, A03, A05 &
-PHP/Laravel, React, PostgreSQL & 2 & Intermediate \\ \hline
+PHP/Laravel, React, PostgreSQL & 2 & Medium \\ \hline
 4 & Corporate helpdesk &
 DOM XSS (\texttt{eval}); bot-based escalation &
 A03, A07 &
-Node.js, React, PostgreSQL, Redis, BullMQ, Playwright & 1 & Intermediate \\ \hline
+Node.js, React, PostgreSQL, Redis, BullMQ, Playwright & 1 & Medium \\ \hline
 5 & NovaCMS blog/CMS &
 SSTI (Jinja2); WAF bypass; RCE via MRO chain &
 A01, A03, A05 &
-Python/Flask, Jinja2 & 4 & Advanced \\ \hline
+Python/Flask, Jinja2 & 4 & Hard \\ \hline
 6 & Veridian Secure &
 SSRF; IMDSv1 enumeration; Redis pivot (\texttt{dict://}) &
 A10, A05, A01 &
-Rust/Actix-web, Redis, simulated IMDS & 4 & Advanced \\ \hline
+Rust/Actix-web, Redis, simulated IMDS & 4 & Hard \\ \hline
 7 & NorthSide Notes &
 Insecure deserialisation (CVE-2017-5941) &
 A08 &
-Node.js, Express, EJS, \texttt{node-serialize} & 1 & Basic/Intermediate \\ \hline
+Node.js, Express, EJS, \texttt{node-serialize} & 1 & Easy \\ \hline
 8 & Greystone Gazette &
 IDOR on sequential IDs; client-side admin guard bypass; OS command injection via \texttt{\$(\ldots)} substitution &
 A01, A03 &
-Go/Gin, SQLite, \texttt{html/template} & 3 & Intermediate \\ \hline
+Go/Gin, SQLite, \texttt{html/template} & 3 & Medium \\ \hline
 9 & TrialVault (Dunholm Research) &
 Actuator exposure; path traversal (\texttt{....//}); JWT algorithm confusion (RS256$\to$HS256); blind Boolean SQLi; RSA-512 + AES-GCM hybrid crypto; logfile-based password leak &
 A01, A02, A03, A05, A07, A09 &
-Java/Spring Boot, PostgreSQL, Redis & 6 & Advanced \\ \hline
+Java/Spring Boot, PostgreSQL, Redis & 6 & Hard \\ \hline
 \end{tabular}
 \end{table*}
 
@@ -190,7 +201,7 @@ the database rather than derived from a salted username.
 \label{eq:flag-format}
 \end{equation}
 where $N$ is the token length in hexadecimal characters
-(16 for Basic-tier single-flag challenges and 20 elsewhere,
+(16 for Easy-band single-flag challenges and 20 elsewhere,
 corresponding to 64- and 80-bit entropy respectively). For
 example, with prefix \texttt{durham}, salt
 \texttt{basic1-default-salt}, and username \texttt{abcd12},
@@ -238,7 +249,7 @@ Algorithm~\ref{alg:flag-gen} shows the end-to-end pipeline.
 
 \subsubsection{Integrity Properties and Positioning}
 
-Three properties follow.
+Four properties follow.
 \textbf{Attribution}: because $u$ is embedded in the flag
 string, any submitted flag identifies its legitimate owner;
 submitting another student's flag is detectable without
@@ -250,8 +261,15 @@ LLM without the salt cannot produce a valid flag even when it
 has correctly identified the methodology; the model may still
 guide the student, but the flag itself must be produced by
 executing the exploit against the student's personalised
-instance. These claims are evaluated empirically in
-Section~\ref{sec:results}.
+instance. \textbf{Single-username distribution}: each student
+receives a stack seeded with only their own username in the
+\texttt{users.json} and \texttt{flags.json} bind-mounts, with
+\texttt{SOLUTIONS.md}, \texttt{credentials.json} for other
+students, and any audit notes stripped before distribution.
+A student cannot recover another student's flag from their
+own image because no other students' flags are present in
+the image to begin with. These claims are evaluated
+empirically in Section~\ref{sec:results}.
 
 The scheme is scoped to the flag layer.
 SecGen~\cite{chothia2023} randomises the entire lab
@@ -265,10 +283,15 @@ personalisation captures that risk at a fraction of the cost.
 
 Full per-challenge documentation is available in the source
 tree; this section records the distinctive design decision
-taken in each challenge, grouped by tier of the deliverables
-ladder (Section~\ref{sec:research-question}).
+taken in each challenge, grouped by difficulty band
+(Section~\ref{sec:research-question}). \emph{Easy} challenges
+are single-flag with a single primitive; \emph{Medium}
+challenges are either multi-flag or single-flag-with-multi-step
+chain; \emph{Hard} challenges combine both, with multi-stage
+chains and multiple flags whose intermediate output feeds the
+next stage's input.
 
-\subsubsection{Basic tier}
+\subsubsection{Easy challenges}
 
 \textbf{CTF1 --- Module Portal: accepting multiple cookie
 encodings.} The unsigned-cookie decoder accepts raw JSON,
@@ -314,41 +337,43 @@ evidence of attempted impersonation, complementing the
 embedded-username attribution of
 equation~(\ref{eq:flag-format}).
 
-\subsubsection{Intermediate tier}
+\subsubsection{Medium challenges}
 
-\textbf{CTF3 --- HR System: parallel paths through SQL
-injection and a debug endpoint.} The HR system ships two
-distinct routes to its two flags. A naive
-\texttt{isBlocked()} regex filter passes \texttt{'OR~1=1--}
-through unaltered because it only matches keywords
-surrounded by whitespace, and a parallel endpoint
-\texttt{/api/debug/user-config} annotated
-\texttt{// TODO: REMOVE BEFORE PRODUCTION} returns plaintext
-credentials. Both paths are pedagogically valid: the
-authenticated route reaches \texttt{/api/flag} for the first
-flag, while the injection or debug route discovers the bot
-employee's AES-encrypted notes whose plaintext is the second
-flag, so a less-confident player is guaranteed to make
-progress while a more ambitious player encounters the
-anti-pattern of a forgotten maintenance endpoint.
+\textbf{CTF3 --- HR System: two flags, the second a
+three-primitive chain.} Flag 1 is reached directly by the
+authenticated \texttt{/api/flag} endpoint after a normal
+login. Flag 2 chains three weaknesses: a no-space SQL
+injection (\texttt{'OR~1=1--}) bypasses an
+\texttt{isBlocked()} regex filter that only matches keywords
+surrounded by whitespace, exposing a hidden bot employee
+record whose \texttt{notes} field carries an AES-CBC
+ciphertext; the decryption key
+\texttt{CTF\_2026\_SECRET\_KEY\_XJ9K2L} is hard-coded in a
+comment in \texttt{frontend/src/utils/legacyAuth.ts} and
+ships in the bundled JS, recoverable via DevTools sources;
+and a parallel endpoint \texttt{/api/debug/user-config}
+annotated \texttt{// TODO: REMOVE BEFORE PRODUCTION} returns
+the same encrypted blob without authorisation, providing an
+alternative IDOR-style retrieval path. The chain teaches
+that filter-based SQLi defence, frontend-source key leakage,
+and forgotten debug surfaces compose into a flag rather than
+remaining independent low-severity findings.
 
-\textbf{CTF4 --- Corporate Helpdesk: bot-mediated XSS and
-per-instance deployment.} The knowledge-base page contains
-an \texttt{eval()} sink reached only when an admin bot (a
-Playwright-driven headless browser registered as a BullMQ
-consumer) follows a link submitted through the report
-workflow. This mirrors the real-world ``XSS-as-CSRF via an
-automated admin'' pattern~\cite{DOMXSSWalker2023} and forces
+\textbf{CTF4 --- Corporate Helpdesk: bot-mediated XSS.}
+The knowledge-base page contains an \texttt{eval()} sink
+reached only when an admin bot (a Playwright-driven headless
+browser registered as a BullMQ consumer) follows a link
+submitted through the report workflow. The chain is two-step:
+the player crafts a payload, submits it as a report link, and
+the bot --- holding admin session --- visits the link and
+triggers the sink that exfiltrates the per-user flag from
+\texttt{/api/admin/flag} back to a player-controlled capture
+endpoint. The pattern mirrors the real-world ``XSS-as-CSRF via
+an automated admin'' attack~\cite{DOMXSSWalker2023} and forces
 the player to navigate URL-encoding subtleties (the payload
-must use \texttt{.concat()} rather than \texttt{+} because
+must use \texttt{.concat()} rather than \texttt{+}, since
 \texttt{+} decodes to a space inside a query string) that a
-static \texttt{alert(1)} exercise would hide. Because the
-bot holds a single privileged session and exfiltrated data
-lands in a shared PostgreSQL table, a multi-tenant
-deployment would leak personalisation; the generation layer
-therefore emits a per-student Compose override with a
-ten-port offset, running the same immutable image in
-per-instance mode (Section~\ref{sec:containerisation}).
+static \texttt{alert(1)} exercise would hide.
 
 \textbf{CTF8 --- Greystone Gazette: breadcrumb chaining
 across three weaknesses.} The editorial system presents a
@@ -371,7 +396,7 @@ diagnostics endpoint whose blocklist rejects \texttt{;},
 guidance that allowlists are the only robust defence against
 injection classes~\cite{NCSCInjection}.
 
-\subsubsection{Advanced tier}
+\subsubsection{Hard challenges}
 
 \textbf{CTF5 --- NovaCMS: disclosing the WAF source to the
 player.} The Jinja2 SSTI challenge is gated by a
@@ -489,21 +514,17 @@ private bridge network (\texttt{veridian-internal}),
 reproducing the defence-in-depth posture of a real cloud
 VPC.
 
-CTF4 requires a distinct deployment model. Its admin bot is a
-single privileged Playwright session and captured data is
-stored in a shared PostgreSQL instance, so a multi-tenant
-deployment would both trivialise the challenge and leak
-personalisation material between students. The generation
-layer therefore emits per-student directories, each
-containing a \texttt{.env} with unique secrets, a
-\texttt{docker-compose.override.yml} with distinct container
-names and a ten-port offset, and a per-user credentials
-bundle. The override is composed on top of the base Compose
-file at run time, so the same immutable image runs unchanged
-across both the shared-instance model (CTF1--3, 5--8) and
-the per-instance model (CTF4). A module administrator does
-not have to choose between ``build once'' and ``personalise'':
-both properties hold simultaneously.
+All nine stacks therefore share a single deployment model:
+the same immutable image is rebuilt by the generation
+layer and run with a per-cohort \texttt{flags.json} and
+\texttt{credentials.json}, with no per-student container
+divergence. The trade-off is that for any challenge whose
+intended-path requires capture state to be visible to the
+attacker (notably CTF4, where a privileged admin bot
+exfiltrates DOM data into a shared PostgreSQL row), the
+distribution model assumes a one-stack-per-student deployment
+or per-stack reset between cohorts; multi-tenancy on a single
+running stack is out of scope.
 
 CTF9 is the largest stack and adds a key-handling
 constraint: the Java application needs an RSA signing key
@@ -530,30 +551,14 @@ is precisely the vulnerability that makes the challenge
 work. Tests must therefore establish two properties: that
 application-level contracts hold (authentication, rate
 limiting, authorisation boundaries) and that the intended
-exploit still yields the flag. Coverage across the nine
-challenges is summarised in Table~\ref{tab:vvt-matrix}.
-
-\begin{table}[t]
-\centering
-\caption{VVT coverage matrix. U = unit/contract tests,
-I = integration tests, E = exploit-as-a-test script,
-A = post-design audit record.}
-\label{tab:vvt-matrix}
-\small
-\begin{tabular}{|c|c|c|c|c|}
-\hline
-\textbf{CTF} & \textbf{U} & \textbf{I} & \textbf{E} & \textbf{A} \\ \hline
-1 & \checkmark & & \checkmark & \checkmark \\ \hline
-2 & & & \checkmark & \checkmark \\ \hline
-3 & & & \checkmark & \checkmark \\ \hline
-4 & & & \checkmark & \checkmark \\ \hline
-5 & \checkmark & & \checkmark & \checkmark \\ \hline
-6 & & & \checkmark & \checkmark \\ \hline
-7 & \checkmark & & \checkmark & \checkmark \\ \hline
-8 & \checkmark & \checkmark & \checkmark & \checkmark \\ \hline
-9 & \checkmark & \checkmark & \checkmark & \checkmark \\ \hline
-\end{tabular}
-\end{table}
+exploit still yields the flag. Every challenge ships all
+four verification layers used in this work --- unit and
+contract tests, integration tests, an exploit-as-a-test
+end-to-end script, and a standardised post-design audit
+record. CTF6 is the single exception on integration: its
+in-process Actix tests sit alongside the binary code as
+inline \texttt{\#[test]} cases rather than in a separate
+\texttt{tests/} directory.
 
 \subsubsection{Exploit Scripts as Ground Truth}
 
@@ -604,93 +609,105 @@ student attempt.
 
 \subsubsection{Contract and Unit Tests}
 
-Per-challenge unit and integration tests exercise
-non-exploit contracts using each stack's native framework:
-Jest with Supertest~\cite{JestSupertest} for Node.js (CTF1,
-CTF7), pytest for Flask (CTF5), the Go standard
-\texttt{testing} package with an in-process Gin server for
-CTF8, and JUnit~5 with Spring Boot Test for CTF9.
-Representative assertions include ``unauthenticated requests
-to \texttt{/flag} return 403,'' ``rate limiting activates
-after five failed logins,'' ``each WAF blocklist entry is
-enforced,'' ``a forged HS256 token signed with the
+Every challenge ships first-party unit and (where the
+stack supports a separate integration directory) integration
+suites using its native framework: Jest with
+Supertest~\cite{JestSupertest} for the Node stacks (CTF1,
+CTF2, CTF4, CTF7), PHPUnit for Laravel (CTF3), pytest for
+Flask (CTF5, with \texttt{unit} and \texttt{integration}
+markers driven by \texttt{conftest.py}), \texttt{cargo test}
+against inline \texttt{\#[test]} cases for Actix (CTF6),
+the Go standard \texttt{testing} package with an in-process
+Gin server for CTF8, and JUnit~5 with Spring Boot Test for
+CTF9. Representative assertions include ``unauthenticated
+requests to \texttt{/flag} return 403,'' ``rate limiting
+activates after five failed logins,'' ``each WAF blocklist
+entry is enforced,'' ``a forged HS256 token signed with the
 public-key PEM does not bypass the session-gated
 \texttt{/incident-report} endpoint,'' and ``the traversal
 filter strips \texttt{../} but permits \texttt{....//}.''
-CTF2, CTF3, CTF4, and CTF6 do not ship first-party unit
-tests; their contracts are covered only through the
-end-to-end layer, acknowledged as a limitation.
+A single cross-stack runner at \texttt{CTFs/run-all-tests.sh}
+iterates every challenge's native command and prints a
+pass/fail/duration table; a \texttt{-{-}quick} switch skips
+the two cold-build suites (CTF6 cargo, CTF9 Maven). The
+same per-CTF commands run in nine parallel jobs in
+\texttt{.github/workflows/tests.yml}, gating every push and
+pull request to \texttt{main} on green contracts across the
+corpus.
 
 \subsubsection{Development and Audit Iteration}
 \label{sec:dev-audit}
 
 Realism motivates features that can themselves become
-unintended vulnerabilities, so each later challenge ships a
-\texttt{workflow.md} cataloguing the risks identified during
-audit, their disposition (``accepted as alternative path,''
-``mitigated,'' ``cannot be fixed without breaking the
-intended path''), and the source file or fix commit. Three
-iteration cycles shaped the final artefact. The CTF1 audit
-surfaced a login-bypass in which the form accepted the
-base64 admin cookie as a password; the intended
+unintended vulnerabilities, so every challenge ships a
+standardised \textit{Post-Design Audit} appendix in its
+\texttt{SOLUTIONS.md} with six fixed subsections:
+\textit{Vulnerability Summary} (one paragraph per flag,
+naming the file and primitive), \textit{OWASP Top~10
+Classification} (flag-keyed table with CWE and one-line
+justification), \textit{Defence Recommendations} (the
+production fix that would close the primitive),
+\textit{Unintended Solutions to Watch For} (alternative
+paths discovered during audit and their disposition --
+accepted, mitigated, or unfixable without breaking the
+intended chain), \textit{Skill Level \& Realism Notes}
+(target audience and a real-world analogue or CVE), and
+\textit{Lessons Learned} (a design retrospective).
+Standardising the schema makes the records comparable
+across challenges and gives the LLM and human evaluation
+chapters a fixed reference frame for vulnerability class.
+Three iteration cycles shaped the final artefact. The CTF1
+audit surfaced a login-bypass in which the form accepted
+the base64 admin cookie as a password; the intended
 cookie-tampering path was preserved by adding a
 sliding-window per-IP rate limiter on the login handler.
-The CTF4 audit is the most extensive, documenting eleven
-findings tied to specific files and fix status, and drove
-the per-instance deployment model when a shared PostgreSQL
-capture store was found to leak personalisation between
-players. The CTF9 pre-build audit recorded eight findings
+The CTF4 audit is the most extensive, with a separate
+\texttt{UNINTENDED\_vulnerabilities.md} documenting eleven
+findings tied to specific files and fix status; one of those
+findings (a shared PostgreSQL capture row that would leak
+exfiltrated DOM payloads between simultaneous players) is the
+direct reason CTF4's distribution model assumes
+one-stack-per-student rather than multi-tenant deployment. The CTF9 pre-build audit recorded eight findings
 with mitigations, the most significant being that the
 private JWT key is loaded from an environment variable
-rather than the classpath so the Flag 2 traversal cannot
+rather than the classpath so the Flag~2 traversal cannot
 reach it.
 
 \subsubsection{LLM and Human Evaluation Tracks}
 
 Two evaluation tracks supplement the automated regime.
-The LLM track exercises a five-model panel across three
-vendors and two capability tiers: Anthropic
-\texttt{claude-sonnet-4-6} and \texttt{claude-haiku-4-5},
-OpenAI \texttt{gpt-5-mini}, and Google
-\texttt{gemini-2.5-pro} alongside \texttt{gemini-2.5-flash}
-on its free tier. The panel deliberately omits flagship
-Opus-class and full GPT-5 models: at \textasciitilde{}\$9
-per full nine-CTF run for Opus 4.7, a multi-seed evaluation
-would exceed the dissertation's hard \pounds20 API budget,
-and the recorded outcome of a panel that excludes the
-largest available models is itself a legitimate finding
-rather than a gap. Access is via each vendor's HTTP API so
-that no project-level context or persistent memory from
-the author's consumer subscriptions contaminates the runs;
-a single spot-check row on \texttt{gpt-5} is included as
-budget headroom permits. Each model is evaluated under two
-scaffoldings: \textit{passive} (a single-shot prompt
-containing the challenge's public surface, with the model
-producing an exploit plan that a separate runner executes
-against the stack), and \textit{agentic} (the model is
-given a constrained shell tool and iterates against a live
-container, capped at fifteen turns and a per-challenge
-token budget). Two seeds per model are run for statistical
-stability; prompt caching is enabled on the public-surface
-packet to keep input cost within budget. A model is
-recorded as having solved a challenge only if the
-transcript culminates in a command that, executed against
-the stack, yields the player's personalised flag---a
-condition the HMAC construction of
-equation~(\ref{eq:hmac-flag}) makes impossible to satisfy
-by text generation alone, so a model that fails a
-script-soluble challenge has failed on reasoning rather
-than environmental accessibility. A small-scale human
-walkthrough with participants of varying skill captures
-the process evidence (narrated screen recordings,
-time-per-flag, intermediate artefacts such as decrypted
-blobs and forged JWTs) that Meinsma et
-al.~\cite{Meinsma2022} identify as absent from solver-count
-logging. Institutional ethics guidance was followed:
-participation was voluntary, data was anonymised at
-collection, and recordings were retained only for the
-duration of analysis. Both tracks' results are presented in
-Section~\ref{sec:results}.
+The LLM track is supported by a fully implemented agentic
+harness committed under \texttt{Evaluation/llm/} with a
+fail-closed sandbox (whitelisted \texttt{localhost:<port>}
+HTTP, \texttt{Guard}-mediated filesystem, ephemeral Alpine
+shell), per-CTF doc packs, expected-flag maps, SHA-pinned
+prompt hashes, and a five-condition run matrix
+(\textit{cold-probe}, \textit{pilot}, \textit{primary},
+\textit{flagship}, \textit{null-prompt}). Execution of the
+multi-model multi-seed panel was deferred on cost grounds:
+a single nine-CTF flagship run is priced at approximately
+USD~9 per model, an order of magnitude over the
+dissertation's \pounds20 API envelope. The harness is
+runnable end-to-end (102 unit tests passing, no API calls
+required) so the trial can be replayed when budget allows;
+a budget-bounded run is identified as further work in
+Section~\ref{sec:conclusion}. A model would be recorded as
+having solved a challenge only if the transcript culminates
+in a command that, executed against the stack, yields the
+player's personalised flag---a condition the HMAC
+construction of equation~(\ref{eq:hmac-flag}) makes
+impossible to satisfy by text generation alone, so a model
+that fails a script-soluble challenge has failed on
+reasoning rather than environmental accessibility. A
+small-scale human walkthrough with participants of varying
+skill captures the process evidence (time-to-flag, AI-tool
+reliance, breadcrumb effectiveness, free-text reflection)
+that Meinsma et al.~\cite{Meinsma2022} identify as absent
+from solver-count logging. Institutional ethics guidance
+was followed: a Durham CS low-risk ethics form was
+completed, participation was voluntary, and responses were
+collected anonymously. Both tracks' results are presented
+in Section~\ref{sec:results}.
 
 \subsubsection{Tooling}
 

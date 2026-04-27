@@ -88,13 +88,29 @@ web-specific competence in depth.
 
 The present project adopts a hybrid position: the suite as a whole
 uses between-challenge gating similar to Balaji et al., but within
-the Advanced challenges (CTF5 and CTF6) a within-domain progression
-is introduced, where four sequential flags teach discrete
-sub-skills (e.g.\ SSTI information disclosure, then Jinja2 filter
-bypass via hex encoding, then MRO traversal to remote code
-execution). This lets a single scenario carry a complete micro-curriculum
-on a single vulnerability class, rather than asking the student to
-switch domains at every level.
+the Hard-difficulty challenges (CTF5, CTF6, CTF9) a within-domain
+progression is introduced, where multiple sequential flags teach
+discrete sub-skills (e.g.\ SSTI information disclosure, then
+Jinja2 filter bypass via hex encoding, then MRO traversal to remote
+code execution). This lets a single scenario carry a complete
+micro-curriculum on a single vulnerability class, rather than
+asking the student to switch domains at every level.
+
+A complementary motivation for graded difficulty within a single
+suite is \textit{cohort-scale calibration}: a Networks-and-Systems
+module wishing to assign the same challenge corpus to a mixed-
+ability cohort needs Easy challenges that pass the median student
+unaided (so the assignment is not punitive at the lower bound) and
+Hard challenges that retain pedagogical headroom for the strongest
+students (so the assignment is not trivial at the upper bound).
+The same graded structure makes the suite naturally compatible
+with a cohort-scoring or modest-incentive evaluation regime
+(cash or gift-card prizes for top scores, an optional
+not-for-credit run), which the lightweight literature on CTF
+participation incentives identifies as an effective recruitment
+device for both pedagogy and evaluation~\cite{Vykopal}; this
+project's evaluation does not implement such a regime, but the
+graded design admits it without further redesign.
 
 Fuzyll's practitioner maxims~\cite{Fuzyll2015} argue that challenges
 should reward understanding over guesswork, and that learning
@@ -109,7 +125,8 @@ outcome. The trade-off is that multiple discovery paths increase
 the risk of unintended solutions, which must be mitigated through
 post-design vulnerability auditing. This project treats the auditing
 step as a first-class engineering activity, recording its findings
-in per-challenge \texttt{workflow.md} files alongside the source.
+in a standardised \textit{Post-Design Audit} appendix appended to
+each challenge's \texttt{SOLUTIONS.md}.
 
 
 \subsection{Web Application Vulnerabilities and OWASP Coverage}
@@ -125,15 +142,22 @@ inclusion of foundational vulnerability classes in CTFs 1--4, but
 neither extends the analysis to emerging classes such as SSTI and
 SSRF, and neither reports measured learning outcomes.
 
-The suite designed here covers six of the ten 2021 OWASP categories
-(A01, A02, A03, A05, A07, A10), and represents three fundamentally
-different injection types within A03 alone: SQL injection at the
-database layer, DOM-based XSS at the browser rendering layer, and
-server-side template injection at the application's view layer.
-This breadth is deliberately wider than the platforms surveyed by
+The suite designed here covers eight of the ten 2021 OWASP
+categories (A01, A02, A03, A05, A07, A08, A09, A10), and
+represents three fundamentally different injection types within
+A03 alone: SQL injection at the database layer, DOM-based XSS
+at the browser rendering layer, and server-side template
+injection at the application's view layer. This breadth is
+deliberately wider than the platforms surveyed by
 Sasiwanit et al.~\cite{Sasiwanit}, which they observe remain
 limited to brute force, SQL injection, and XSS, omitting SSTI,
-insecure deserialisation, and SSRF despite their real-world prevalence.
+insecure deserialisation, and SSRF despite their real-world
+prevalence. The 2025 OWASP Top~10 introduces additional
+categories including \textit{Software Supply Chain Failures}
+and elevates Security Misconfiguration in the rankings; these
+2025-specific classes are not directly modelled in the present
+suite, and a 2025 refresh is identified as further work in
+Section~\ref{sec:conclusion}.
 
 Two vulnerability classes warrant particular discussion because they
 are under-represented in CTF education and are central to this
@@ -282,8 +306,8 @@ with broad OWASP coverage including under-taught vulnerability
 classes, introducing a deterministic-HMAC personalisation layer
 that is lighter than SecGen, packaging each challenge as a
 self-contained Docker Compose stack with flags mounted at runtime,
-and adopting a dual evaluation methodology that combines
-automated exploit replay, a five-model LLM solvability trial
-spanning three vendors and two capability tiers under both
-passive and agentic scaffolding, and a structured human
-walkthrough.
+and adopting a triangulated evaluation methodology that combines
+automated regression (per-CTF unit/integration suites, end-to-end
+exploit-as-a-test, and a nine-job CI matrix), a fully implemented
+multi-model agentic LLM harness committed for deferred execution
+on cost grounds, and a structured human walkthrough.

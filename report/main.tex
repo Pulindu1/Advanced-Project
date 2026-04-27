@@ -117,28 +117,30 @@ rely on identical challenge instances that are vulnerable to flag
 sharing and LLM-assisted solving, and rarely exercise the modern
 framework stacks that graduating students will encounter in industry.
 This dissertation presents the design, implementation, and evaluation
-of a seven-challenge web exploitation CTF suite that addresses all
+of a nine-challenge web exploitation CTF suite that addresses all
 three deficiencies within a single graded coursework context. Each
 challenge is built on a distinct modern technology stack
-(Node.js/Express, React/Vite, PHP/Laravel, Python/Flask, Rust/Actix-web)
-and targets a different subset of the OWASP Top~10, including
+(Node.js/Express, React/Vite, PHP/Laravel, Python/Flask, Rust/Actix-web,
+Go/Gin, Spring Boot) and targets a different subset of the
+OWASP Top~10, covering eight of the ten 2021 categories including
 under-represented classes such as server-side template injection,
-server-side request forgery against cloud metadata, and
-prototype-level insecure deserialisation. Academic-integrity guarantees
+server-side request forgery against simulated cloud metadata, and
+insecure deserialisation. Academic-integrity guarantees
 are provided by a shared generation layer that derives per-user flags
 deterministically via HMAC-SHA256 over a per-deployment salt,
 embedding the recipient's username in every flag string so that
 flag reuse is both detectable and attributable. Challenges are
 packaged as self-contained Docker Compose stacks with no student data
 baked into the images, and their intended exploit paths are verified
-by a suite of Python end-to-end exploit scripts that act as an
-objective ground truth for solvability. The system is evaluated
-against a three-axis methodology combining automated exploit
-replay, a multi-vendor LLM solvability trial across five models
-spanning two capability tiers, and a structured
-human participant walkthrough, with results discussed in terms of
-pedagogical alignment, integrity resilience, and engineering
-trade-offs.
+by a three-layer test apparatus: per-CTF unit and integration
+suites in each stack's native framework, a Python end-to-end
+exploit harness asserting every flag against a running container,
+and a nine-job CI matrix gating every push and pull request. The
+system is evaluated against a three-axis methodology combining
+automated regression, an LLM solvability harness committed for
+deferred multi-model execution, and a structured human participant
+walkthrough, with results discussed in terms of pedagogical
+alignment, integrity resilience, and engineering trade-offs.
 \end{abstract}
 
 \begin{IEEEkeywords}

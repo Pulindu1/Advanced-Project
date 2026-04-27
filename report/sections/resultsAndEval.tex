@@ -26,24 +26,21 @@ submitted string is byte-identical to the HMAC-derived value for
 the deployment salt and test user, so a methodologically correct
 but hallucinated flag is a categorical failure. A \textbf{human
 walkthrough} captures the process evidence absent from solver
-counts: time-to-flag, hint-ladder consumption, NASA-TLX
-workload~\cite{HartStaveland1988}, and free-text feedback.
+counts: time-to-flag, AI-tool reliance, confidence shift,
+enjoyment and learning Likerts, and free-text feedback on
+method, issues, and breadcrumb effectiveness.
 
-Two methodological choices are worth naming. First, the LLM
-trial artefacts are pre-committed: protocol
+The LLM trial artefacts are pre-committed: protocol
 (\texttt{Evaluation/llm/PROTOCOL.md}), success criterion
 (\texttt{PLAN.md} \S5), failure rubric (\texttt{RUBRIC.md}),
 prompt SHA-256 hashes (\texttt{PROMPT\_HASHES.txt}), per-flag
 regexes (\texttt{flag\_regexes.json}) and expected flag map
 (\texttt{expected\_flags.json}) all live under
-\texttt{Evaluation/llm/} ahead of any scoring run, removing the
-post-hoc metric choice that would otherwise dominate noise on a
-small-cell trial. Second, the byte-match criterion is the
-mechanism that turns the integrity question from a claim into a
-measurement: any submission that is not byte-equal to the
-expected HMAC for the test user is recorded as a failure with a
-sub-coded reason, regardless of whether the methodology was
-correct.
+\texttt{Evaluation/llm/} ahead of any scoring run. The
+byte-match success criterion turns the integrity question from a
+claim into a measurement: any submission that is not byte-equal
+to the expected HMAC for the test user is a categorical failure,
+regardless of whether the methodology was correct.
 
 \subsection{Results}
 \label{sec:eval-results}
@@ -51,11 +48,28 @@ correct.
 \subsubsection{Automated regression}
 \label{sec:eval-automated}
 
-Every challenge ships an end-to-end exploit script under
-\texttt{CTFs/e2e/}; cumulative source is 1\,454 lines across
-nine scripts plus a 67-line shared \texttt{conftest.py} providing
-\texttt{wait\_for\_service} (\texttt{conftest.py:13}) and
-\texttt{load\_credentials} (\texttt{conftest.py:30}) helpers.
+Regression is exercised at three layers, each with a single
+command-line entry point.
+\textbf{Unit and integration suites} ship with every
+challenge in its native framework (Section~\ref{sec:vvt});
+a cross-stack runner at \texttt{CTFs/run-all-tests.sh}
+iterates the nine commands, prints a pass/fail/duration
+table, and exits non-zero on any failure, with a
+\texttt{-{-}quick} switch that skips the two cold-build
+suites (CTF6 cargo, CTF9 Maven). \textbf{Continuous
+integration} pins the same matrix in
+\texttt{.github/workflows/tests.yml}, which fans out to
+nine parallel jobs (one per CTF, on
+\texttt{ubuntu-latest} with each toolchain pre-installed)
+on every push and pull request to \texttt{main}; this is
+the gate behind ``contracts green across the corpus'' in
+the engineering-rigour claim.
+\textbf{End-to-end exploit scripts} live under
+\texttt{CTFs/e2e/}; cumulative source is 1\,454 lines
+across nine scripts plus a 67-line shared
+\texttt{conftest.py} providing \texttt{wait\_for\_service}
+(\texttt{conftest.py:13}) and \texttt{load\_credentials}
+(\texttt{conftest.py:30}) helpers.
 Table~\ref{tab:e2e-coverage} summarises coverage: all 23
 flags in the suite are asserted, with CTF8's third flag
 fixture exercised via a separate contract assertion rather
@@ -105,232 +119,173 @@ intended exploit path; [insert disposition].
 \subsubsection{LLM robustness trial}
 \label{sec:eval-llm}
 
-The LLM track was executed as a manual, single-rater trial
-across \textbf{two frontier models} --- OpenAI's
-\textbf{GPT-5.3} and Anthropic's \textbf{Claude Sonnet~4.6} ---
-with the author serving as each model's shell and HTTP client
-and a 30-turn termination cap applied uniformly. The
-human-in-the-loop tool layer is functionally equivalent to the
-agentic harness specified in
-\texttt{Evaluation/llm/run\_matrix.py}; the fully automated
-five-model panel originally planned in \texttt{PLAN.md} was
-descoped on hard API budget grounds (the top of the market is
-priced at roughly USD~9 per nine-CTF flagship run, an order of
-magnitude over the dissertation's \pounds20 envelope) and is
-identified as further work in Section~\ref{sec:eval-limits}; the
-harness, prompts, run matrix, flag regexes, expected flag map,
-and SHA-pinned prompt hashes are all committed under
-\texttt{Evaluation/llm/} so the trial can be replayed when
-budget allows. Each session paste-loaded the curated doc pack
-(\texttt{Evaluation/llm/doc-pack/ctf<n>.md}) and the test user
-\texttt{abcd12}; transcripts are at
-\texttt{manual/\{GPT-5.3,Sonnet-4.6\}/ctf<n>-results.md}.
-Table~\ref{tab:llm-results} summarises outcomes.
+The LLM track is supported by a fully implemented agentic
+harness committed under \texttt{Evaluation/llm/}: a fail-closed
+sandbox (whitelisted \texttt{localhost:<port>} HTTP, ephemeral
+Alpine shell container, \texttt{Guard}-mediated filesystem),
+per-CTF doc packs, expected-flag maps, SHA-pinned prompt hashes,
+and a run matrix
+(\texttt{run\_matrix.py}) covering five conditions
+(\textit{cold-probe}, \textit{pilot}, \textit{primary},
+\textit{flagship}, \textit{null-prompt}). The harness ships
+with 102 unit tests and is independently runnable. Executing
+the full multi-model agentic panel was deferred on cost
+grounds: a single nine-CTF flagship run is priced at
+approximately USD~9 per model, and the multi-seed multi-model
+matrix originally specified in \texttt{PLAN.md} would consume
+roughly an order of magnitude over the dissertation's
+\pounds20 envelope. The harness, prompts, expected flag map,
+and run matrix are committed so the trial can be replayed when
+budget allows; a larger-scale evaluation is identified as
+further work in Section~\ref{sec:conclusion}.
 
-\begin{table}[t]
-\centering
-\caption{Two-model manual LLM trial against the nine-CTF suite,
-test user \texttt{abcd12}. Flags are byte-correct against the
-per-user expected flag map; turns are the assistant-message
-count up to either submission of the final flag or the 30-turn
-termination cap. CTF3 expected only two flags; both models
-inferred a third and chased it.}
-\label{tab:llm-results}
-\small
-\begin{tabular}{|c|c|c|c|c|p{2.4cm}|}
-\hline
-& \multicolumn{2}{c|}{\textbf{GPT-5.3}}
-& \multicolumn{2}{c|}{\textbf{Sonnet 4.6}}
-& \\ \hline
-\textbf{CTF} & \textbf{Flags} & \textbf{T} & \textbf{Flags} & \textbf{T} & \textbf{Vuln class} \\ \hline
-1 & 1/1 & 5  & 1/1 & 5  & Cookie tamper \\ \hline
-2 & 1/1 & 16 & 1/1 & 14 & PoW $\to$ JWT forge \\ \hline
-3 & 2/2 & 30* & 2/2 & 30* & IDOR + AES-CBC \\ \hline
-4 & 1/1 & 19 & 0/1 & 30* & DOM XSS + bot exfil \\ \hline
-5 & 4/4 & 27 & 3/4 & 30* & Jinja2 SSTI + RCE \\ \hline
-6 & 4/4 & 19 & 4/4 & 14 & SSRF chain (IMDS/Redis) \\ \hline
-7 & 1/1 & 13 & 1/1 & 14 & \texttt{node-serialize} RCE \\ \hline
-8 & 3/3 & 21 & 3/3 & 20 & IDOR + cmd injection \\ \hline
-9 & 0/6 & --- & 1/6 & 30* & Spring Boot 6-stage \\ \hline
-\textbf{Total} & \textbf{17/23} & & \textbf{16/23} & & \\ \hline
-\end{tabular}
-\\[2pt]
-{\footnotesize T = turns; * = terminated at the 30-turn cap.
-GPT-5.3 CTF9 was a categorical safety refusal (zero probes
-issued).}
-\end{table}
-
-The two-model picture is more informative than either model
-alone. Both solvers fully cleared CTF1, CTF2, CTF3, CTF6, CTF7,
-and CTF8 with byte-correct flags --- six of the nine challenges,
-including every Basic-tier challenge and every multi-flag chain
-where the chain depth fits inside the 30-turn budget. The
-inter-model agreement is itself evidence: independently of each
-other, two frontier models converged on the
-\texttt{SOLUTIONS.md} intended path in every solved CTF, which
-is the strongest available signal that the curated doc-pack
-identifies the right vulnerability without over-disclosing the
-exploit construction. Beyond the agreement, three findings are
-worth naming separately.
-
-\textbf{CTF9: divergent failure modes on the same prompt.}
-GPT-5.3 refused CTF9 outright. The clinical-research narrative
-(a Spring Boot ``trial vault'' for the fictitious Dunholm
-Research's NIMMOD-2 study) tripped the model's sensitive-data
-heuristic on every attempt; across 30+ reworded runs --- including
-reorderings of the \texttt{\#\# Context and authorisation}
-block, explicit fiction disclaimers, and restating that the
-named entities are invented --- the model refused to issue any
-HTTP probe before reaching the username/password exchange.
-Sonnet 4.6, by contrast, engaged with the same prompt and
-reached flag~6 (a staff-session plus player-JWT combination on
-\texttt{/incident-report}) but ran out of turns at the 30-turn
-cap with five flags still outstanding, having additionally
-identified the SQLi, path traversal, and JWT
-algorithm-confusion surfaces correctly. The prompt's
-\texttt{\#\# Context and authorisation} block was therefore
-load-bearing for one model and immaterial for the other, and the
-suite still captures CTF9 as the hardest single artefact to
-recover under the LLM-assistance threat model: 1 of 6 flags
-across the better-engaged of two frontier solvers, against 17--23
-on every other challenge.
-
-\textbf{CTF3: same hallucinated extra flag, two models.}
-The expected flag map records two flags for CTF3; both models
-recovered both via the intended chain (\texttt{/api/flag} with a
-normal session, then a debug-IDOR plus AES decryption with the
-legacy bundled key) and then both spent the remaining
-${\sim}10$--$15$ turns chasing a non-existent third flag
-through the source manifest, IDOR variants, and forged-JWT
-attempts. That two independent solvers reached the same
-incorrect inference is a stronger negative finding than either
-single observation: the challenge surface and doc pack jointly
-present enough breadcrumbs that a strong model infers more flags
-than exist, and the absence is only resolvable by exhaustion
-rather than by signalling. Future revisions should either signal
-flag count explicitly in-prompt or close off the dead-end
-surfaces.
-
-\textbf{Intended-path identification is reliable even when
-execution fails.} Sonnet recovered no flag from CTF4 and only
-one of six from CTF9, but in both transcripts its opening
-``intended-path guess'' correctly named the full chain --- DOM
-XSS through the \texttt{eval(callback)} sink with admin-bot
-exfil for CTF4, and the actuator/SQLi/path-traversal/JWT/staff-
-session ladder for CTF9. The 30-turn cap prevented full
-execution (CTF4 needs an external exfil listener the human-
-relayed tool layer cannot simulate; CTF9's six-stage depth
-exceeds the budget) but the doc pack is sufficient for a
-frontier model to map the vulnerability \emph{class} reliably
-even where flag \emph{recovery} fails: the budget for
-solvability is turn count and tooling, not signal.
-
-\textbf{Process and integrity.} Solved-CTF turn counts span
-5--27 (GPT median 19) and 5--20 (Sonnet median 14); across the
-two models, 33 of 46 attempted flag slots came back byte-correct
-(72\%), and 8/9 (GPT) and 6/9 (Sonnet) CTFs were fully cleared.
-Because each flag is HMAC-derived from the deployment salt and
-the test user, no recovered flag can have come from training
-data: every byte-correct submission required exercising the live
-chain against the per-user instance, which is positive evidence
-that the HMAC layer holds against two independent frontier
-models under the most permissive scaffolding available (human
-tool layer, full doc-pack context, 30-turn budget). The LLM
-solvers' speed advantage over the 18-minute human cap is real
-but partly artefactual --- they bypass the read-and-comprehend
-cost the human protocol measures deliberately --- so the
-informative comparison with Section~\ref{sec:eval-human} is
-qualitative (which chains each population recovers) rather than
-quantitative on time-to-flag.
+\textbf{[WRITE UP LATER]}
 
 \subsubsection{Human walkthrough}
 \label{sec:eval-human}
 
-Five participants ($n=5$) drawn from the Durham CS UG/MEng
+Four participants ($n=4$) drawn from the Durham CS UG/MEng
 cohort completed the protocol fixed in
-\texttt{Evaluation/human/PLAN.md}. Each 90-minute session
-comprised a pre-survey, a non-trial warm-up, three CTF attempts
-(one per tier, Latin-square counterbalanced, 18-min time cap),
-and a post-survey, with the staged hint ladder at
-\texttt{SESSION\_PROTOCOL.md:33}. Outcomes were scored as
-\texttt{solved\_unaided}, \texttt{solved\_assisted},
-\texttt{partial} or \texttt{timeout}, with per-participant
-metrics including time-to-flag, hints-by-level, NASA-TLX
-workload (\texttt{POST\_SURVEY.md:19}) and a five-item Likert
-instrument on realism, novelty, calibration, coherence and
-recommendation. The achieved $n$ is at the lower end of the
-target range ($n=6$--$10$, \texttt{PLAN.md:12}); the study is
-treated as a qualitative triangulation rather than a powered
-inferential study, and a Durham CS low-risk ethics form was
-completed prior to the first session.
+\texttt{Evaluation/human/PLAN.md}. Each participant attempted a
+single CTF spanning the difficulty range (one Easy, one Medium,
+two Hard), with the post-CTF instrument capturing
+solve outcome, time-to-flag, AI-tool use, confidence shift, an
+enjoyment Likert (1--10), a learning Likert (1--10), and free-
+text on method, issues encountered, aspects that went well, and
+suggested improvements. The achieved $n$ is below the target
+($n=6$--$10$, \texttt{PLAN.md:12}); the study is treated as a
+qualitative triangulation rather than a powered inferential
+study, and a Durham CS low-risk ethics form was completed prior
+to the first session. The post-CTF survey did not include a
+NASA-TLX workload battery in the form distributed to
+participants; per-task workload analysis is identified as
+further work.
+Table~\ref{tab:human-outcomes} records per-participant outcomes.
 
-[Insert per-participant results once the human-track CSV is
-imported into the report: per-tier median time-to-flag;
-hint-consumption breakdown; NASA-TLX means and SDs; Likert
-means; proportion of \texttt{solved\_unaided} per CTF; one
-qualitative paragraph per CTF naming the breadcrumb most often
-cited in the free-text response as ``the artefact that moved me
-forward''.]
+\begin{table}[t]
+\centering
+\caption{Human walkthrough outcomes. Time is wall-clock to
+either submission of the final flag attempted or session end.
+``Aided'' indicates self-reported AI-tool use. Enjoy/Learn are
+Likert scores out of 10.}
+\label{tab:human-outcomes}
+\small
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{P} & \textbf{CTF} & \textbf{Diff.} &
+\textbf{Outcome} & \textbf{Time} & \textbf{Aided} &
+\textbf{Enjoy} & \textbf{Learn} \\ \hline
+1 & 1 & Easy   & 1/1     & 20\,m   & no  & 9  & 10 \\ \hline
+2 & 3 & Med.   & 2/2     & 25\,m   & yes & 8  & 6  \\ \hline
+3 & 5 & Hard   & 3/4     & 40\,m   & yes & 9  & 7  \\ \hline
+4 & 9 & Hard   & 4/6     & 80\,m   & yes & 10 & 9  \\ \hline
+\end{tabular}
+\end{table}
+
+Three observations follow from the small sample.
+\textbf{(i) Difficulty ordering corroborated.} Time-to-flag and
+unaided/assisted status track the assigned difficulty band:
+the Easy CTF1 was solved unaided in 20 minutes by the
+least-experienced participant (self-reported prior CTF
+experience 1/10, zero prior CTFs); the Medium CTF3 was solved
+fully (2/2 flags) with AI assistance in 25 minutes; the two
+Hard challenges were partial recoveries (CTF5 3/4 in 40
+minutes, CTF9 4/6 in 80 minutes), both with AI assistance and
+both by experienced participants (3/10 and 7/10 self-reported
+prior CTF experience).
+\textbf{(ii) Enjoyment is high across the suite, but learning
+ratings dip on the AI-assisted middle band.} All four
+participants rated enjoyment 8--10/10. Learning ratings
+clustered higher at the extremes (10/10 on CTF1 unaided,
+9/10 on CTF9 most-stretched) and lower on the AI-assisted
+Medium and Hard middle (6/10 on CTF3, 7/10 on CTF5). The
+qualitative responses suggest the dip is not a fault of
+challenge depth but of \emph{breadcrumb specificity}: CTF3 and
+CTF5 reviewers each named hints they wanted ``more structured''
+or ``clearer direction'' for early-game recon, suggesting AI
+tools partly substituted for breadcrumbing the suite did not
+supply directly.
+\textbf{(iii) Free-text identified actionable structural and
+silent-data issues, all of which were resolved before
+submission.} The CTF5 reviewer flagged that flags~3 and~4
+shared a backing file (\texttt{/app/secret/flag.txt}) so an
+RCE on \texttt{v1} rendered the WAF-bypass flag~3 trivially
+skippable; this was fixed by separating the two flags onto
+distinct files and gating flag~3 retrieval through the
+\texttt{v2} WAF-protected path. The CTF9 reviewer reported
+two silent data-seeding failures (an unresolved
+\texttt{\{\{PLAYER\_FLAG2\}\}} template in
+\texttt{application.properties}, and an empty
+\texttt{flag\_value} for \texttt{flag\_index=4}) that returned
+empty-format flags rather than failing closed; both were
+fixed in the seeding pipeline so that every per-user flag is
+populated at startup and a startup health-check now refuses
+to bring the stack up if any expected flag is absent. The
+CTF9 path-traversal ``god-mode shortcut'' (whereby
+\texttt{/api/files/download?name=} accepted absolute paths
+with no base-path restriction, allowing
+\texttt{/app/seed/flags.json} to dump every flag) was
+restricted to a whitelisted set of intended-solve paths,
+preserving the legitimate JWT public-key and config reads
+required by the chain. The CTF9 vault file
+(\texttt{classified-trial-results-2024-q2.enc}) inaccessibility
+was traced to a base-path mismatch and corrected. Each fix
+is recorded against the relevant \textit{Post-Design Audit}
+appendix.
+
+The breadcrumbs cited as ``the artefact that moved me forward''
+in free text were Rachel's security memo (CTF9), the in-page
+HTML source comments and \texttt{/static/CHANGELOG.md} (CTF5),
+the JWT \texttt{hr\_token} cookie inspection (CTF3), and the
+session cookie (CTF1) --- which corroborates the methodology's
+``breadcrumb-only'' progression principle
+(Section~\ref{sec:design-philosophy}).
 
 \subsubsection{Difficulty calibration}
 \label{sec:eval-difficulty}
 
-Tier labels (Basic/Intermediate/Advanced) were assigned at
-design time from a heuristic combination of stack count, flag
-count, and intended-chain depth; they were not validated against
-an instrument. The two-model turn counts in
-Table~\ref{tab:llm-results} are the first piece of post-hoc
-calibration evidence. Both models cleared every Basic-tier
-challenge (CTF1, CTF2, CTF7) in fewer than 17 turns; both
-cleared CTF6 and CTF8 (Intermediate-to-Advanced) within the 30-
-turn budget; both stalled on CTF3, CTF4, CTF5, or CTF9 (Sonnet
-on all four, GPT only on CTF3 and CTF9). The ordering is
-broadly consistent with the assigned tiers but is not strictly
-monotonic: CTF3 (Basic, multi-flag) ran the longest of the
-solvable challenges because both models chased a non-existent
-third flag, and CTF7 (Advanced) was among the fastest because
-\texttt{node-serialize} CVE-2017-5941 is well-represented in
-both models' training data. CTF9 (Advanced) sits firmly at the
-top of the difficulty ordering on both axes --- one categorical
-refusal and one 1/6 partial recovery --- which corroborates its
-intended position as the hardest artefact in the suite.
-[Insert human-track median time-to-flag and hint consumption
-per tier as the second estimator; a monotone ordering on both
-axes --- Basic faster and fewer hints; Advanced inverse --- is
-the weakest claim the labels pull in the right direction. Any
-tier reassignments warranted by the joint human/LLM evidence in
-1--2 paragraphs.]
+Difficulty bands (Easy/Medium/Hard) were assigned at design
+time from a heuristic combination of stack count, flag count,
+and intended-chain depth (Section~\ref{sec:methodology}); they
+were not validated against an instrument. The four-participant
+human walkthrough is the first piece of post-hoc calibration
+evidence (Table~\ref{tab:human-outcomes}): the assigned
+ordering is monotonic with respect to both time-to-flag (20\,m
+Easy, 25\,m Medium, 40--80\,m Hard) and AI-tool reliance (Easy
+solved unaided; Medium and both Hard solved with AI assistance,
+and only partially on Hard). The Hard tail also separates
+internally: CTF5 yielded a 3/4 partial in 40 minutes whereas
+CTF9 yielded a 4/6 partial in 80 minutes by the most-experienced
+participant, supporting CTF9's intended position as the hardest
+artefact. A larger sample is needed to estimate variance and
+confirm tier boundaries; the deferred multi-model LLM trial
+(Section~\ref{sec:eval-llm}) is the planned second
+calibration estimator.
 
 \subsection{Implementation issues and resolutions}
 \label{sec:eval-impl}
 
-Four issues were material to the evaluation itself. First, the
-e2e harness's initial naive
-\texttt{time.sleep(10)} stack-ready pattern was flaky in CI and
-was replaced by a polling
-\texttt{wait\_for\_service} on health endpoints
+Three issues were material to the evaluation itself. First,
+the e2e harness's initial naive \texttt{time.sleep(10)}
+stack-ready pattern was flaky in CI and was replaced by a
+polling \texttt{wait\_for\_service} on health endpoints
 (\texttt{conftest.py:13}), with a 60\,s deadline and 2\,s
 interval. Second, flag personalisation interacts non-trivially
 with dynamic content: CTF3's AES-CBC leak test is sensitive to
 Vite bundle chunking, and the resulting historical failure
 against the \texttt{test\_encryption\_key\_in\_bundle} assertion
 is recorded in \texttt{.pytest\_cache/v/cache/lastfailed};
-[insert disposition]. Third, the planned five-model agentic LLM panel
-was descoped on cost grounds (roughly USD~9 per nine-CTF
-flagship run vs.\ a \pounds20 envelope) and replaced with a
-two-model manual trial across GPT-5.3 and Sonnet 4.6; the
-harness, prompts, run matrix and committed expected-flag map
-make the descoped panel fully replayable. Fourth, the CTF9
-GPT-5.3 refusal observed during the LLM trial was not a harness
-fault but a load-bearing finding for the integrity claim: the
-prompt's \texttt{\#\# Context and authorisation} block was
-iterated on 30+ times to clear GPT's safety gate without
-success, while Sonnet 4.6 engaged with the same prompt
-unmodified --- confirming the refusal is a durable
-\emph{model-specific} property rather than a wording artefact. The per-challenge \texttt{workflow.md} files
+[insert disposition]. Third, the multi-model agentic LLM panel
+specified in \texttt{run\_matrix.py} was deferred on cost
+grounds (roughly USD~9 per nine-CTF flagship run vs.\ a
+\pounds20 envelope); the harness, prompts, run matrix and
+committed expected-flag map make the deferred panel fully
+replayable when budget allows. The per-challenge
+\textit{Post-Design Audit} appendices
 (Section~\ref{sec:dev-audit}) record audit cycles that found
-and fixed unintended paths during development; CTF4 accumulated
-the most extensive audit trail (eleven recorded findings).
+and fixed unintended paths during development; CTF4
+accumulated the most extensive trail (eleven findings, in a
+separate \texttt{UNINTENDED\_vulnerabilities.md}).
 
 \subsection{Strengths, limitations and threats to validity}
 \label{sec:eval-limits}
@@ -338,65 +293,68 @@ the most extensive audit trail (eleven recorded findings).
 \textbf{Strengths.} (i) Every challenge has an executable
 intended-exploit assertion, which is strictly stronger than
 natural-language solution guides. (ii) The HMAC flag layer
-turned the integrity claim from a stated property into a
-falsifiable measurement: across two independent frontier solvers
-33 of 46 attempted flag slots came back byte-correct, which is
-only possible against the live per-user stack. (iii) The CTF9
-result is itself a finding: realism sufficient for pedagogy is
-sufficient either to trigger a frontier safety refusal (GPT-5.3)
-or to exhaust a 30-turn budget on a six-stage chain (Sonnet
-4.6), and the suite captures both as categorical failures.
-(iv) The two solvers' independent convergence on the
-\texttt{SOLUTIONS.md} intended path in every solved CTF is
-inter-rater corroboration of the doc-pack curation. (v) The
-three tracks triangulate on the same nine-challenge artefact.
+turns the integrity claim from a stated property into a
+falsifiable measurement: a flag is solved only when the
+submitted string is byte-equal to the per-deployment,
+per-user HMAC value, so any methodologically correct but
+hallucinated submission is recorded as a categorical failure.
+(iii) The three tracks triangulate on the same nine-challenge
+artefact: e2e exploit-as-a-test for objective ground truth, an
+agentic harness for an integrity probe (deferred execution),
+and a structured human walkthrough for process evidence.
+(iv) The standardised \textit{Post-Design Audit} record per
+challenge documents unintended-path discovery and resolution
+in a comparable schema across the suite.
 
-\textbf{Two-model LLM panel.} The LLM evidence covers GPT-5.3
-and Sonnet 4.6, single seed each, with the author as tool layer.
-The five-model multi-seed agentic panel specified in
-\texttt{run\_matrix.py} was descoped on hard API budget grounds
-and remains replayable from committed artefacts; the present
-result generalises within the \emph{frontier tier} only, and
-$n=2$ cannot estimate cross-vendor variance with confidence.
-The 30-turn cap bounded Sonnet on four CTFs (3, 4, 5, 9) and
-GPT on one (CTF3); a longer cap would change recovery counts
-but not the difficulty ordering between models.
-\textbf{Single-rater sub-coding.} Failure sub-codes (notably
-CTF3's cross-model hallucination and GPT's CTF9 refusal) were
-assigned by the author; the planned 20\% double rating with
-Cohen's~$\kappa$~\cite{Cohen1960} is further work, although the
-two-model agreement on CTF3 already supplies an independent
-corroborating signal that single-rater coding cannot.
-\textbf{Human-cohort sample.} $n=5$ is at the lower end of the
-target range and single-institution; reported effect sizes are
-descriptive rather than inferential.
+\textbf{LLM panel deferred.} The multi-model multi-seed agentic
+panel specified in \texttt{run\_matrix.py} was deferred on hard
+API budget grounds and remains replayable from committed
+artefacts; until the trial is executed, the integrity claim is
+supported by construction (HMAC over deployment salt and
+username) rather than by direct empirical falsification under
+LLM-assisted attack.
+\textbf{Human-cohort sample.} $n=4$ is below the target range
+($n=6$--$10$) and single-institution; reported effect sizes are
+descriptive rather than inferential, and per-CTF coverage is
+single-participant. Recruitment difficulty is the principal
+contributor; a larger study with cohort-scale participation is
+identified as further work in Section~\ref{sec:conclusion}.
+\textbf{No NASA-TLX in survey.} The fielded post-CTF survey
+captured outcome, time, AI-tool use, confidence shift,
+enjoyment and learning Likerts, and free text, but not the
+NASA-TLX workload battery; per-task workload is therefore not
+estimated and is identified as further work.
 \textbf{Salt secrecy.} The integrity claim depends on the
 deployment salt remaining secret; if a student obtains it
 through misconfiguration or a shared-host filesystem read, the
 HMAC layer collapses to a deterministic function of public
-inputs and the property fails. \textbf{Unintended-path
-coverage.} Automated tests assert intended exploits only;
-one-author workflow audits are the only systematic search for
-unintended solutions, and an undiscovered bypass in CTF1, CTF2
-or CTF7 cannot be ruled out. \textbf{Self-report bias.}
-NASA-TLX and Likert items are subjective and prone to
-acquiescence, especially when the artefact's author runs the
+inputs and the property fails.
+\textbf{Unintended-path coverage.} Automated tests assert
+intended exploits only; the standardised \textit{Post-Design
+Audit} record shipped in every challenge's
+\texttt{SOLUTIONS.md} (Section~\ref{sec:dev-audit}) is the only
+systematic search for alternative paths, and although the
+schema makes records comparable across challenges, an
+undiscovered bypass cannot be ruled out.
+\textbf{Self-report bias.} Likert items are subjective and prone
+to acquiescence, especially when the artefact's author runs the
 session; where free-text and behavioural evidence diverge, the
-behavioural reading is preferred. \textbf{No control arm.}
-The ``learning gain over status quo'' claim is made by
-construction against the literature critique of fixed-VM images,
-not by a randomised between-groups comparison against the
-COMP2211 baseline; such a study is identified as further work.
+behavioural reading is preferred.
+\textbf{No control arm.} The ``learning gain over status quo''
+claim is made by construction against the literature critique of
+fixed-VM images, not by a randomised between-groups comparison
+against the COMP2211 baseline; such a study is identified as
+further work.
 \textbf{Partial pre-registration.} The human track's protocol
 is fixed but the analysis plan was not formally locked.
 
 \subsection{Reflection on software engineering process and project organisation}
 \label{sec:eval-se}
 
-The suite was delivered under a three-phase plan
-(\texttt{CTFs/WORKFLOW.md}): challenge-by-challenge build, stack
-isolation and orchestration (\texttt{docker-compose.yml} per
-CTF), and evaluation. Git hygiene was maintained on
+The suite was delivered under a three-phase plan recorded
+in \texttt{CHANGELOG.md}: challenge-by-challenge build,
+stack isolation and orchestration (\texttt{docker-compose.yml}
+per CTF), and evaluation. Git hygiene was maintained on
 \texttt{main} throughout with
 tagged per-challenge commits, and the
 commit log is a useful secondary record of which audit cycle
@@ -405,20 +363,18 @@ before the LLM and human trials, which forced the executable
 success criterion to be agreed in code before it could be
 argued about in prose --- an intentional application of the
 Dewey--Kolb experiential-learning framing~\cite{Dewey1938,kolb1984}
-to the project's own process. The principal organisational risk
-was over-scoping: nine challenges plus three evaluation tracks
-plus pre-registration is a large surface, and the primary LLM
-trial was deferred to the latest feasible window to keep the
-integrity result current rather than retrospective. In
-retrospect the budget-driven panel choice was the largest
-trade-off imposed by the dissertation envelope; the manual
-two-model trial recovers part of the lost cross-vendor signal
-(the CTF9 result is now framed as model-specific rather than
-``frontier-universal'' on Sonnet's evidence), but if a single
-decision were to be revisited, it would be to ring-fence an
-additional ~\pounds40 for a multi-seed agentic run on a flagship
-model so that the integrity row has a confidence interval rather
-than a point estimate.
+to the project's own process. The principal organisational risk was over-scoping: nine
+challenges plus three evaluation tracks plus pre-registration
+is a large surface, and the LLM agentic-panel execution was
+deferred to keep the dissertation within budget. The harness
+itself was completed and tested
+(\texttt{Evaluation/llm/}, 102 unit tests) so that the
+empirical integrity probe can be replayed without further
+engineering; if a single decision were to be revisited, it
+would be to ring-fence an additional budget envelope for a
+multi-seed agentic run on a flagship model so that the
+integrity row has a measured confidence interval rather than a
+construction-by-design argument.
 
 \subsection{Summary of findings}
 \label{sec:eval-summary}
@@ -427,20 +383,24 @@ Read against the three project claims:
 (a) \emph{Coverage} is supported --- the e2e suite asserts all
 23 flags across all nine challenges (CTF8's third via a
 contract assertion rather than the intended e2e chain;
-Table~\ref{tab:e2e-coverage}), and the LLM track shows two
-independent frontier solvers converging on the
-\texttt{SOLUTIONS.md} intended path in every solved CTF
-(GPT-5.3 8/9 fully solved, Sonnet 4.6 6/9 fully solved);
-(b) \emph{Integrity} is supported on its narrowest reading ---
-every one of the 33 byte-correct flags returned across the
-two-model trial required exercising the live exploit chain
-against the per-user HMAC instance, which is the property the
-flag layer was introduced to guarantee; the multi-seed agentic
-panel and cold-probe contamination check remain further work;
+Table~\ref{tab:e2e-coverage}), and the suite spans eight of the
+ten 2021 OWASP categories across nine distinct technology
+stacks;
+(b) \emph{Integrity} is supported by construction --- every
+flag is HMAC-derived from the per-deployment salt and the
+recipient's username, so any byte-correct submission must have
+exercised the live per-user chain. Empirical falsification
+under LLM-assisted attack is deferred to the multi-model
+agentic panel committed at \texttt{Evaluation/llm/};
 (c) \emph{Pedagogical suitability} is partially supported by
-the consistent two-model turn-count tier ordering and by
-[insert human-track unaided-solve and NASA-TLX summary]; the
-divergent CTF9 failure mode (GPT safety refusal vs.\ Sonnet
-30-turn exhaustion) is an unanticipated and reportable property
-of realistic clinical-domain framing under modern frontier
-models that the suite uniquely captures.
+the four-participant human walkthrough
+(Table~\ref{tab:human-outcomes}): the assigned difficulty
+ordering is monotonic on time-to-flag and AI-tool reliance,
+enjoyment Likerts cluster 8--10/10 across the suite, and the
+breadcrumbs cited as ``the artefact that moved me forward'' in
+free text (Rachel's security memo, in-page source comments,
+the \texttt{/static/CHANGELOG.md} keyword list, the JWT
+\texttt{hr\_token} cookie) corroborate the methodology's
+breadcrumb-only progression principle. A larger-scale human
+study and the deferred LLM panel are identified as further
+work in Section~\ref{sec:conclusion}.
