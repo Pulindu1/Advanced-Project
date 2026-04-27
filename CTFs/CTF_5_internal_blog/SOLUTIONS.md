@@ -216,3 +216,51 @@ This returns the contents of `/app/secret/flag_abcd12.txt`. Substitute the logge
 3. **Cryptographic Failure**: SECRET_KEY hardcoded as a weak, guessable value
 4. **Broken Access Control**: Hidden API route protected only by a predictable header token
 5. **WAF Bypass**: Keyword blocklist defeated by hex encoding and Jinja2 filter chaining
+
+---
+
+## Post-Design Audit
+
+### Vulnerability Summary
+
+- **Flag 1 — Information Disclosure (debug surface + HTML comments).** A debug-only Flask blueprint (`app/routes/api.py`'s `config_note` and `app/static/CHANGELOG.md`) and template comments in `app/templates/editor.html` reveal the existence of the preview endpoint and the `FLAG2_CATALOG` config key. The flag retrieves trivially after dossier-style discovery; it is the warm-up that establishes the player's familiarity with reading rendered HTML and static asset trees.
+- **Flag 2 — SSTI exposing `app.config`.** `app/routes/preview.py` passes user input through `render_template_string`; rendering `{{config}}` dumps the entire Flask `app.config` dict, including `FLAG2_CATALOG`, which `app/__init__.py` populates at startup with one wrapped flag per player. The per-user fan-out via `FLAG2_CATALOG` means players see *every* player's flag-2 in the dump, but only their own decodes to a valid format match — accepted by the e2e harness.
+- **Flag 3 — WAF Bypass (hex encoding + attr filter).** Flag 2's `{{config}}` is filtered at the WAF layer for keywords like `__class__`, `__mro__`, `subprocess`. The bypass uses `|attr('\x5f\x5fclass\x5f\x5f')` (hex-escaped underscores) plus the `attr` filter to chain through Jinja2's introspection without ever touching the blocked literal strings. This forces the player to learn Jinja's filter pipeline rather than just rote `{{}}` injection.
+- **Flag 4 — RCE via Python MRO chain.** Once Flag 3's bypass is in place, the same primitive lets the player walk Python's class hierarchy (e.g. via `''|attr('__class__')|attr('__mro__')|attr('1')|attr('__subclasses__')()`) to find `subprocess.Popen` or `os._wrap_close`, then invoke `cat /app/secret/flag_<username>.txt`. The flag file fan-out happens in `app/seed.py::write_flag4_files()` — moved out of the seed early-return guard so flag files survive container rebuilds.
+
+### OWASP Top 10 Classification
+
+| Flag | OWASP 2021 | CWE | One-line justification |
+|------|-----------|-----|------------------------|
+| 1 | A05 — Security Misconfiguration | CWE-540 | Debug endpoints and HTML comments left in production. |
+| 1 | A01 — Broken Access Control | CWE-284 | Hidden API protected by a predictable header token. |
+| 2 | A03 — Injection | CWE-1336 | Server-Side Template Injection via `render_template_string`. |
+| 2 | A02 — Cryptographic Failures | CWE-798 | Hardcoded weak Flask `SECRET_KEY` (necessary for the `FLAG2_CATALOG` discovery). |
+| 3 | A03 — Injection | CWE-1336 | SSTI bypass of keyword denylist via hex-encoded literals + filter chaining. |
+| 4 | A03 — Injection | CWE-94 | RCE via Python MRO walking once SSTI is established. |
+
+### Defence Recommendations
+
+- **Flag 1 fix.** Remove debug endpoints in production builds; strip HTML comments via a build-time transform. The `config_note` route should be gated behind `if app.debug:`.
+- **Flag 2 fix.** Never pass user input to `render_template_string`. Use `render_template` with named template files only. If dynamic templates are required, parse to AST and reject any node referencing `__class__`, `__mro__`, or `attr`.
+- **Flag 3 fix.** Drop the WAF entirely — it provides a false sense of security. The correct fix is the Flag-2 fix; the WAF only ratchets the difficulty for players, not for real attackers who have already published every variant.
+- **Flag 4 fix.** Once SSTI is closed, RCE follows automatically. As defence-in-depth, run the Flask process under a restrictive seccomp/AppArmor profile and a non-root user; mount the flag file read-only with `O_NOFOLLOW`.
+
+### Unintended Solutions to Watch For
+
+- **Reading flags from `flags.json` on the host.** Out of scope; e2e harness runs against the container.
+- **Cross-user flag-4 read via path manipulation.** A player who walks the MRO can `cat` any file inside the container, including other players' `flag_<username>.txt`. Documented and accepted (the test harness asserts `durham-cms-flag4{...}` matching the calling player's username, so unintended reads are detectable).
+- **Brute-forcing the admin token.** The token is sufficiently long; not feasible. Players who try this get stuck and pivot.
+
+### Skill Level & Realism Notes
+
+- Target skill level: **intermediate to advanced** (escalating per flag). Flag 1 is intro; Flag 4 demands real Python introspection skill.
+- Real-world analogue: SSTI in Flask/Jinja2 has been the source of multiple bug-bounty payouts (HackerOne reports against Shopify, Uber, Twitter). The hex-encoding bypass class mirrors techniques documented by James Kettle and others in Jinja2-injection research.
+
+### Lessons Learned (Design Retrospective)
+
+- **`FLAG2_CATALOG` fan-out replaced a brittle single-flag config injection.** Earlier the SECRET_KEY itself encoded the flag; players reported only seeing `'FLAG_PREFIX': 'durham-cms'` in `{{config}}` dumps. Switching to a per-user dict in `app.config` made the flag visible without changing the SSTI primitive.
+- **Hint banner removed mid-development.** Three iterations of the dashboard banner (explicit hint → placeholder → removed) showed how easy it is to give the answer away. Final state: no banner; players are expected to read the source. Documented in commit history; do not re-introduce.
+- **Volume persistence bit hard.** `docker compose down` (without `-v`) preserved `flags.json` and `users.json` from a prior boot, masking seeder regressions. The README's reset block now explicitly uses `-v`. Standard pattern adopted for CTFs 1, 8, 9 too.
+- **pytest fixture isolation is non-trivial here.** Multiple test modules touch `flags.json`; without `tmp_path` per test, parallel `pytest -n auto` runs would race. Phase 2 will codify the unit-vs-integration split via pytest markers — the existing `tests/conftest.py` is the seed of that work.
+- **Next time:** add a custom Jinja2 `Environment` with `SandboxedEnvironment` enabled in a "production_simulation" mode, so tests can prove the bypass class is closed under that configuration without changing the player path.

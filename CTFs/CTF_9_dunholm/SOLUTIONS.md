@@ -498,7 +498,18 @@ You should get a single line containing `durham-drflag6{<hex>_abcd12}`. That is 
 
 ---
 
-## OWASP mapping
+## Post-Design Audit
+
+### Vulnerability Summary
+
+- **Flag 1 — Actuator exposure (A05).** `/actuator/env` is reachable without authentication and dumps environment-derived properties including `DR_API_KEY_PART1`. The Spring Boot Actuator exposure is a textbook misconfiguration; the flag pivot occurs because the env dump leaks half of the AES key needed by Flag 5.
+- **Flag 2 — Directory traversal (A01).** A file-serving endpoint accepts `..`-style traversal, exposing `application.properties`, `users.json`, and other files outside the intended document root. The flag itself is at a fixed path; the traversal is the discovery primitive.
+- **Flag 3 — JWT algorithm confusion (A02, A07).** The application accepts both `RS256` and `HS256` and uses the public key as the HMAC key when verifying `HS256` tokens. A player extracts the public key, signs an `HS256` JWT with that key as the secret, and the server accepts it as a valid admin token.
+- **Flag 4 — Blind boolean SQL injection (A03).** A staff search endpoint reflects boolean SQL conditions via response timing/length differences. The player extracts the AES-GCM key character-by-character using `ascii(substr(...))` comparisons.
+- **Flag 5 — Decrypt the vault (A02).** AES-GCM-encrypted vault content is decrypted using the key reassembled from `DR_API_KEY_PART1` (Flag 1) + `DR_API_KEY_PART2` (Flag 4). The encryption itself is sound; the failure is operational — keys are reachable through other CTF primitives.
+- **Flag 6 — Log leak + staff login (A09).** A debug log file accessible via Flag 2's traversal contains a plaintext staff password (Amir Patel's). The player logs in with those credentials and presents both the player and staff cookies to `/incident-report` to retrieve the flag.
+
+### OWASP Top 10 Classification
 
 | Flag | Primary | Secondary |
 |------|---------|-----------|
@@ -509,9 +520,20 @@ You should get a single line containing `durham-drflag6{<hex>_abcd12}`. That is 
 | 5 | A02:2021 Cryptographic Failures | A05:2021 Security Misconfiguration |
 | 6 | A09:2021 Security Logging and Monitoring Failures | A02:2021 Cryptographic Failures |
 
----
+### Defence Recommendations
 
-## Skill level
+- **Flag 1 fix.** Disable Spring Boot Actuator in production, or set `management.endpoints.web.exposure.include=health,info` and require authentication for the rest. Never put long-lived secrets in environment variables that an env-dump endpoint can reach.
+- **Flag 2 fix.** Canonicalise file paths before serving (`Path.toAbsolutePath().normalize()` then assert it starts with the intended document root). Reject any input containing `..`, `%2e%2e`, or null bytes outright.
+- **Flag 3 fix.** Pin JWT verification to `RS256` only; reject any token whose `alg` header is anything else. Do not look up the verification key via the token's `alg` claim — the algorithm choice must be a server-side constant.
+- **Flag 4 fix.** Replace string concatenation in the search query with parameterised queries (PreparedStatement). No filter, no escaping — just bind. Add response-time normalisation if blind exfil via timing remains a concern, but this is defence-in-depth, not a fix.
+- **Flag 5 fix.** Manage encryption keys via a KMS or secrets manager; never reassemble keys from environment fragments. The current design is intentionally fragile to teach the lesson.
+- **Flag 6 fix.** Strip secrets from log output at write time (Logback `MaskingPatternLayout` or equivalent). Audit log surfaces with the same access control as the data they describe — debug logs containing PII or credentials are a compliance failure even if "internal".
+
+### LLM-Specific Outcome (worth flagging)
+
+GPT-5.3 manual runs against this CTF terminated at 30+ runs because the model refused to engage with the clinical-research narrative on safety grounds even with explicit fictional-content disclaimers. This is a documented evaluation outcome, recorded in `Evaluation/llm/manual/GPT-5.3/ctf9-results.md`. Players solving directly succeed without issue; this shapes the dissertation discussion of LLM over-refusal as a measurable failure mode rather than a defect of the CTF.
+
+### Skill Level & Realism Notes
 
 Advanced. The player is expected to be comfortable with:
 
@@ -527,9 +549,9 @@ Advanced. The player is expected to be comfortable with:
 A strong intermediate player can reach Flag 3 alone. Flags 4 to 6
 reward patience and scripting.
 
----
+Real-world analogue: Spring Boot Actuator misconfigurations are among the most-exploited misconfigurations on the Internet (Shodan dorks for `/actuator/env` return tens of thousands of hits). JWT algorithm-confusion is documented as CVE-2015-9235 (jsonwebtoken) and recurs across language ecosystems. Blind boolean SQLi remains a staple of OWASP testing guides. The clinical-research framing draws on the Anthem 2015, Equifax 2017, and Vastaamo 2020 disclosures (large-scale exfiltration of healthcare/PII data).
 
-## Unintended solutions (accepted)
+### Unintended solutions (accepted)
 
 - **Flag 4 skipped, solved via Flag 5 first.** If the player factors
   `n` before doing the SQLi, they can recover the AES key, then
@@ -550,9 +572,14 @@ reward patience and scripting.
   and direct key reconstruction all produce the same plaintext. Any
   route counts.
 
----
+### Lessons Learned (Design Retrospective)
 
-## Narrative hooks (for marking)
+- **The fictional-content disclaimer matters.** The narrative names a fictional clinical research firm (Dunholm Research), trial (NIMMOD-2 / DR-2024-017), and staff (Helen Cross, Amir Patel, Rachel Osei, James Whitfield, Sophie Chen). LLM evaluation runs surfaced that even with disclaimers, GPT-5.3 refuses to operate on the scenario; the manual prompt was strengthened to explicitly note "no patient data, no medical records, no genuine PII" — without changing player-facing content. Documented in `Evaluation/llm/manual/ctf9.md`.
+- **Six chained flags is at the edge of what's tractable.** Phase 5 (vault decrypt) genuinely depends on Phase 1's actuator leak being available; if any prior flag's primitive is closed, the chain breaks. The "Flag 1 skipped" unintended-solution path was added intentionally to keep the chain solvable if a marker locks down the env dump.
+- **Spring Boot test discipline.** The four JUnit files in `src/test/java/com/dunholm/service/` exercise individual services but do not boot the full Spring context — that's reserved for the Phase 2 integration tests, which will use `@SpringBootTest` with `@Transactional` rollback per test. Document this in the integration test PR so the boundary is preserved.
+- **Next time:** ship a non-clinical narrative variant (e.g. e-commerce loyalty programme) so the LLM-refusal path can be A/B-tested against the same exploit chain. This would isolate "LLM refuses scenario" from "LLM cannot solve technique" as separate evaluation axes.
+
+### Narrative hooks (for marking)
 
 A player who demonstrates the chain and can also point to the correct
 in-universe context is a stronger capture than one who just pulls the

@@ -190,3 +190,49 @@ docker compose down -v && docker compose up --build
 ```
 
 This re-runs migrations and re-seeds from the mounted `flags.json` and `credentials.json`.
+
+---
+
+## Post-Design Audit
+
+### Vulnerability Summary
+
+- **Flag 1 — `flag_api` (path-traversal hint → JWT-authenticated `/api/flag`).** The dashboard view embeds an HTML comment containing the literal string `/admin/../../flag`, which functions as a discoverability hint rather than a real traversal vulnerability. Once the player navigates to `/flag`, the page calls `GET /api/flag` with the player's session JWT; the controller in `backend/app/Http/Controllers/FlagController.php` looks up the authenticated user's `flag_api` value from the `flags` table seeded from `flags.json`. The vulnerability is **information disclosure via dev-comment leakage**, not actual filesystem traversal.
+- **Flag 2 — `flag_decrypt` (SQL injection → encrypted blob → key-in-source decrypt).** Three chained primitives:
+  1. **SQL injection** in `EmployeeController::index()` (`backend/app/Http/Controllers/EmployeeController.php`). The search filter blocks the canonical `' OR 1=1--` payload but misses the no-space variant `'OR 1=1--` and `'/**/OR/**/1=1--`, both of which return all rows including the per-player `<username>-bot` employee whose `notes` column carries an AES-256-CBC ciphertext.
+  2. **Plaintext encryption key in frontend source.** `frontend/src/utils/legacyAuth.ts` hard-codes `CTF_2026_SECRET_KEY_XJ9K2L` in a comment that ships in the bundled JS — visible in DevTools → Sources.
+  3. **Authorisation bypass on debug endpoint.** `DebugController::getUserConfig()` returns the encrypted blob (and other config) keyed on a `user` query parameter without checking that the requester owns the resource — an IDOR. With the SQLi already done, this is the cheaper retrieval path.
+
+### OWASP Top 10 Classification
+
+| Flag | OWASP 2021 | CWE | One-line justification |
+|------|-----------|-----|------------------------|
+| 1 | A04 — Insecure Design | CWE-540 | Comment in dashboard HTML leaks the existence and shape of the `/flag` endpoint. |
+| 2 | A03 — Injection | CWE-89 | Filter-based SQLi mitigation in `EmployeeController::index()` is bypassable by whitespace-free / comment-padded payloads. |
+| 2 | A02 — Cryptographic Failures | CWE-798 | AES-256-CBC key shipped in browser-visible TypeScript source. |
+| 2 | A01 — Broken Access Control | CWE-639 | `DebugController::getUserConfig()` returns arbitrary users' configs without authorisation checks. |
+
+### Defence Recommendations
+
+- **Flag 1 fix.** Remove the dev comment from `dashboard.blade.php` (or its frontend analogue). Authorise `/api/flag` not just by JWT presence but by an explicit role/claim — the current setup releases per-user flags to any authenticated player, which is acceptable as a teaching primitive but unacceptable in production.
+- **Flag 2 fix — SQLi.** Replace the regex/string-filter approach in `EmployeeController::index()` with parameterised Eloquent queries: `Employee::where('name', 'like', '%' . $search . '%')`. Drop the filter entirely; binding is sufficient.
+- **Flag 2 fix — key disclosure.** Move the AES key into a server-only environment variable (`config/encryption.php`) and have the backend perform decryption, returning plaintext (or blocked) to the frontend. Never ship encryption keys to a browser-visible asset.
+- **Flag 2 fix — debug endpoint.** Either remove `DebugController::getUserConfig()` outside development environments (`if (app()->environment('local'))` guard) or require the requesting user to match the queried user.
+
+### Unintended Solutions to Watch For
+
+- **Direct AES decryption against the JSON in `flags.json` on the host.** A player with shell access to the dev's machine can read `flag_decrypt` directly. Out of scope — the test harness in `e2e/ctf3_exploit.py` runs against the running container and never reads the host file.
+- **Skipping SQLi by guessing the bot username.** The `<username>-bot` naming convention is documented in scaffolding text on the Employees page; a player who guesses the structure can hit `DebugController::getUserConfig()` directly without the SQLi step. Accepted — same OWASP class (A01), and the e2e test only asserts flag retrieval, not the path taken.
+- **Brute-forcing the AES key.** `CTF_2026_SECRET_KEY_XJ9K2L` derives a 256-bit key via SHA-256, which is not brute-forceable. Players who skip Step 1 get stuck and re-read the source. Acceptable friction.
+
+### Skill Level & Realism Notes
+
+- Target skill level: **intermediate → advanced**. Chains three vulnerabilities of different classes (info disclosure, injection, IDOR + crypto). Players need familiarity with browser dev tools, SQL injection technique, and command-line crypto.
+- Real-world analogue: enterprise HR/CRM apps where a debug endpoint survives into production (CVE-2023-29489 cPanel debug, plus countless internal post-mortems). The frontend-source key leak mirrors several mobile-app reverse-engineering write-ups (e.g. Strava, Tinder embedded API keys). SQL filter bypass via no-space variants is a documented WAF/regex evasion class.
+
+### Lessons Learned (Design Retrospective)
+
+- **Two flags per user changed the contract-test shape.** `flags.json` evolved from `{username: flag}` (CTF1 shape) to `{username: {flag_api, flag_decrypt}}`. The contract test in `backend/tests/Feature/ContractTest.php` now needs to assert both fields exist for every seeded user; the seeder behaviour must be deterministic in test mode.
+- **No-space SQLi was nearly missed.** During development the filter was tested against `' OR 1=1--` only; the bypass was discovered when a tester ran `sqlmap` and reported the no-space variant. Lesson: never rely on string filters for SQLi defence; always parameterise. The CTF intentionally retains the broken filter as the teaching primitive.
+- **Frontend source as a leakage surface is under-appreciated.** Players consistently miss `legacyAuth.ts` on first attempt; adding an HTML hint pointing at `Sources` was considered but rejected — the discoverability gap matches real-world reality where bundled JS is rarely audited.
+- **Next time:** add an integration test that asserts the encrypted `notes` column in the seeded DB decrypts back to the per-user `flag_decrypt` value — this would catch any regression in the seeder's encryption logic without needing the full e2e chain. Maps directly into Phase 2's CTF3 integration brief.

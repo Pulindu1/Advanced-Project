@@ -113,3 +113,47 @@ docker compose down -v && docker compose up --build
 ```
 
 This wipes `server/data/` and reseeds from the mounted `flags.json` and `credentials.json`.
+
+---
+
+## Post-Design Audit
+
+### Vulnerability Summary
+
+- **Flag (PoW reward → JWT secret disclosure → token forgery).** The single flag lives in the vault of a per-user bot account named `<username>-vault`, retrievable only by presenting a JWT whose `sub` claim names that bot. The exploit unfolds in three primitive steps, all backed by `server/index.js`:
+  1. **Information disclosure.** `POST /api/challenge/solve` validates the player's PoW (SHA-256 with leading zero count from `GET /api/challenge`), then returns the JWT signing secret in the response body. The verification logic and the secret read from `process.env.JWT_SECRET` are co-located in the same handler — there is no architectural reason for the secret to leave the server.
+  2. **Predictable secret.** The development default is `dev-secret-change-me`. Even if step 1 were absent, the secret is short and dictionary-derived; an offline brute force against any captured token would succeed.
+  3. **Authorisation by user-controlled key.** `GET /api/vault` reads the `sub` claim of the verified JWT and returns the vault for that subject. There is no check that the authenticated session and the JWT subject agree, so a forged token grants access to any vault — including `<username>-vault`, which holds the flag.
+
+### OWASP Top 10 Classification
+
+| Flag | OWASP 2021 | CWE | One-line justification |
+|------|-----------|-----|------------------------|
+| 1 | A02 — Cryptographic Failures | CWE-798 | Hard-coded / weak default JWT signing secret (`dev-secret-change-me`). |
+| 1 | A04 — Insecure Design | CWE-209 | The PoW reward IS the signing secret — the design intentionally couples a self-service endpoint to the master cryptographic key. |
+| 1 | A01 — Broken Access Control | CWE-639 | Vault retrieval keyed on the JWT `sub` claim with no cross-check against the authenticated session. |
+
+### Defence Recommendations
+
+- **Never return secrets from a public endpoint.** `POST /api/challenge/solve` should, at most, return a session-scoped opaque capability token, never the JWT signing secret. Strip the `secret` field from the response in `server/index.js`.
+- **Strong, randomly generated `JWT_SECRET`.** Generate at deploy time (`crypto.randomBytes(32).toString('hex')`); fail startup if the env var is missing or shorter than 32 bytes. Remove the `dev-secret-change-me` fallback.
+- **Bind JWT subject to authenticated session.** When `/api/vault` resolves a JWT, also assert that `session.user === decoded.sub` (or that the session principal has explicit authorisation over the requested vault). Forging a token for `abcd12-vault` would then fail because the signed-in player is `abcd12`, not the bot.
+- **Keep PoW for rate-limiting only.** PoW is appropriate for slowing brute force; it is not a credential. Decouple the difficulty knob from the authorisation flow.
+
+### Unintended Solutions to Watch For
+
+- **Skipping the PoW and using a leaked `JWT_SECRET` directly** (e.g. via `git log` archaeology or by reading the `.env.example` shipped in the repo). The exploit class — JWT forgery — is the same; the test harness in `e2e/ctf2_exploit.py` accepts any valid forged token. Documented as accepted.
+- **Vault enumeration through `GET /api/teams/users`.** The endpoint legitimately lists bot users with the `-vault` suffix, so a player guessing the naming scheme without consulting the page also succeeds. Intended scaffolding, not unintended.
+- **PoW collision.** Theoretically a player could find a different `nonce+suffix` that satisfies the difficulty for somebody else's nonce. In practice difficulty is small enough that this is faster than logging in correctly; not a real risk.
+
+### Skill Level & Realism Notes
+
+- Target skill level: **intermediate**. The chain requires comfort with three concepts (PoW, JWT mechanics, IDOR) but no novel cryptanalysis.
+- Real-world analogue: maps onto incidents where development-only signing secrets shipped to production (e.g. CVE-2018-1000531 jsonwebtoken weakness, plus countless internal "leaked JWT secret in `.env.example`" disclosures). The `sub`-keyed vault lookup mirrors classic IDOR patterns documented in OWASP API Security Top 10 (API1:2023).
+
+### Lessons Learned (Design Retrospective)
+
+- **PoW-as-info-leak was a deliberate inversion.** Early drafts had the player crack the secret offline; that proved too slow for a teaching context. Returning the secret on PoW solve became the explicit teaching primitive ("never reward an authentication mechanism with the keys to authentication"), and the difficulty was tuned so the PoW completes in under a minute on a laptop.
+- **Bot-account naming is the discoverability hinge.** Without `-vault` suffixes visible in `GET /api/teams/users`, players bounce off Stage 2. The test confirms the listing endpoint is hit; do not let it regress to a paginated/filtered view.
+- **Vite dev proxy interactions.** The frontend relies on Vite's `/api` proxy to reach the demo server; players hitting `localhost:5174` directly without the backend running see opaque proxy errors that look like exploit failures. The README now calls this out — keep the warning in any future restructure.
+- **Next time:** add a `kid` (key id) header to JWTs and rotate the secret per-deploy, so even if a player extracts the current secret, replays across deployments fail. This would let the dissertation discuss key-rotation hygiene without changing the player path.

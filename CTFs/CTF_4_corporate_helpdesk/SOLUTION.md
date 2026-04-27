@@ -338,3 +338,53 @@ This challenge covers:
 - **A03:2021 — Injection** (DOM XSS via eval and innerHTML)
 - **A05:2021 — Security Misconfiguration** (eval enabled, no CSP headers)
 - **A07:2021 — Identification and Authentication Failures** (admin bot visits user-supplied URLs)
+
+---
+
+## Post-Design Audit
+
+### Vulnerability Summary
+
+- **Flag (DOM XSS in KB → admin-bot exfiltration of `/api/admin/flag`).** The vulnerability lives in `apps/web/src/pages/KnowledgeBase.tsx`, where a `useCallback` ref handler reads `URLSearchParams` directly into `node.innerHTML` and, more dangerously, into `eval(callback)`. The flag itself is held server-side in `apps/api` and exposed only on `GET /api/admin/flag?reportId=<id>`, gated by an admin session. The exploit chain abuses three components in concert:
+  1. **DOM XSS sink** — `eval(callback)` in `KnowledgeBase.tsx` executes any JavaScript supplied via the `callback` query parameter.
+  2. **Admin-privileged bot.** `apps/bot/` runs Playwright sessions logged in as an admin, picking jobs off a BullMQ queue. When the player submits a KB URL via `/report`, the bot visits it carrying admin auth cookies, so the `eval`'d payload runs with admin credentials and can hit `/api/admin/flag`.
+  3. **Open exfiltration sink.** `POST /api/exfil/capture` is unauthenticated by design — any payload posted there is stored and shown back to the submitter on `/captures`. Together with the bot's append of `_reportId` to the visited URL, the player gets a deterministic round-trip channel.
+- The `+`-becomes-space URL decoding quirk forces players to use `String.prototype.concat` rather than `+` for string concatenation in their payload — a real-world quirk that adds intermediate-tier difficulty without changing the underlying exploit class.
+
+### OWASP Top 10 Classification
+
+| Flag | OWASP 2021 | CWE | One-line justification |
+|------|-----------|-----|------------------------|
+| 1 | A03 — Injection | CWE-79 | DOM-based XSS via `eval()` and `innerHTML` of unfiltered URL parameters in `KnowledgeBase.tsx`. |
+| 1 | A05 — Security Misconfiguration | CWE-1004 | No CSP, `eval` allowed, no auth on `/api/exfil/capture`, admin bot configured to visit arbitrary user-supplied URLs. |
+| 1 | A07 — Identification & Authentication Failures | CWE-287 | Bot acts as an authenticated admin against URLs whose origin is the user — privilege confusion at the actor boundary. |
+| 1 | A01 — Broken Access Control | CWE-639 | `/api/admin/flag` returns the *report submitter's* flag rather than the calling admin's flag, allowing the bot's admin session to expose the player's flag. |
+
+### Defence Recommendations
+
+- **Eliminate `eval` entirely.** Strip the `callback` query handling from `KnowledgeBase.tsx`; there is no production reason for a search results page to execute caller-supplied JavaScript.
+- **Use `textContent`, not `innerHTML`,** for the search-result heading. If HTML escaping for highlight markup is required, use a vetted sanitiser (DOMPurify) with a strict allow-list — never the URL parameter directly.
+- **Strict CSP.** `script-src 'self'` (no `'unsafe-inline'`, no `'unsafe-eval'`), `frame-ancestors 'none'`. Even if `eval` were retained, CSP would block its execution at runtime.
+- **Validate report URLs.** Restrict the allowed URL pattern in `apps/api`'s report submission handler to KB paths with a known schema; reject query strings outside an explicit allow-list. The bot should never visit a URL the API would not have constructed itself.
+- **Authenticate the exfiltration endpoint.** `/api/exfil/capture` exists for the player to read back captured data. Move it behind the same session middleware as `/captures` and key entries by the authenticated user, eliminating the "anyone can write, anyone can read" surface.
+- **Never expose another user's flag to an admin endpoint.** `/api/admin/flag?reportId` should authorise based on the admin's own resources, not the report submitter's. The current behaviour is the deliberate teaching primitive — the production fix is to return the admin's flag (or 403) regardless of who filed the report.
+
+### Unintended Solutions to Watch For
+
+- **Self-XSS without using the bot.** A player can `eval` their own URL and read their own session, but the flag is on `/api/admin/flag`, which their session cannot access. Path is structurally blocked — confirmed via the e2e harness in `CTFs/e2e/ctf4_exploit.py`.
+- **CSRF instead of XSS.** The bot's admin session is cookie-based; a CSRF-shaped attack using `<form>` POSTs would, in theory, hit admin endpoints. In practice, `/api/admin/flag` is GET-only and CORS / SameSite settings block direct cross-site fetches. Players occasionally try this; the test harness rejects (no flag in `/captures`) until they pivot to XSS.
+- **Submitting a non-KB URL to `/report`.** Server-side validation rejects URLs whose path does not match the KB pattern, which prevents using arbitrary attacker-controlled origins. Players who try this pattern get a `400` and pivot back. Intended behaviour.
+- **Reading the flag straight from `flags.json` on the host.** Out of scope; the e2e test runs against docker-compose and treats flags as opaque.
+
+### Skill Level & Realism Notes
+
+- Target skill level: **intermediate**. Players need to understand DOM XSS sinks, the admin-as-victim model, URL encoding quirks (`+`/space), and a chained exploit with two HTTP endpoints.
+- Real-world analogue: very common pattern in helpdesk / ticketing systems where moderators visit user-supplied URLs (Bugzilla 2018 admin XSS, Atlassian Confluence CVE-2022-26134 surface). The "bot visits reported URL as admin" mechanic mirrors the URL preview / link expansion features in Slack / Discord / Jira, which have repeatedly been the entry point for SSRF + admin-confused-deputy chains.
+
+### Lessons Learned (Design Retrospective)
+
+- **The `+` → space decoding bug nearly killed the challenge.** Early versions of the canonical payload used `+` for string concatenation; players reported `eval` errors that looked like the challenge was broken. The shift to `.concat()` in the canonical solution and a documented troubleshooting note resolved this, but it shows how URL-encoding pitfalls can blur the line between "intended difficulty" and "broken challenge".
+- **Bot console log surfacing improved completion rates.** Initially the bot ran headlessly with no visible logs; players failing silently could not debug their payload. Exposing the captured `console.log`/`console.error` messages on the Report page gave players the feedback loop they needed without revealing the internal solution.
+- **`_reportId` discovery is the lynchpin.** The bot appends `_reportId` to the visited URL; without that, players would have to guess the report id. The Report-page card now surfaces the exact bot URL — preserving discoverability while keeping the technique non-trivial.
+- **Workspace-style monorepo (`apps/api`, `apps/web`, `apps/bot`) made the test discipline harder.** A single `npm test` does not exercise the full chain; the integration test for Phase 2 will need to start the bot worker against a real Redis instance to hit the queue path. Plan accordingly.
+- **Next time:** add a CSP report-only header so players can observe how a real CSP would have blocked the exploit; this turns the challenge into a teaching artefact for both the offensive and defensive sides.

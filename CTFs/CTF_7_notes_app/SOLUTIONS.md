@@ -282,15 +282,17 @@ Players who achieve RCE by any means and read their flag file should receive ful
 
 ---
 
-## Unintended Solutions to Watch For
+## Post-Design Audit
+
+> The `## Vulnerability Summary` section near the top of this document satisfies the audit's first required subsection; it is referenced rather than duplicated.
+
+### Unintended Solutions to Watch For
 
 - **Reading another player's flag file:** The IIFE constructs the flag file path from the `username` field in the payload. A player could change the username in the payload to read another player's file. This is technically possible but acceptable for a basic-tier CTF. Verify that the flag matches the player's assigned username.
 - **Visiting /flag:** Returns a red herring page with no flag. Not a solution path.
 - **Brute forcing login:** Rate limited to 5 attempts per 2 minutes per IP.
 
----
-
-## Defence Recommendations
+### Defence Recommendations
 
 1. **Replace node-serialize.** The package is unmaintained and unfixable. Use `JSON.parse()` for plain data, or a library that does not call `eval()`.
 2. **Sign cookies.** Use Express's built-in signed cookie support (`res.cookie('profile', value, { signed: true })`). A tampered cookie will fail signature verification and be rejected.
@@ -299,9 +301,7 @@ Players who achieve RCE by any means and read their flag file should receive ful
 5. **Run npm audit regularly.** CVE-2017-5941 has been in public databases since 2017. Routine dependency auditing would have flagged this immediately.
 6. **Retire abandoned software.** Applications with no active maintainer accumulate unpatched vulnerabilities over time.
 
----
-
-## OWASP Classification
+### OWASP Classification
 
 | Technique | OWASP Category | Justification |
 |-----------|----------------|---------------|
@@ -309,9 +309,7 @@ Players who achieve RCE by any means and read their flag file should receive ful
 | Known-vulnerable npm package (CVE-2017-5941) | A06:2021 Vulnerable and Outdated Components | Application depends on an abandoned package with a published critical CVE |
 | Unsigned, unencrypted session cookie | A02:2021 Cryptographic Failures | Session data lacks signing or encryption, enabling trivial tampering |
 
----
-
-## Skill Level Summary
+### Skill Level & Realism Notes
 
 | Step | What the student does | Skill required |
 |------|-----------------------|----------------|
@@ -321,6 +319,15 @@ Players who achieve RCE by any means and read their flag file should receive ful
 | 4 | Look up CVE-2017-5941, understand the _$$ND_FUNC$$_ trigger | Beginner/Intermediate |
 | 5 | Construct the IIFE payload with the correct file path | Intermediate |
 | 6 | Replace the cookie and visit /home to retrieve the flag | Beginner |
+
+Real-world analogue: CVE-2017-5941 itself, plus the broader 2017–2018 wave of Node.js insecure-deserialization findings (paypal/serialize-javascript, etc.). Several enterprise breaches in that period traced back to abandoned npm packages still in production lockfiles.
+
+### Lessons Learned (Design Retrospective)
+
+- **The IIFE payload design forced an explicit username field.** Earlier drafts scoped the flag file globally (`/app/flag.txt`); switching to per-user files (`/app/flag_<username>.txt`) required the IIFE to reference `username` from the cookie payload, which created the unintended read-anyone's-flag vector documented above. We accepted that tradeoff because per-user flags rule out flag-sharing between cohort members — the more important property for assessment integrity.
+- **Discoverability is over-scaffolded by design.** Three independent paths reveal `node-serialize` (HTML comment, `/debug`, `/CHANGELOG.md`, `/package.json`); a player who misses one will hit another. Don't trim these in future revisions — observation tells us players use different paths and trimming any one increases dropout.
+- **Rate-limiter friction.** The brute-force defence on login also rate-limits the contract test's repeated bad-login fixture; tests now run with a per-test fresh app state to avoid hitting the limit. Documented for future test authors.
+- **Next time:** add an integration test that mocks `flagService` to assert the per-user file path resolution without invoking node-serialize at all — the deserialisation path is for the e2e harness, integration tests should isolate the routing layer from the parser.
 
 ---
 

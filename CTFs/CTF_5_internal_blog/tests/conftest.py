@@ -9,6 +9,19 @@ from app.models import db as _db
 TEST_PLAYER = 'test12'
 
 
+def pytest_collection_modifyitems(config, items):
+    """Auto-mark tests by directory: tests/integration/* gets `integration`,
+    everything else gets `unit`. Keeps the workflow §2 rubric enforceable
+    via `pytest -m unit` / `pytest -m integration`.
+    """
+    for item in items:
+        path = str(item.fspath)
+        if os.sep + 'tests' + os.sep + 'integration' + os.sep in path:
+            item.add_marker(pytest.mark.integration)
+        else:
+            item.add_marker(pytest.mark.unit)
+
+
 @pytest.fixture(scope='session')
 def test_password():
     """Random password for the test player, generated once per session."""

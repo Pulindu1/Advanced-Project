@@ -127,3 +127,43 @@ docker compose down && docker compose up --build
 ```
 
 This reseeds users from the mounted `credentials.json`.
+
+---
+
+## Post-Design Audit
+
+### Vulnerability Summary
+
+- **Flag (cookie tampering → admin role).** The single flag is gated on a role attribute that is read directly from a Base64-encoded, unsigned `session` cookie. The cookie middleware at `src/middleware/authCookie.js` decodes Base64 → JSON → trusts the `role` field; the route guard at `src/routes/flag.js` (delegating to `src/controllers/flagController.js`) compares that attribute with the literal string `"admin"` to release the flag. The primitive the player needs is therefore not a network exploit but a client-side DevTools mutation: rewrite the cookie payload, re-encode, refresh `/flag`. The flag retrieved is then keyed on the original `username` field (which the player leaves intact), so the per-user flag mapping in `src/services/flagService.js` returns the correct value for the logged-in attacker.
+
+### OWASP Top 10 Classification
+
+| Flag | OWASP 2021 | CWE | One-line justification |
+|------|-----------|-----|------------------------|
+| 1 | A01 — Broken Access Control | CWE-639 | Authorisation derived from a client-controlled identifier (the `role` attribute of an unsigned cookie). |
+| 1 | A07 — Identification & Authentication Failures | CWE-565 | Server relies on cookie data without integrity verification; no signing, no encryption, `httpOnly: false`. |
+
+### Defence Recommendations
+
+- **Sign the session cookie.** Replace the bare-Base64 scheme in `authCookie.js` with an HMAC or AEAD-protected token (`jsonwebtoken` with a server-only secret, or `cookie-session` with `keys`). Reject cookies whose signature does not validate; never trust the `role` field on the client.
+- **Move `role` server-side.** Persist `role` in `users.json` (or a session store keyed by an opaque session id) and look it up by username; the cookie becomes an opaque session id, not a self-contained role claim. The current `verifyUser` flow already returns role at login — wire it through the session, not the cookie body.
+- **Set cookie hardening flags.** `httpOnly: true`, `secure: true` in production, `sameSite: 'lax'`. The deliberate `httpOnly: false` in `publicController.js` exists only to make DevTools inspection trivial for players; production flips this.
+- **Rotate session secrets on logout / password change** to invalidate any cookie copies still in the wild.
+
+### Unintended Solutions to Watch For
+
+- **Re-using another player's tampered cookie.** Because the cookie carries `username`, a player who forges `{"username":"efgh34","role":"admin"}` retrieves *efgh34's* flag — verifying the per-user fan-out from `flagService.js`. The exploit is still in scope (the same primitive — cookie forgery), and the `e2e/ctf1_exploit.py` test only checks `durham{` prefix, so it accepts this path. Acceptable.
+- **Editing the cookie via Burp/curl rather than DevTools.** Same primitive, different surface. Accepted.
+- **Brute-forcing the admin password directly.** Blocked: `seedUsers()` in `src/server.js` swaps the `SYSTEM_INTERNAL` sentinel for `crypto.randomBytes(24).toString('hex')` at boot, so no one can authenticate as `admin` directly. This is the intentional gate forcing the cookie path.
+
+### Skill Level & Realism Notes
+
+- Target skill level: **intro**. First exposure to client-side trust failures.
+- Real-world analogue: legacy PHP/Express apps that store role in a cookie or `localStorage` and read it back without a signature; OWASP Juice Shop's "Login Admin" challenge hits the same class. Public CVE examples include various WordPress plugin auth-bypass patterns where role attributes were trusted from request payloads.
+
+### Lessons Learned (Design Retrospective)
+
+- **`SYSTEM_INTERNAL` sentinel pattern.** Originally `admin` shipped with a known password; this turned out to be a more attractive path for players than the intended cookie tamper. The Phase-0 swap to a random per-boot password (alongside CTFs 5/8/9) closed the bypass without changing the public credential surface.
+- **`afterAll` cleanup discipline in `test/app.test.js`.** The contract tests overwrite `src/data/users.json` to seed deterministic accounts; without an `afterAll` restoring the original contents, repeat `npm test` runs would leak the test fixture into the next docker rebuild. Adding the restore was a coverage-credibility win, not a logic change.
+- **Volume cleanup matters for re-seeding.** `docker compose down` (without `-v`) preserves the `users.json` from a prior boot; `down -v` is the only path that re-runs the seeder against a fresh `credentials.json`. This bit the integration testing of CTF5 first, but the fix landed here too.
+- **Next time:** ship a `--debug-token` query knob on `/flag` (gated behind a build flag) so contract tests can assert the role-check branch without forging cookies; cookies remain the player path, but the server-side exercise gets cheaper.

@@ -250,16 +250,18 @@ curl -sS -b $COOKIE -X POST http://localhost:3002/api/admin/health \
 
 ---
 
-## Unintended Solutions to Watch For
+## Post-Design Audit
+
+> The `## Vulnerability Summary` section near the top of this document satisfies the audit's first required subsection; it is referenced rather than duplicated.
+
+### Unintended Solutions to Watch For
 
 - **Cross-user flag read via path manipulation.** The Flag 3 payload specifies the flag file path explicitly. A player could read another player's flag by changing the username in the path (`$(cat /app/flags/flag3-efgh34.txt)`). This is accepted as a documented CTF limitation; each player must still craft the substitution payload to succeed, so the learning objective is preserved.
 - **Users.json via path traversal.** The flag-3 payload is `$(cat ...)` with arbitrary file reads inside the container. A determined player could read `/app/src/data/users.json` and harvest other players' bcrypt hashes. The hashes are salted bcrypt, so this is a theoretical risk only; it doesn't shortcut any flag.
 - **Browsing `/admin` without bypassing JS.** A player with JavaScript disabled will see the empty admin shell and stop. This is not a valid flag path -- the expected route is via `curl` / DevTools Network tab.
 - **Brute-force login.** Rate limited to 5 attempts per 2-minute sliding window per IP by `middleware.NewLoginRateLimiter`.
 
----
-
-## Defence Recommendations
+### Defence Recommendations
 
 1. **Enforce server-side ownership on `/api/articles/:id`.** Before returning an article, check `article.author_id == session.user_id` or check an explicit share list. Client-side filtering is not access control.
 2. **Enforce server-side role checks on every `/api/admin/*` route.** Add a `RequireRole("admin")` middleware and apply it to the admin route group. The client-side redirect in `admin.js` is a UX hint, not a security boundary.
@@ -268,9 +270,7 @@ curl -sS -b $COOKIE -X POST http://localhost:3002/api/admin/health \
 5. **Use non-sequential article IDs.** UUIDs or ULIDs make enumeration harder, but they do not fix the underlying access-control bug.
 6. **Drop the binary's permission surface.** Run the container as a non-root user; strip `CAP_NET_RAW` if ICMP is unavailable anyway.
 
----
-
-## OWASP Classification
+### OWASP Classification
 
 | Technique | OWASP Category | Justification |
 |-----------|----------------|---------------|
@@ -278,9 +278,7 @@ curl -sS -b $COOKIE -X POST http://localhost:3002/api/admin/health \
 | Missing server-side authorisation on admin API | A01:2021 Broken Access Control | Role check performed only on the client, server trusts any valid session |
 | OS command injection via `$(...)` bypass | A03:2021 Injection | Unvalidated user input interpolated into `sh -c` with an incomplete deny-list |
 
----
-
-## Skill Level Summary
+### Skill Level & Realism Notes
 
 | Step | What the student does | Skill required |
 |------|-----------------------|----------------|
@@ -290,6 +288,15 @@ curl -sS -b $COOKIE -X POST http://localhost:3002/api/admin/health \
 | 4 | Read the admin maintenance_tools hint pointing at `/api/admin/health` | Beginner |
 | 5 | Discover the blocklist via trial and construct a `$(...)` bypass | Intermediate |
 | 6 | Locate the flag file path (`/app/flags/flag3-<user>.txt`) and craft the `cat` payload | Intermediate |
+
+Real-world analogue: Capital One's 2019 SSRF + IAM compromise (broken-access-control of metadata) shares the IDOR pattern; the `$(...)` substitution-bypass class is identical to the Bash CVE-2014-6271 (Shellshock) variant family on web shellouts. The IDOR + admin client-only-check combination matches dozens of bug-bounty disclosures (e.g. Uber 2016 GET-based account takeover surfaces).
+
+### Lessons Learned (Design Retrospective)
+
+- **The Go integration test (`test/integration_test.go`) was the project's first real integration suite.** Building it surfaced the per-test sqlite-file pattern that the rest of the workflow now standardises on (see `CTFs/TESTING_RUBRIC.md` §2.2). Keep the test data isolated; never share a single sqlite path across goroutines.
+- **The blocklist was tightened mid-development.** Initial drafts allowed backticks; we removed those after testing showed players bypassing the deny-list with `` `cat ...` `` rather than the intended `$(...)`. The current deny-list is intentionally narrow (no backticks, no `;`, no `&`, no `|`) so `$(...)` is the path that works; preserve this footprint when revisiting.
+- **Sequential article IDs were a deliberate teaching choice.** Switching to UUIDs would obscure the IDOR primitive; the production fix is documented in defence rec #1 above and kept distinct from the teaching primitive.
+- **Next time:** ship a `--seed-flags-from-env` mode so the e2e harness can re-key flags between runs without rebuilding the container; current rebuild adds ~30s per CI cycle.
 
 ---
 

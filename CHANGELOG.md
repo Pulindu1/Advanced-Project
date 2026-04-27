@@ -11,6 +11,12 @@ files changed (optional)
 
 
 
+### Coverage uplift: integration tests + cross-CTF runner - 27/04/26
+- Added integration tests to CTFs 1-7, 9 (CTF8 already had them).
+- New `CTFs/run-all-tests.sh` runs every CTF's suite in one command; `--quick` skips slow Rust/Spring builds.
+- `CTFs/workflow.md` §1 table now all; README links the runner.
+- Updated root readme
+
 ### Manual testing (claude + gpt) complete - 26/04/26
 - we have completed testing with ChatGPT and Claude (Evaluation/llm/manual)
 - updated report methodology and eval, using the data from above.

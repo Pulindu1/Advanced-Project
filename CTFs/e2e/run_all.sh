@@ -18,22 +18,23 @@ RESULTS=()
 
 for ctf in ctf1 ctf2 ctf3 ctf4 ctf5 ctf6 ctf7 ctf8 ctf9; do
     script="${ctf}_exploit.py"
+    label=$(printf '%s' "$ctf" | tr '[:lower:]' '[:upper:]')
     echo ""
-    echo "--- ${ctf^^} ---"
+    echo "--- ${label} ---"
 
     if [ ! -f "$script" ]; then
         echo "[SKIP] $script not found"
         SKIPPED=$((SKIPPED + 1))
-        RESULTS+=("SKIP  ${ctf^^}")
+        RESULTS+=("SKIP  ${label}")
         continue
     fi
 
     if python3 -m pytest "$script" -v --tb=short 2>&1; then
         PASSED=$((PASSED + 1))
-        RESULTS+=("PASS  ${ctf^^}")
+        RESULTS+=("PASS  ${label}")
     else
         FAILED=$((FAILED + 1))
-        RESULTS+=("FAIL  ${ctf^^}")
+        RESULTS+=("FAIL  ${label}")
     fi
 done
 

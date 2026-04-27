@@ -3,6 +3,7 @@ package com.dunholm.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -17,6 +18,15 @@ public class LogfileSeedService {
 
     @Value("${logging.file.name:/app/logs/trialvault.log}")
     private String logfileLocation;
+
+    // Spring Boot's RollingFileAppender rotates trialvault.log at midnight,
+    // archiving the seeded block into the day's .gz. Re-prepend on a tick so
+    // the Flag-6 password line survives rotation; seed is idempotent via the
+    // "Seeded audit history" marker check below.
+    @Scheduled(fixedDelay = 60_000L, initialDelay = 60_000L)
+    public void scheduledReseed() {
+        seedLogfile();
+    }
 
     public void seedLogfile() {
         Path p = Path.of(logfileLocation);

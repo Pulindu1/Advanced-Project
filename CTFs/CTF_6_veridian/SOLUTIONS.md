@@ -246,3 +246,48 @@ Response: The admin dashboard HTML containing the classified incident report and
 2. **Security Misconfiguration (A05):** Cloud metadata accessible without IMDSv2 token; sensitive data in user-data script
 3. **Security Misconfiguration (A07):** Unauthenticated Redis on internal network; no URL scheme restrictions
 4. **Broken Access Control (A01):** Admin route protected only by a static session token header with no session binding
+
+---
+
+## Post-Design Audit
+
+### Vulnerability Summary
+
+- **Flag 1 — SSRF to cloud metadata (IMDSv1).** The `POST /api/preview` handler in `src/routes.rs::api_preview` calls `preview::fetch_url(url)` without validating the URL scheme or destination host. A player submits `http://169.254.169.254/latest/meta-data/iam/security-credentials/` (the AWS IMDSv1 endpoint, simulated by the `metadata` sidecar in `docker-compose.yml`); the server-side fetch reaches it because it shares the `veridian-internal` network. The flag is embedded in the simulated IAM credential response.
+- **Flag 2 — Metadata user-data enumeration.** Continuing from Flag 1, the metadata sidecar exposes `/latest/user-data` returning a bootstrap script with embedded secrets (the flag-2 placeholder substituted at fetch time by `routes.rs` per-user-flag replacement logic). The vulnerability class is "sensitive data baked into cloud bootstrap scripts" — a real-world misconfiguration pattern.
+- **Flag 3 — SSRF via `dict://` to Redis.** `preview::fetch_url` does not restrict URL schemes. Submitting `dict://redis:6379/INFO` triggers the dict protocol handler in `reqwest`, sending a CRLF-injection-style command to the unauthenticated Redis instance. Redis dumps server info including a stored session-token key whose value is the flag-3 wrapper; the response gets returned through the preview route.
+- **Flag 4 — Session token replay.** Flag 3's Redis dump includes a real admin session token stored under a known key. The player extracts it and replays it as the `X-Session-Token` header on `GET /admin` (the route is gated only by header equality in `routes.rs::admin_panel`, not by session binding). The admin panel renders the per-user flag-4 sourced from the player's login session.
+
+### OWASP Top 10 Classification
+
+| Flag | OWASP 2021 | CWE | One-line justification |
+|------|-----------|-----|------------------------|
+| 1 | A10 — Server-Side Request Forgery | CWE-918 | Unvalidated user-controlled URL passed to a server-side HTTP fetch. |
+| 2 | A05 — Security Misconfiguration | CWE-540 | Sensitive data in cloud bootstrap user-data accessible via metadata endpoint. |
+| 3 | A10 — SSRF + A07 — Identification & Authentication Failures | CWE-918, CWE-306 | SSRF with unrestricted URL scheme reaches an unauthenticated Redis on the internal network. |
+| 4 | A01 — Broken Access Control | CWE-639 | Admin route gated by static header token with no session binding; replay-able from any context. |
+
+### Defence Recommendations
+
+- **Flag 1 fix.** Validate the URL host against an allow-list of public domains before fetching. Reject IP-literal hosts entirely; reject hosts that resolve to private/link-local ranges. Migrate the simulated metadata service to IMDSv2 (token-based) — this would also block the vulnerability class at the AWS layer.
+- **Flag 2 fix.** Never put secrets into cloud user-data; reference them at runtime from a managed secret store (KMS, Secrets Manager). Even if metadata exposure recurs, the secret is not present.
+- **Flag 3 fix.** Restrict `preview::fetch_url` to `http://` and `https://` schemes only. Reject `dict://`, `gopher://`, `file://`, `ftp://`, etc. Combine with the host allow-list from Flag 1 fix; both layers must apply.
+- **Flag 4 fix.** Bind admin session tokens to the authenticated user's login session id; reject tokens whose binding does not match the calling session. Header-only checks are not authentication.
+
+### Unintended Solutions to Watch For
+
+- **Direct host-network access to Redis.** Players who realise Redis is exposed could `redis-cli -h redis` from outside the container and harvest tokens directly. Blocked by `veridian-internal` network being a Docker-internal bridge — Redis is not exposed on the host. Confirmed via `docker-compose.yml` topology.
+- **Reading `flags.json` on the host.** Out of scope; e2e harness runs against the running container.
+- **Brute-forcing the admin token.** The token is generated per boot with sufficient entropy. Players hit the wall and pivot to the SSRF-Redis path. Intended.
+
+### Skill Level & Realism Notes
+
+- Target skill level: **intermediate → advanced**. SSRF basics in Flag 1, scheme/protocol smuggling in Flag 3 (genuine novelty for most students), and the multi-hop replay chain in Flag 4.
+- Real-world analogue: Capital One 2019 (SSRF + IMDS + IAM) is the textbook reference; the `dict://` smuggling class is documented in Orange Tsai's SSRF research and several CTF write-ups (e.g. RealWorld CTF 2019/2020). Token replay against unauthenticated internal services maps to numerous internal pen-test findings.
+
+### Lessons Learned (Design Retrospective)
+
+- **Multi-container topology is the lesson and the bug.** The `metadata` and `redis` sidecars exist to make this CTF's SSRF chain meaningful. The compose file's `veridian-internal` network was originally a default bridge that exposed Redis on the host — fixed during testing once an unintended-solution path was demonstrated. Document the network topology clearly when evolving this CTF.
+- **Per-user flag replacement happens server-side.** `routes.rs::api_preview` substitutes flag placeholders in fetched response bodies based on the calling session's username; this means that when a player's SSRF reaches the metadata service, the response they see contains *their* flag, not a shared one. Be careful when evolving the flag-substitution logic — regressions silently show wrong flags.
+- **Empty `tests/` directory was a discoverability gap.** Phase 1a populated CTF6 with a contract suite via inline `#[cfg(test)]` modules in `routes.rs`; the discovery that CTF6 was Rust (not Python/FastAPI as the audit baseline assumed) caused the first plan deviation logged in `CTFs/workflow.md`.
+- **Next time:** publish a `/health/ready` route that reports whether the metadata and Redis sidecars are reachable from the app container. Aids both player onboarding (clear when the stack isn't fully up) and the integration test harness for Phase 2.
