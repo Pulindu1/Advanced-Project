@@ -25,13 +25,13 @@ class TestWriterHappyPath:
                 image_tag="trial-2026-04-21",
                 condition="agentic",
                 ctf=1,
-                test_user="llmu01",
+                test_user="abcd12",
             )
             w.user_message("hello")
             w.assistant_message("thinking", reasoning="chain")
             w.tool_call("c1", "http_request", {"url": "http://localhost:3001/"})
             w.tool_result("c1", 42, "OK 200")
-            w.submit("basicflag1{abc_llmu01}", accepted=True)
+            w.submit("basicflag1{abc_abcd12}", accepted=True)
             w.end("submitted")
 
         validate(path)

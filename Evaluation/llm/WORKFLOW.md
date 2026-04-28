@@ -327,15 +327,42 @@ the work already checked in Phases 1-3.
   and `test_truncation_counts_turns_not_tool_calls` in
   `tests/test_harness.py`.
 
+### 3.8  Drop trial-salt indirection (PLAN.md revision 2026-04-28)
+
+Reverses 3.0.2 / 3.1 / 3.2 at the operational layer (the historical
+entries above remain as a record of what was originally built; this
+sub-phase records the pivot). The trial now points at the demo
+accounts each CTF already ships, and `expected_flags.json` is
+assembled by reading those flag files directly. Phase 4 becomes
+boot + e2e with no in-repo file mutation, which avoids the
+git-status churn seen during the first Phase 4 sweep.
+
+- [x] 3.8.1  `scripts/build_expected_flags.py` reads each CTF's
+  in-repo `flags.json` and assembles `expected_flags.json` for the
+  chosen demo account (`abcd12`, or `test12` for CTF5). Replaces
+  `scripts/generate_expected_flags.js` (deleted).
+- [x] 3.8.2  `run_matrix.py::CTF_SPECS` `test_user` values changed
+  from `llmu0<n>` to `abcd12` (CTF5: `test12`).
+- [x] 3.8.3  `scripts/phase4_baseline.sh` rewritten: no chgen step,
+  no `GENERATOR_SALT` requirement, no `add_users_db.js`. Just
+  `down -v` -> `up -d --build` -> wait -> e2e -> `down -v`.
+- [x] 3.8.4  Synthetic test users in `tests/test_transcripts.py` and
+  `tests/test_aggregate.py` swapped to `abcd12`. 113 tests still
+  green.
+- [x] 3.8.5  `trial.env` is vestigial under the new flow and may be
+  removed; left in place for now since the file is gitignored and
+  carries no on-disk dependency.
+
 ---
 
 ## Phase 4 --- Upper-bound baseline
 
-- [ ] 4.1  For each CTF: `docker compose up -d`, seed the trial
-  users, run the e2e script for that CTF, confirm it scores all
-  flags.
-- [ ] 4.2  Run the full `CTFs/e2e/run_all.sh` against the trial
-  stack with trial users. All CTFs pass.
+- [x] 4.1  For each CTF: `docker compose up -d`, run the e2e script
+  for that CTF, confirm it scores all flags. Driven by
+  `scripts/phase4_baseline.sh` which iterates 1..9 with per-CTF
+  `down -v` between runs.
+- [x] 4.2  All 9 CTFs PASS under `phase4_baseline.sh` (logs in
+  `runs/phase4/ctfN.log`).
 - [ ] 4.3  If any fail: fix the CTF, not the trial. Trial is blocked
   until green.
 
@@ -343,47 +370,55 @@ the work already checked in Phases 1-3.
 
 ## Phase 5 --- Cold probe (45 runs, no stack)
 
-- [ ] 5.1  `python run_matrix.py --phase cold-probe`. This iterates
-  the 5-model panel (Sonnet 4.6, Haiku 4.5, gpt-5-mini,
-  Gemini 2.5 Pro, Gemini 2.5 Flash) x 9 CTFs passive, one seed.
-- [ ] 5.2  Aggregate: `python aggregate.py --phase cold-probe`.
-- [ ] 5.3  Inspect: expected 0 byte-matches across all 45 runs.
-- [ ] 5.4  Any byte-match: stop. Investigate whether the model has
-  seen the flag through training data or whether the anti-leak guard
-  has a bug. Trial is blocked until resolved.
+- [x] 5.1  `python run_matrix.py --phase cold-probe`. Iterated the
+  5-model panel (Sonnet 4.6, Haiku 4.5, gpt-5-mini, Gemini 2.5 Pro,
+  Gemini 2.5 Flash) x 9 CTFs passive, one seed. 45/45 cells
+  completed (gemini-flash CTF6/CTF9 originally deferred under
+  Google 503/quota errors and re-run after the Google client got
+  exponential-backoff retry; see Phase 7 notes).
+- [x] 5.2  Aggregate: `python aggregate.py build` writes
+  `reports/results.csv` + `reports/flag_results.csv`.
+- [x] 5.3  Inspect: 0 byte-matches across all 45 cold-probe runs.
+- [x] 5.4  N/A -- no byte-matches, so the anti-leak guard held and
+  the trial was not blocked.
 
 ---
 
 ## Phase 6 --- Pilot (6 runs, ~GBP 1)
 
-- [ ] 6.1  `python run_matrix.py --phase pilot` --- Sonnet 4.6 x
-  {CTF1, CTF5, CTF9} x {passive, agentic}.
-- [ ] 6.2  Inspect each transcript manually. Check schema validates,
-  tool invocations look sensible, no guard violations logged.
-- [ ] 6.3  Fix any harness bug. Re-pilot until 3 consecutive runs
-  are clean.
+- [x] 6.1  `python run_matrix.py --phase pilot` --- Sonnet 4.6 x
+  {CTF1, CTF5, CTF9} x {passive, agentic}. 6/6 cells ok.
+- [x] 6.2  Transcripts schema-validated by harness exit; spot-checks
+  showed sensible tool use and no Guard events.
+- [x] 6.3  No harness bug surfaced from pilot. Vendor-specific bugs
+  surfaced later in primary (gpt-5 temperature, Gemini schema
+  `additionalProperties`, Anthropic 429 backoff, Gemini 503 backoff)
+  were each fixed before continuing the affected vendor.
 
 ---
 
 ## Phase 7 --- Full run
 
-- [ ] 7.1  Null-prompt sanity: 1 Sonnet 4.6 run on CTF1 with README
-  stripped to a bare placeholder. Expected failure.
-  (Originally scoped for Opus; Sonnet substitutes after the
-  Opus/flagship tier was cut for budget.)
-- [ ] 7.2  `python run_matrix.py --phase primary` --- 180 runs:
-  5 models x 9 CTFs x {passive, agentic} x 2 seeds. Seeds are
-  recorded in the run-id suffix for reproducibility.
-- [ ] 7.3  `python run_matrix.py --phase spot-check` --- optional
-  1-2 runs on `gpt-5` against CTF1 and/or CTF5 agentic, run only if
-  cumulative spend leaves headroom under the GBP20 hard cap.
-  Replaces the former Opus `flagship` phase, which was dropped when
-  a multi-seed Opus pass was estimated at ~GBP7 per full nine-CTF
-  traversal.
-- [ ] 7.4  Each run does `docker compose down -v && up` between
-  runs against the same CTF. Wall clock: several hours; mostly
-  unattended. Flash runs use the free tier where available;
-  Haiku, gpt-5-mini, and Gemini Pro dominate paid spend.
+- [x] 7.1  Null-prompt sanity: 1 Sonnet 4.6 run on CTF1 with the
+  doc pack stripped to a placeholder via the new `--null-prompt`
+  flag (added to `harness.py` and wired through `run_matrix.py`
+  during the run). Failed as expected.
+- [x] 7.2  `python run_matrix.py --phase primary` --- 72 of 90
+  cells. Sonnet 4.6, gpt-5-mini, Gemini 2.5 Pro, and Gemini 2.5
+  Flash each ran 18/18. **Haiku 4.5 was dropped from the primary
+  phase to stay within the per-vendor credit budget after Sonnet
+  exhausted the Anthropic top-up; recorded as a financial
+  constraint to be disclosed in the dissertation.** Seeds remained
+  at `PRIMARY_SEEDS = (1,)` per PLAN.md revision 2026-04-27;
+  the s=2 second pass was not run.
+- [ ] 7.3  Spot-check (`gpt-5` x {CTF1, CTF5} agentic) **skipped**.
+  Out of panel scope; remaining vendor credit was held back to
+  cover analysis-phase contingencies rather than spent on this
+  optional row.
+- [x] 7.4  Per-CTF stack reset (`docker compose down -v && up -d`)
+  ran cleanly throughout. Wall-clock as expected. Per-vendor
+  staging (`--only-model`) made spend trivial to read off the
+  vendor dashboard.
 
 ---
 

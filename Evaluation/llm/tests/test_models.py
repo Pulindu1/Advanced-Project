@@ -294,7 +294,8 @@ class TestOpenAI:
         assert kwargs["model"] == "gpt-5-mini"
         assert kwargs["tool_choice"] == "auto"
         assert kwargs["max_completion_tokens"] == 4096
-        assert kwargs["temperature"] == 0.0
+        # gpt-5 family rejects custom temperature; harness must omit it.
+        assert "temperature" not in kwargs
 
     def test_response_parsing_plain_text(self):
         c, fake = self._make()

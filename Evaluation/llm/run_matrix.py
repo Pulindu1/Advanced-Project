@@ -8,13 +8,18 @@ Phases (aligned with WORKFLOW.md after the panel revision):
 
 - `cold-probe`   --- 5 models x 9 CTFs passive, no stack, 1 seed (45)
 - `pilot`        --- Sonnet x {1,5,9} x {passive, agentic}         (6)
-- `primary`      --- 5 models x 9 x {passive, agentic} x 2 seeds  (180)
+- `primary`      --- 5 models x 9 x {passive, agentic} x 1 seed   (90)
 - `spot-check`   --- gpt-5 x {1,5} agentic, 1 seed                  (2)
 - `null-prompt`  --- Sonnet x CTF1 passive, empty doc pack          (1)
+
+Single-seed primary is the GBP10 cap revision (see PLAN.md
+"Revision: 2026-04-27 budget cut"). Restore `PRIMARY_SEEDS = (1, 2)`
+only if budget headroom is confirmed before the primary phase runs.
 
 Usage:
   python run_matrix.py --phase cold-probe
   python run_matrix.py --phase pilot --dry-run
+  python run_matrix.py --phase primary --only-model sonnet  # one LLM at a time
 """
 
 from __future__ import annotations
@@ -47,15 +52,15 @@ class CtfSpec:
 
 
 CTF_SPECS: dict[int, CtfSpec] = {
-    1: CtfSpec(1, "Basic_1_Nodejs", (3000,), "llmu01"),
-    2: CtfSpec(2, "CTF_2_pswd_manager", (4000,), "llmu02"),
-    3: CtfSpec(3, "CTF_3_HR-system", (5174, 8004), "llmu03"),
-    4: CtfSpec(4, "CTF_4_corporate_helpdesk", (5176, 4001), "llmu04"),
-    5: CtfSpec(5, "CTF_5_internal_blog", (5175,), "llmu05"),
-    6: CtfSpec(6, "CTF_6_veridian", (5180,), "llmu06"),
-    7: CtfSpec(7, "CTF_7_notes_app", (3001,), "llmu07"),
-    8: CtfSpec(8, "CTF_8_gazette", (3002,), "llmu08"),
-    9: CtfSpec(9, "CTF_9_dunholm", (3003,), "llmu09"),
+    1: CtfSpec(1, "Basic_1_Nodejs", (3000,), "abcd12"),
+    2: CtfSpec(2, "CTF_2_pswd_manager", (4000,), "abcd12"),
+    3: CtfSpec(3, "CTF_3_HR-system", (5174, 8004), "abcd12"),
+    4: CtfSpec(4, "CTF_4_corporate_helpdesk", (5176, 4001), "abcd12"),
+    5: CtfSpec(5, "CTF_5_internal_blog", (5175,), "test12"),
+    6: CtfSpec(6, "CTF_6_veridian", (5180,), "abcd12"),
+    7: CtfSpec(7, "CTF_7_notes_app", (3001,), "abcd12"),
+    8: CtfSpec(8, "CTF_8_gazette", (3002,), "abcd12"),
+    9: CtfSpec(9, "CTF_9_dunholm", (3003,), "abcd12"),
 }
 
 
@@ -73,7 +78,7 @@ MODELS = {
 PANEL = ("sonnet", "haiku", "gpt5mini", "gemini-pro", "gemini-flash")
 PILOT_CTFS = (1, 5, 9)
 SPOT_CHECK_CTFS = (1, 5)
-PRIMARY_SEEDS = (1, 2)
+PRIMARY_SEEDS = (1,)
 
 
 # --- Phase enumeration ------------------------------------------------------
@@ -184,6 +189,8 @@ def run_cell(
         cmd += ["--extended-thinking-budget", str(extended_thinking_budget)]
     if cell.seed is not None:
         cmd += ["--seed", str(cell.seed)]
+    if cell.tag == "null":
+        cmd += ["--null-prompt"]
 
     _log(f"[cell] {run_id}")
     if dry_run:
@@ -225,11 +232,29 @@ def main(argv: list[str] | None = None) -> int:
         "--only-ctf", type=int, default=None,
         help="Restrict to a single CTF number.",
     )
+    ap.add_argument(
+        "--only-model", choices=sorted(MODELS.keys()), default=None,
+        help=(
+            "Restrict to a single model key (sonnet, haiku, gpt5mini, "
+            "gemini-pro, gemini-flash, gpt5, opus). Lets you stage spend "
+            "per provider — run one LLM, check cost, then the next."
+        ),
+    )
+    ap.add_argument(
+        "--only-condition",
+        choices=["passive", "agentic", "cold-probe"],
+        default=None,
+        help="Restrict to a single condition. Useful for targeted reruns.",
+    )
     args = ap.parse_args(argv)
 
     cells = phase_cells(args.phase)
     if args.only_ctf is not None:
         cells = [c for c in cells if c.ctf == args.only_ctf]
+    if args.only_model is not None:
+        cells = [c for c in cells if c.model_key == args.only_model]
+    if args.only_condition is not None:
+        cells = [c for c in cells if c.condition == args.only_condition]
 
     runs_dir = Path(args.runs_dir)
     runs_dir.mkdir(parents=True, exist_ok=True)

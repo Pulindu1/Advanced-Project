@@ -1,0 +1,167 @@
+### 2026-04-28T12:13:48Z CTF9 begin
+### down -v (pre)
+### up -d --build
+ Image ctf_9_dunholm-web Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 600B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 819B done
+#2 DONE 0.0s
+
+#3 resolve image config for docker-image://docker.io/docker/dockerfile:1.6
+#3 ...
+
+#4 [auth] docker/dockerfile:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 resolve image config for docker-image://docker.io/docker/dockerfile:1.6
+#3 DONE 1.7s
+
+#5 docker-image://docker.io/docker/dockerfile:1.6@sha256:ac85f380a63b13dfcefa89046420e1781752bab202122f8f50032edf31be0021
+#5 resolve docker.io/docker/dockerfile:1.6@sha256:ac85f380a63b13dfcefa89046420e1781752bab202122f8f50032edf31be0021 done
+#5 CACHED
+
+#6 [internal] load metadata for docker.io/library/eclipse-temurin:17-jre-jammy
+#6 ...
+
+#7 [auth] library/maven:pull token for registry-1.docker.io
+#7 DONE 0.0s
+
+#8 [auth] library/eclipse-temurin:pull token for registry-1.docker.io
+#8 DONE 0.0s
+
+#6 [internal] load metadata for docker.io/library/eclipse-temurin:17-jre-jammy
+#6 DONE 0.6s
+
+#9 [internal] load metadata for docker.io/library/maven:3.9-eclipse-temurin-17
+#9 DONE 0.6s
+
+#10 [internal] load .dockerignore
+#10 transferring context: 191B done
+#10 DONE 0.0s
+
+#11 [internal] load build context
+#11 transferring context: 4.64kB done
+#11 DONE 0.0s
+
+#12 [build 1/6] FROM docker.io/library/maven:3.9-eclipse-temurin-17@sha256:036d1a6f2965e4368157bb87f02cd31652a96918a26f7eb5ae45a0aa33f2cb8e
+#12 resolve docker.io/library/maven:3.9-eclipse-temurin-17@sha256:036d1a6f2965e4368157bb87f02cd31652a96918a26f7eb5ae45a0aa33f2cb8e 0.0s done
+#12 DONE 0.0s
+
+#13 [runtime 1/8] FROM docker.io/library/eclipse-temurin:17-jre-jammy@sha256:642d45bf22d3cb9face159181732ed9fa70873b2681e50445eff7d4785c176bb
+#13 resolve docker.io/library/eclipse-temurin:17-jre-jammy@sha256:642d45bf22d3cb9face159181732ed9fa70873b2681e50445eff7d4785c176bb 0.0s done
+#13 DONE 0.0s
+
+#14 [runtime 6/8] COPY src/main/resources/application.properties /app/config/application.properties
+#14 CACHED
+
+#15 [build 4/6] RUN mvn -B -q dependency:go-offline
+#15 CACHED
+
+#16 [runtime 4/8] RUN mkdir -p /app/config /app/keys /app/logs /app/seed /data/uploads /data/vault
+#16 CACHED
+
+#17 [build 2/6] WORKDIR /build
+#17 CACHED
+
+#18 [build 3/6] COPY pom.xml .
+#18 CACHED
+
+#19 [build 5/6] COPY src ./src
+#19 CACHED
+
+#20 [runtime 5/8] COPY --from=build /build/target/trialvault.jar /app/trialvault.jar
+#20 CACHED
+
+#21 [build 6/6] RUN mvn -B -DskipTests package
+#21 CACHED
+
+#22 [runtime 7/8] COPY src/main/resources/keys/public.pem /app/keys/public.pem
+#22 CACHED
+
+#23 [runtime 2/8] RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+#23 CACHED
+
+#24 [runtime 3/8] WORKDIR /app
+#24 CACHED
+
+#25 [runtime 8/8] COPY src/main/resources/data/uploads/ /data/uploads/
+#25 CACHED
+
+#26 exporting to image
+#26 exporting layers done
+#26 exporting manifest sha256:4dc19ec5a3ae102c250716fa36a7fafcccc09d9b1ebbbbe35fc0a01093c5657c done
+#26 exporting config sha256:e2cdce4887b6b0d8068fde497b51fda8f2095172c64f62527b1299187cc1673a done
+#26 exporting attestation manifest sha256:faa50a4eaaeed07860b1a9f5a0261591c1e2a4d5fcf1e35093c21c809f064334 done
+#26 exporting manifest list sha256:32f9a2f9b9d30b927885118071e9688026ce81bd1bc5586e21bf8a5b3778e20d done
+#26 naming to docker.io/library/ctf_9_dunholm-web:latest done
+#26 unpacking to docker.io/library/ctf_9_dunholm-web:latest done
+#26 DONE 0.1s
+
+#27 resolving provenance for metadata file
+#27 DONE 0.0s
+ Image ctf_9_dunholm-web Built 
+ Network ctf_9_dunholm_trialvault-net Creating 
+ Network ctf_9_dunholm_trialvault-net Created 
+ Volume ctf_9_dunholm_trialvault-db Creating 
+ Volume ctf_9_dunholm_trialvault-db Created 
+ Container trialvault-redis Creating 
+ Container trialvault-postgres Creating 
+ Container trialvault-redis Created 
+ Container trialvault-postgres Created 
+ Container trialvault-web Creating 
+ Container trialvault-web Created 
+ Container trialvault-redis Starting 
+ Container trialvault-postgres Starting 
+ Container trialvault-postgres Started 
+ Container trialvault-redis Started 
+ Container trialvault-postgres Waiting 
+ Container trialvault-postgres Healthy 
+ Container trialvault-web Starting 
+ Container trialvault-web Started 
+### wait-for-http http://localhost:3003/  (timeout 120s)
+curl: (56) Recv failure: Connection reset by peer
+curl: (56) Recv failure: Connection reset by peer
+curl: (56) Recv failure: Connection reset by peer
+### run e2e: python3 -m pytest ctf9_exploit.py -v
+============================= test session starts ==============================
+platform darwin -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /Library/Frameworks/Python.framework/Versions/3.12/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/pulindufonseka/Documents/GitHub/Advanced-Project/CTFs/e2e
+plugins: anyio-4.12.0
+collecting ... collected 12 items
+
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag1_unauth_info_has_no_flag PASSED [  8%]
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag1_authenticated_reveals_flag PASSED [ 16%]
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag1_env_leaks_dr_api_key_part1 PASSED [ 25%]
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag2_traversal_reads_application_properties PASSED [ 33%]
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag2_naive_traversal_is_stripped PASSED [ 41%]
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag3_player_cookie_blocked_from_admin PASSED [ 50%]
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag3_hs256_forgery_reaches_admin PASSED [ 58%]
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag4_blind_sqli_extracts_flag PASSED [ 66%]
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag5_vault_decrypts_to_flag PASSED [ 75%]
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag6_log_leaks_staff_password PASSED [ 83%]
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag6_requires_both_sessions PASSED [ 91%]
+ctf9_exploit.py::TestCTF9TrialVaultExploits::test_flag6_player_alone_does_not_leak PASSED [100%]
+
+============================== 12 passed in 7.78s ==============================
+### down -v (post)
+ Container trialvault-web Stopping 
+ Container trialvault-web Stopped 
+ Container trialvault-web Removing 
+ Container trialvault-web Removed 
+ Container trialvault-postgres Stopping 
+ Container trialvault-redis Stopping 
+ Container trialvault-postgres Stopped 
+ Container trialvault-postgres Removing 
+ Container trialvault-postgres Removed 
+ Container trialvault-redis Stopped 
+ Container trialvault-redis Removing 
+ Container trialvault-redis Removed 
+ Network ctf_9_dunholm_trialvault-net Removing 
+ Volume ctf_9_dunholm_trialvault-db Removing 
+ Volume ctf_9_dunholm_trialvault-db Removed 
+ Network ctf_9_dunholm_trialvault-net Removed 
+### 2026-04-28T12:14:13Z CTF9 end: PASS

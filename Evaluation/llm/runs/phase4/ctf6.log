@@ -1,0 +1,234 @@
+### 2026-04-28T12:13:26Z CTF6 begin
+### down -v (pre)
+### up -d --build
+ Image ctf_6_veridian-metadata Building 
+ Image ctf_6_veridian-redis Building 
+ Image ctf_6_veridian-app Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.70kB done
+#1 DONE 0.0s
+
+#2 [app internal] load build definition from Dockerfile
+#2 transferring dockerfile: 951B 0.0s done
+#2 DONE 0.0s
+
+#3 [metadata internal] load build definition from Dockerfile
+#3 transferring dockerfile: 227B done
+#3 DONE 0.0s
+
+#4 [redis internal] load build definition from Dockerfile
+#4 transferring dockerfile: 189B done
+#4 DONE 0.0s
+
+#5 [redis internal] load metadata for docker.io/library/redis:7-alpine
+#5 DONE 0.0s
+
+#6 [redis internal] load .dockerignore
+#6 transferring context: 2B done
+#6 DONE 0.0s
+
+#7 [redis 1/3] FROM docker.io/library/redis:7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf
+#7 resolve docker.io/library/redis:7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf done
+#7 DONE 0.0s
+
+#8 [redis internal] load build context
+#8 transferring context: 29B done
+#8 DONE 0.0s
+
+#9 [redis 2/3] COPY seed.sh /usr/local/bin/seed.sh
+#9 CACHED
+
+#10 [redis 3/3] RUN chmod +x /usr/local/bin/seed.sh
+#10 CACHED
+
+#11 [redis] exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:6bc4095d0a81198c7a6b6e521373fac12389f7082f596d45fd7261fc6f80979a done
+#11 exporting config sha256:78f2932f2d9ba3716d28e5f8c1c3982dc6b46da438fdf775ea06cd971ab8b2fb done
+#11 exporting attestation manifest sha256:da2ea9a79519d55a7f3bde7d4d2ea06ecbafb4fd4f8596a2c46110448dd103c7 done
+#11 exporting manifest list sha256:5bd1f230d467ef8d98ea338ff6d4abcf0e2f40877a31b151e1904b15b58e0cb4 done
+#11 naming to docker.io/library/ctf_6_veridian-redis:latest done
+#11 unpacking to docker.io/library/ctf_6_veridian-redis:latest
+#11 unpacking to docker.io/library/ctf_6_veridian-redis:latest done
+#11 DONE 0.1s
+
+#12 [redis] resolving provenance for metadata file
+#12 DONE 0.0s
+
+#13 [metadata internal] load metadata for docker.io/library/python:3.11-slim
+#13 DONE 0.2s
+
+#14 [metadata internal] load .dockerignore
+#14 transferring context: 2B done
+#14 DONE 0.0s
+
+#15 [metadata internal] load build context
+#15 transferring context: 75B done
+#15 DONE 0.0s
+
+#16 [metadata 1/5] FROM docker.io/library/python:3.11-slim@sha256:6d85378d88a19cd4d76079817532d62232be95757cb45945a99fec8e8084b9c2
+#16 resolve docker.io/library/python:3.11-slim@sha256:6d85378d88a19cd4d76079817532d62232be95757cb45945a99fec8e8084b9c2 done
+#16 DONE 0.0s
+
+#17 [metadata 2/5] WORKDIR /app
+#17 CACHED
+
+#18 [metadata 3/5] COPY requirements.txt .
+#18 CACHED
+
+#19 [metadata 4/5] RUN pip install --no-cache-dir -r requirements.txt
+#19 CACHED
+
+#20 [metadata 5/5] COPY metadata_server.py .
+#20 CACHED
+
+#21 [metadata] exporting to image
+#21 exporting layers done
+#21 exporting manifest sha256:73599d893d358f8d56624b396bc654a20f192812ed4ddfd762ac2dbe2a1514e4 done
+#21 exporting config sha256:ce356407a099475583d0d10b48cd8ee68bec36dd74d935bcb77d0e08e1e25eff done
+#21 exporting attestation manifest sha256:cc83998ef314e3bd0b030e96035140a81240f8aba340b510e3d3b310f1e27bd8 done
+#21 exporting manifest list sha256:ba100ed5ae9b8b8ec8b0480ef655a0e96bb11c52c5f29e6e6ba9a688960f51bc done
+#21 naming to docker.io/library/ctf_6_veridian-metadata:latest done
+#21 unpacking to docker.io/library/ctf_6_veridian-metadata:latest done
+#21 DONE 0.0s
+
+#22 [app internal] load metadata for docker.io/library/rust:latest
+#22 ...
+
+#23 [auth] library/debian:pull token for registry-1.docker.io
+#23 DONE 0.0s
+
+#24 [auth] library/rust:pull token for registry-1.docker.io
+#24 DONE 0.0s
+
+#25 [metadata] resolving provenance for metadata file
+#25 DONE 0.0s
+
+#26 [app internal] load metadata for docker.io/library/debian:bookworm-slim
+#26 DONE 0.6s
+
+#22 [app internal] load metadata for docker.io/library/rust:latest
+#22 DONE 0.8s
+
+#27 [app internal] load .dockerignore
+#27 transferring context: 2B done
+#27 DONE 0.0s
+
+#28 [app builder 1/7] FROM docker.io/library/rust:latest@sha256:a9cfb755b33f5bb872610cbdb25da61f527416b28fc9c052bbce4bef93e7799a
+#28 resolve docker.io/library/rust:latest@sha256:a9cfb755b33f5bb872610cbdb25da61f527416b28fc9c052bbce4bef93e7799a 0.0s done
+#28 DONE 0.0s
+
+#29 [app stage-1 1/7] FROM docker.io/library/debian:bookworm-slim@sha256:f9c6a2fd2ddbc23e336b6257a5245e31f996953ef06cd13a59fa0a1df2d5c252
+#29 resolve docker.io/library/debian:bookworm-slim@sha256:f9c6a2fd2ddbc23e336b6257a5245e31f996953ef06cd13a59fa0a1df2d5c252 0.0s done
+#29 DONE 0.0s
+
+#30 [app internal] load build context
+#30 transferring context: 543B 0.1s done
+#30 DONE 0.1s
+
+#31 [app stage-1 4/7] COPY --from=builder /build/target/release/veridian-portal /app/veridian-portal
+#31 CACHED
+
+#32 [app stage-1 2/7] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates     && rm -rf /var/lib/apt/lists/*
+#32 CACHED
+
+#33 [app stage-1 6/7] COPY static/ /app/static/
+#33 CACHED
+
+#34 [app stage-1 3/7] WORKDIR /app
+#34 CACHED
+
+#35 [app builder 4/7] RUN mkdir src && echo "fn main() {}" > src/main.rs
+#35 CACHED
+
+#36 [app builder 5/7] RUN cargo build --release 2>/dev/null || true
+#36 CACHED
+
+#37 [app builder 6/7] COPY src/ src/
+#37 CACHED
+
+#38 [app builder 7/7] RUN touch src/main.rs && cargo build --release
+#38 CACHED
+
+#39 [app builder 3/7] COPY Cargo.toml Cargo.lock* ./
+#39 CACHED
+
+#40 [app stage-1 5/7] COPY templates/ /app/templates/
+#40 CACHED
+
+#41 [app builder 2/7] WORKDIR /build
+#41 CACHED
+
+#42 [app stage-1 7/7] RUN mkdir -p /app/data
+#42 CACHED
+
+#43 [app] exporting to image
+#43 exporting layers done
+#43 exporting manifest sha256:6ab54bb6c3b2740a5b5656268f51671f75944f3f174fbeb672c433790efc1544 done
+#43 exporting config sha256:f94f46c427325863615da23503ccea2d19e26b1961cb8242d93c5adafd5f85e8 done
+#43 exporting attestation manifest sha256:919d5c4d07327ec8f67d4813102484e950ee8331064aa66b7a97b0cd5bf2c038 done
+#43 exporting manifest list sha256:913162e5cf86f68332a79aa0a8bc1519c45b2c39f8792f0c578a369967485ebd done
+#43 naming to docker.io/library/ctf_6_veridian-app:latest done
+#43 unpacking to docker.io/library/ctf_6_veridian-app:latest done
+#43 DONE 0.0s
+
+#44 [app] resolving provenance for metadata file
+#44 DONE 0.0s
+ Image ctf_6_veridian-metadata Built 
+ Image ctf_6_veridian-redis Built 
+ Image ctf_6_veridian-app Built 
+ Network ctf_6_veridian_veridian-internal Creating 
+ Network ctf_6_veridian_veridian-internal Created 
+ Container veridian-redis Creating 
+ Container veridian-metadata Creating 
+ Container veridian-metadata Created 
+ Container veridian-redis Created 
+ Container veridian-app Creating 
+ Container veridian-app Created 
+ Container veridian-redis Starting 
+ Container veridian-metadata Starting 
+ Container veridian-metadata Started 
+ Container veridian-redis Started 
+ Container veridian-redis Waiting 
+ Container veridian-redis Healthy 
+ Container veridian-app Starting 
+ Container veridian-app Started 
+### wait-for-http http://localhost:5180/  (timeout 120s)
+curl: (56) Recv failure: Connection reset by peer
+### run e2e: python3 -m pytest ctf6_exploit.py -v
+============================= test session starts ==============================
+platform darwin -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /Library/Frameworks/Python.framework/Versions/3.12/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/pulindufonseka/Documents/GitHub/Advanced-Project/CTFs/e2e
+plugins: anyio-4.12.0
+collecting ... collected 11 items
+
+ctf6_exploit.py::TestCTF6Flag1::test_health_endpoint_breadcrumbs PASSED  [  9%]
+ctf6_exploit.py::TestCTF6Flag1::test_metadata_directory_listing PASSED   [ 18%]
+ctf6_exploit.py::TestCTF6Flag1::test_flag1_in_iam_credentials PASSED     [ 27%]
+ctf6_exploit.py::TestCTF6Flag2::test_userdata_contains_redis_config PASSED [ 36%]
+ctf6_exploit.py::TestCTF6Flag2::test_flag2_in_bootstrap_script PASSED    [ 45%]
+ctf6_exploit.py::TestCTF6Flag3::test_redis_reachable_via_dict PASSED     [ 54%]
+ctf6_exploit.py::TestCTF6Flag3::test_redis_keys_enumerable PASSED        [ 63%]
+ctf6_exploit.py::TestCTF6Flag3::test_flag3_from_redis PASSED             [ 72%]
+ctf6_exploit.py::TestCTF6Flag4::test_admin_session_token_in_redis PASSED [ 81%]
+ctf6_exploit.py::TestCTF6Flag4::test_admin_rejects_without_token PASSED  [ 90%]
+ctf6_exploit.py::TestCTF6Flag4::test_flag4_on_admin_dashboard PASSED     [100%]
+
+============================== 11 passed in 0.22s ==============================
+### down -v (post)
+ Container veridian-app Stopping 
+ Container veridian-app Stopped 
+ Container veridian-app Removing 
+ Container veridian-app Removed 
+ Container veridian-redis Stopping 
+ Container veridian-metadata Stopping 
+ Container veridian-redis Stopped 
+ Container veridian-redis Removing 
+ Container veridian-redis Removed 
+ Container veridian-metadata Stopped 
+ Container veridian-metadata Removing 
+ Container veridian-metadata Removed 
+ Network ctf_6_veridian_veridian-internal Removing 
+ Network ctf_6_veridian_veridian-internal Removed 
+### 2026-04-28T12:13:38Z CTF6 end: PASS

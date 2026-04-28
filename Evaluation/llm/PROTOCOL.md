@@ -13,12 +13,12 @@ transcript and reported in the Limitations subsection.
 
 ## 1. Provision test users
 
-- [ ] Trial salt (distinct from production) in
-      `evaluation/llm/trial.env`, gitignored.
-- [ ] Generate `testuser01`..`testuser09` for the 9 CTFs via each
-      challenge's generator.
-- [ ] Write expected flags to `expected_flags.json`.
-- [ ] Write flag regexes to `flag_regexes.json`.
+- [ ] No per-trial provisioning. Each CTF ships a demo account; the
+      trial uses `abcd12` (or `test12` for CTF5).
+- [ ] Build `expected_flags.json` from the in-repo `flags.json`
+      files: `python3 Evaluation/llm/scripts/build_expected_flags.py`.
+- [ ] Write flag regexes to `flag_regexes.json` (one-time;
+      pre-registered).
 
 ## 2. Upper-bound baseline
 

@@ -9,6 +9,7 @@ calls `set_user` (first turn only), then alternates `send` with
 from __future__ import annotations
 
 import json
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
@@ -132,7 +133,26 @@ class AnthropicClient(ModelClient):
         else:
             kwargs["temperature"] = self.temperature
 
-        resp = self.client.messages.create(**kwargs)
+        # Anthropic 429 rate-limit / 529 overloaded are common transient
+        # errors when the agentic loop blasts through input-token-per-min
+        # quotas. Retry with exponential backoff capped at 60s; total
+        # max wait ~3 minutes per call.
+        resp = None
+        max_attempts = 8
+        for attempt in range(max_attempts):
+            try:
+                resp = self.client.messages.create(**kwargs)
+                break
+            except Exception as e:
+                msg = str(e)
+                retriable = (
+                    "429" in msg or "rate_limit" in msg
+                    or "529" in msg or "overloaded" in msg
+                )
+                if not retriable or attempt == max_attempts - 1:
+                    raise
+                time.sleep(min(2 ** (attempt + 2), 60))  # 4,8,16,32,60,60,60
+        assert resp is not None
 
         text_parts: list[str] = []
         reasoning_parts: list[str] = []
@@ -243,8 +263,10 @@ class OpenAIClient(ModelClient):
             tool_choice="auto",
             max_completion_tokens=self.max_tokens,
         )
-        # Some newer models reject temperature; send it but tolerate rejection.
-        kwargs["temperature"] = self.temperature
+        # gpt-5 family rejects any non-default temperature (HTTP 400
+        # "Unsupported value"). Only send it for older models.
+        if not self.model_id.startswith("gpt-5"):
+            kwargs["temperature"] = self.temperature
         if self.seed is not None:
             kwargs["seed"] = self.seed
 
@@ -302,6 +324,20 @@ class OpenAIClient(ModelClient):
 # --------------------------------------------------------------------
 
 
+def _sanitize_schema_for_gemini(schema: Any) -> Any:
+    # Gemini's function-declaration parser rejects JSON-Schema's
+    # `additionalProperties`, which Anthropic and OpenAI accept.
+    if isinstance(schema, dict):
+        return {
+            k: _sanitize_schema_for_gemini(v)
+            for k, v in schema.items()
+            if k != "additionalProperties"
+        }
+    if isinstance(schema, list):
+        return [_sanitize_schema_for_gemini(v) for v in schema]
+    return schema
+
+
 class GoogleClient(ModelClient):
     """Wraps google-genai's `client.models.generate_content`.
 
@@ -345,7 +381,7 @@ class GoogleClient(ModelClient):
                 types_module.FunctionDeclaration(
                     name=t["name"],
                     description=t["description"],
-                    parameters=t["input_schema"],
+                    parameters=_sanitize_schema_for_gemini(t["input_schema"]),
                 )
                 for t in tools
             ]
@@ -396,11 +432,29 @@ class GoogleClient(ModelClient):
         if self.seed is not None:
             config_kwargs["seed"] = self.seed
 
-        resp = self.client.models.generate_content(
-            model=self.model_id,
-            contents=self.contents,
-            config=GenerateContentConfig(**config_kwargs),
-        )
+        # Gemini 503 UNAVAILABLE / 429 RESOURCE_EXHAUSTED are common
+        # transient capacity errors. Retry with exponential backoff
+        # capped at 30s; total max wait ~2 minutes per call.
+        resp = None
+        max_attempts = 8
+        for attempt in range(max_attempts):
+            try:
+                resp = self.client.models.generate_content(
+                    model=self.model_id,
+                    contents=self.contents,
+                    config=GenerateContentConfig(**config_kwargs),
+                )
+                break
+            except Exception as e:
+                msg = str(e)
+                retriable = (
+                    "503" in msg or "UNAVAILABLE" in msg
+                    or "429" in msg or "RESOURCE_EXHAUSTED" in msg
+                )
+                if not retriable or attempt == max_attempts - 1:
+                    raise
+                time.sleep(min(2 ** attempt, 30))  # 1,2,4,8,16,30,30,30
+        assert resp is not None  # loop either raises or sets resp
 
         text_parts: list[str] = []
         tool_uses: list[dict[str, Any]] = []

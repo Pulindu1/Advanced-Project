@@ -1,0 +1,72 @@
+HTTP/1.1 401 Unauthorized
+X-Powered-By: Express
+Content-Type: text/html; charset=utf-8
+Content-Length: 2191
+ETag: W/"88f-JiizgFPen2qEVDvt+pT+xUB0pp8"
+Date: Tue, 28 Apr 2026 19:58:07 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CTF-1 – Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/custom.css">
+  </head>
+  <body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="/">
+          <span class="logo-box me-2"></span>
+          <span class="brand-text">CTF-1</span>
+        </a>
+        <div class="d-flex">
+          <a class="btn btn-outline-light btn-sm me-2" href="/home">Home</a>
+          <a class="btn btn-outline-light btn-sm" href="/logout">Logout</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-5">
+
+
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-body">
+            <h3 class="card-title mb-3">Sign in</h3>
+            <p class="text-muted">Sign into your account using your login details.</p>
+
+            
+              <div class="alert alert-danger" role="alert">Invalid username or password.</div>
+            
+
+          <form method="POST" action="/login">
+            <div class="mb-3">
+              <label class="form-label">Username</label>
+              <input class="form-control" type="text" name="username" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input class="form-control" type="password" name="password" required />
+            </div>
+            <div class="d-grid">
+              <button class="btn btn-primary" type="submit">Log in</button>
+            </div>
+          </form>
+
+          <hr />
+          <p class="small text-muted mb-0">Known test account (for students): <code>student / student123</code></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
+

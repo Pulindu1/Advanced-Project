@@ -10,7 +10,8 @@ files changed (optional)
 
 
 
-
+### Finished llm automated tests - 27/04/26
+- ran all 3 llms and finished.
 
 ### Added peer tests - 27/04/26
 - Added data from google forms for post ctf surveys

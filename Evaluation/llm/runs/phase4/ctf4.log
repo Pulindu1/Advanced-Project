@@ -1,0 +1,222 @@
+### 2026-04-28T12:12:56Z CTF4 begin
+### down -v (pre)
+### up -d --build
+ Image ctf_4_corporate_helpdesk-api Building 
+ Image ctf_4_corporate_helpdesk-web Building 
+ Image ctf_4_corporate_helpdesk-bot Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.81kB done
+#1 DONE 0.0s
+
+#2 [api internal] load build definition from Dockerfile
+#2 transferring dockerfile: 364B 0.0s done
+#2 DONE 0.0s
+
+#3 [bot internal] load build definition from Dockerfile
+#3 transferring dockerfile: 341B 0.0s done
+#3 DONE 0.0s
+
+#4 [web internal] load build definition from Dockerfile
+#4 transferring dockerfile: 176B 0.0s done
+#4 DONE 0.0s
+
+#5 [web internal] load metadata for docker.io/library/node:18-alpine
+#5 ...
+
+#6 [bot internal] load metadata for mcr.microsoft.com/playwright:v1.40.1-jammy
+#6 DONE 0.3s
+
+#7 [bot internal] load .dockerignore
+#7 transferring context: 2B done
+#7 DONE 0.0s
+
+#8 [bot 1/7] FROM mcr.microsoft.com/playwright:v1.40.1-jammy@sha256:1aba528f5db4f4c130653ed1de737ddc1d276197cc4503d3bb7903a93b7fb32e
+#8 resolve mcr.microsoft.com/playwright:v1.40.1-jammy@sha256:1aba528f5db4f4c130653ed1de737ddc1d276197cc4503d3bb7903a93b7fb32e done
+#8 DONE 0.0s
+
+#5 [api internal] load metadata for docker.io/library/node:18-alpine
+#5 DONE 0.3s
+
+#9 [bot internal] load build context
+#9 transferring context: 208B done
+#9 DONE 0.0s
+
+#10 [bot 5/7] RUN npx playwright install chromium
+#10 CACHED
+
+#11 [bot 3/7] COPY package*.json ./
+#11 CACHED
+
+#12 [bot 4/7] RUN npm install --include=dev
+#12 CACHED
+
+#13 [bot 2/7] WORKDIR /app
+#13 CACHED
+
+#14 [bot 6/7] COPY . .
+#14 CACHED
+
+#15 [bot 7/7] RUN npm run build
+#15 CACHED
+
+#16 [api internal] load .dockerignore
+#16 transferring context: 2B done
+#16 DONE 0.0s
+
+#17 [web internal] load .dockerignore
+#17 transferring context: 2B done
+#17 DONE 0.0s
+
+#18 [web internal] load build context
+#18 transferring context: 1.08kB done
+#18 DONE 0.0s
+
+#19 [web 1/6] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
+#19 resolve docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e 0.0s done
+#19 DONE 0.0s
+
+#20 [web 4/5] RUN npm install --include=dev
+#20 CACHED
+
+#21 [web 3/5] COPY package*.json ./
+#21 CACHED
+
+#22 [web 5/5] COPY . .
+#22 CACHED
+
+#23 [api internal] load build context
+#23 transferring context: 1.15kB done
+#23 DONE 0.0s
+
+#24 [api 4/6] RUN npm install --include=dev
+#24 CACHED
+
+#25 [api 5/6] COPY . .
+#25 CACHED
+
+#26 [api 3/6] COPY package*.json ./
+#26 CACHED
+
+#27 [api 2/6] WORKDIR /app
+#27 CACHED
+
+#28 [api 6/6] RUN npm run build
+#28 CACHED
+
+#29 [bot] exporting to image
+#29 exporting layers done
+#29 exporting manifest sha256:6c6f23ec9b609ab85c8b36cc1acbac0299afbcfc698e83461b2590858263f35a done
+#29 exporting config sha256:109c605849b653bf2e31324b56e24c7d24746ec49245e5db1d7437bbeb339033 done
+#29 exporting attestation manifest sha256:10203c872e9bc32cfb4e223de8b7a19d725411489a4ce19f2ac10add952071e1 0.0s done
+#29 exporting manifest list sha256:fe0450c1c76ffc7d7c0adb17b1849a41183341756bd4a1ea34f658a700d2a517 done
+#29 naming to docker.io/library/ctf_4_corporate_helpdesk-bot:latest done
+#29 unpacking to docker.io/library/ctf_4_corporate_helpdesk-bot:latest done
+#29 DONE 0.1s
+
+#30 [api] exporting to image
+#30 exporting layers done
+#30 exporting manifest sha256:a041970956aa8b7ae18c16ada53165c518877c5e894fee0056aa57fbc8da6408 done
+#30 exporting config sha256:487ee9338f5044464786bfbdd3d02d26bb486b7a61893eccad05c1e26318f533 done
+#30 exporting attestation manifest sha256:45bc19424373454ec6a5590c1c0390a605b86765a3607a74d69fdcb90ba19cc4
+#30 exporting attestation manifest sha256:45bc19424373454ec6a5590c1c0390a605b86765a3607a74d69fdcb90ba19cc4 0.0s done
+#30 exporting manifest list sha256:e260cba44b1f6301e5bdf89d79c469095504230c1b8afd9b7337c36dbe403487 0.0s done
+#30 naming to docker.io/library/ctf_4_corporate_helpdesk-api:latest done
+#30 unpacking to docker.io/library/ctf_4_corporate_helpdesk-api:latest done
+#30 DONE 0.1s
+
+#31 [bot] resolving provenance for metadata file
+#31 DONE 0.0s
+
+#32 [web] exporting to image
+#32 exporting layers done
+#32 exporting manifest sha256:849549dc203b5a99a01fdc1bb6cd37fd17e392a6852be3df980d2353964fc933 done
+#32 exporting config sha256:78a90b458309862213a691c9f4e85d076b3f6a96acd5c087523f6b8732b8d329 done
+#32 exporting attestation manifest sha256:e1befe8f49d990e1777fa589120a8d66d8ed3cef9cfc1a1f4457ca457463b77b 0.0s done
+#32 exporting manifest list sha256:5bf57399804b3bf65ca817fe171297b2981856ee2306192a4a21f750e6fd713b 0.0s done
+#32 naming to docker.io/library/ctf_4_corporate_helpdesk-web:latest done
+#32 unpacking to docker.io/library/ctf_4_corporate_helpdesk-web:latest done
+#32 DONE 0.1s
+
+#33 [web] resolving provenance for metadata file
+#33 DONE 0.0s
+
+#34 [api] resolving provenance for metadata file
+#34 DONE 0.0s
+ Image ctf_4_corporate_helpdesk-api Built 
+ Image ctf_4_corporate_helpdesk-web Built 
+ Image ctf_4_corporate_helpdesk-bot Built 
+ Network ctf_4_corporate_helpdesk_intradesk-network Creating 
+ Network ctf_4_corporate_helpdesk_intradesk-network Created 
+ Volume ctf_4_corporate_helpdesk_postgres-data Creating 
+ Volume ctf_4_corporate_helpdesk_postgres-data Created 
+ Volume ctf_4_corporate_helpdesk_redis-data Creating 
+ Volume ctf_4_corporate_helpdesk_redis-data Created 
+ Container intradesk-redis Creating 
+ Container intradesk-db Creating 
+ Container intradesk-redis Created 
+ Container intradesk-db Created 
+ Container intradesk-api Creating 
+ Container intradesk-api Created 
+ Container intradesk-web Creating 
+ Container intradesk-bot Creating 
+ Container intradesk-web Created 
+ Container intradesk-bot Created 
+ Container intradesk-redis Starting 
+ Container intradesk-db Starting 
+ Container intradesk-redis Started 
+ Container intradesk-db Started 
+ Container intradesk-db Waiting 
+ Container intradesk-redis Waiting 
+ Container intradesk-db Healthy 
+ Container intradesk-redis Healthy 
+ Container intradesk-api Starting 
+ Container intradesk-api Started 
+ Container intradesk-bot Starting 
+ Container intradesk-web Starting 
+ Container intradesk-web Started 
+ Container intradesk-bot Started 
+### wait-for-http http://localhost:4001/  (timeout 90s)
+curl: (56) Recv failure: Connection reset by peer
+curl: (56) Recv failure: Connection reset by peer
+curl: (22) The requested URL returned error: 404
+### run e2e: python3 -m pytest ctf4_exploit.py -v
+============================= test session starts ==============================
+platform darwin -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /Library/Frameworks/Python.framework/Versions/3.12/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/pulindufonseka/Documents/GitHub/Advanced-Project/CTFs/e2e
+plugins: anyio-4.12.0
+collecting ... collected 3 items
+
+ctf4_exploit.py::TestCTF4XSSExploit::test_admin_flag_endpoint_requires_admin PASSED [ 33%]
+ctf4_exploit.py::TestCTF4XSSExploit::test_exfil_capture_endpoint_open PASSED [ 66%]
+ctf4_exploit.py::TestCTF4XSSExploit::test_full_exploit_chain PASSED      [100%]
+
+============================== 3 passed in 4.14s ===============================
+### down -v (post)
+ Container intradesk-bot Stopping 
+ Container intradesk-web Stopping 
+ Container intradesk-web Stopped 
+ Container intradesk-web Removing 
+ Container intradesk-web Removed 
+ Container intradesk-bot Stopped 
+ Container intradesk-bot Removing 
+ Container intradesk-bot Removed 
+ Container intradesk-api Stopping 
+ Container intradesk-api Stopped 
+ Container intradesk-api Removing 
+ Container intradesk-api Removed 
+ Container intradesk-redis Stopping 
+ Container intradesk-db Stopping 
+ Container intradesk-redis Stopped 
+ Container intradesk-redis Removing 
+ Container intradesk-redis Removed 
+ Container intradesk-db Stopped 
+ Container intradesk-db Removing 
+ Container intradesk-db Removed 
+ Volume ctf_4_corporate_helpdesk_redis-data Removing 
+ Volume ctf_4_corporate_helpdesk_postgres-data Removing 
+ Network ctf_4_corporate_helpdesk_intradesk-network Removing 
+ Volume ctf_4_corporate_helpdesk_redis-data Removed 
+ Volume ctf_4_corporate_helpdesk_postgres-data Removed 
+ Network ctf_4_corporate_helpdesk_intradesk-network Removed 
+### 2026-04-28T12:13:20Z CTF4 end: PASS

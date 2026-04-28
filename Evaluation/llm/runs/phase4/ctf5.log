@@ -1,0 +1,99 @@
+### 2026-04-28T12:13:20Z CTF5 begin
+### down -v (pre)
+### up -d --build
+ Image ctf_5_internal_blog-app Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 624B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 285B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/python:3.11-slim
+#3 ...
+
+#4 [auth] library/python:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 0.9s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 96B done
+#5 DONE 0.0s
+
+#6 [1/6] FROM docker.io/library/python:3.11-slim@sha256:6d85378d88a19cd4d76079817532d62232be95757cb45945a99fec8e8084b9c2
+#6 resolve docker.io/library/python:3.11-slim@sha256:6d85378d88a19cd4d76079817532d62232be95757cb45945a99fec8e8084b9c2 done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 2.75kB done
+#7 DONE 0.0s
+
+#8 [2/6] WORKDIR /app
+#8 CACHED
+
+#9 [3/6] COPY requirements.txt .
+#9 CACHED
+
+#10 [4/6] RUN pip install --no-cache-dir -r requirements.txt
+#10 CACHED
+
+#11 [5/6] COPY . .
+#11 DONE 0.0s
+
+#12 [6/6] RUN mkdir -p /app/secret /app/instance
+#12 DONE 0.1s
+
+#13 exporting to image
+#13 exporting layers 0.0s done
+#13 exporting manifest sha256:fe605101bb493eaeddf6b442de59e5830e6cd5893081c92381b5ae7c15325e9b done
+#13 exporting config sha256:fce1777f0947e34a10de2e983750a5d97fd3365f46e7bf3cf97b79f2231a8f2e done
+#13 exporting attestation manifest sha256:dfe1cb5378ed97b867395ef41b464a6f7cd64d6b128998cab30867a23f786930 done
+#13 exporting manifest list sha256:285cee4c1703d28334b413e9bf01900c18a2507f9a40811a2f43c4201c61cecc done
+#13 naming to docker.io/library/ctf_5_internal_blog-app:latest done
+#13 unpacking to docker.io/library/ctf_5_internal_blog-app:latest 0.0s done
+#13 DONE 0.1s
+
+#14 resolving provenance for metadata file
+#14 DONE 0.0s
+ Image ctf_5_internal_blog-app Built 
+ Network ctf_5_internal_blog_default Creating 
+ Network ctf_5_internal_blog_default Created 
+ Volume ctf_5_internal_blog_novacms-data Creating 
+ Volume ctf_5_internal_blog_novacms-data Created 
+ Container novacms Creating 
+ Container novacms Created 
+ Container novacms Starting 
+ Container novacms Started 
+### wait-for-http http://localhost:5175/  (timeout 60s)
+curl: (56) Recv failure: Connection reset by peer
+### run e2e: python3 -m pytest ctf5_exploit.py -v
+============================= test session starts ==============================
+platform darwin -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /Library/Frameworks/Python.framework/Versions/3.12/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/pulindufonseka/Documents/GitHub/Advanced-Project/CTFs/e2e
+plugins: anyio-4.12.0
+collecting ... collected 8 items
+
+ctf5_exploit.py::TestCTF5Flag1::test_health_endpoint_hints PASSED        [ 12%]
+ctf5_exploit.py::TestCTF5Flag1::test_flag1_retrieval PASSED              [ 25%]
+ctf5_exploit.py::TestCTF5Flag2::test_ssti_confirmed PASSED               [ 37%]
+ctf5_exploit.py::TestCTF5Flag2::test_config_leak PASSED                  [ 50%]
+ctf5_exploit.py::TestCTF5Flag3::test_waf_blocks_config_on_v2 PASSED      [ 62%]
+ctf5_exploit.py::TestCTF5Flag3::test_waf_error_provides_hint PASSED      [ 75%]
+ctf5_exploit.py::TestCTF5Flag3::test_flag3_waf_bypass PASSED             [ 87%]
+ctf5_exploit.py::TestCTF5Flag4::test_rce_reads_flag_file PASSED          [100%]
+
+============================== 8 passed in 0.33s ===============================
+### down -v (post)
+ Container novacms Stopping 
+ Container novacms Stopped 
+ Container novacms Removing 
+ Container novacms Removed 
+ Volume ctf_5_internal_blog_novacms-data Removing 
+ Network ctf_5_internal_blog_default Removing 
+ Volume ctf_5_internal_blog_novacms-data Removed 
+ Network ctf_5_internal_blog_default Removed 
+### 2026-04-28T12:13:26Z CTF5 end: PASS

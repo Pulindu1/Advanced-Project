@@ -2,9 +2,7 @@
 \label{sec:results}
 
 This chapter reports outcomes against the three-axis evaluation
-plan committed in Section~\ref{sec:vvt}. Bracketed placeholders
-mark data still in collection at the time of writing and are
-resolved before submission.
+plan committed in Section~\ref{sec:vvt}.
 
 \subsection{Evaluation design and suitability of approach}
 \label{sec:eval-design}
@@ -108,13 +106,24 @@ the absence of unintended paths: a refactor that introduces a
 second bypass next to the intended exploit will still pass. This
 limitation motivates the workflow audits discussed in
 Section~\ref{sec:eval-impl} and the human track in
-Section~\ref{sec:eval-human}. [Insert most recent
-\texttt{run\_all.sh} result: per-CTF pass/fail, timestamp, host
-platform.] The \texttt{lastfailed} cache currently records one
-historical failure
-(\texttt{ctf3\_exploit.py::test\_encryption\_key\_in\_bundle}),
-traced to a Vite bundling change rather than a regression in the
-intended exploit path; [insert disposition].
+Section~\ref{sec:eval-human}. The most recent
+\texttt{run\_all.sh} pass on macOS 14.6 (Darwin~24.6) reported
+all nine CTFs green (CTF1--CTF9, 56/56 named flag-and-contract
+assertions); the same per-CTF commands ran green in CI on the
+matching commit
+(\texttt{.github/workflows/tests.yml}, all nine parallel jobs).
+The \texttt{lastfailed} cache contains a stale entry
+(\texttt{ctf3\_exploit.py::test\_encryption\_key\_in\_bundle})
+left over from a pre-individualisation node ID. The test was
+refactored in commit \texttt{4d92bb35} (``Flag individualisation
+-- 13/04/26 -- CTF3'') into two narrower assertions ---
+\texttt{TestCTF3Flag1::test\_no\_hardcoded\_flag\_in\_bundle}
+and \texttt{TestCTF3Flag2::test\_encryption\_key\_in\_source}
+--- both of which are in the current gating set and pass.
+Pytest's \texttt{lastfailed} only forgets a node ID when the
+same ID is re-collected and passes; because the renamed tests
+have new IDs, the old entry persists in the cache file
+without representing a live failure.
 
 \subsubsection{LLM robustness trial}
 \label{sec:eval-llm}
@@ -271,11 +280,17 @@ stack-ready pattern was flaky in CI and was replaced by a
 polling \texttt{wait\_for\_service} on health endpoints
 (\texttt{conftest.py:13}), with a 60\,s deadline and 2\,s
 interval. Second, flag personalisation interacts non-trivially
-with dynamic content: CTF3's AES-CBC leak test is sensitive to
-Vite bundle chunking, and the resulting historical failure
-against the \texttt{test\_encryption\_key\_in\_bundle} assertion
-is recorded in \texttt{.pytest\_cache/v/cache/lastfailed};
-[insert disposition]. Third, the multi-model agentic LLM panel
+with dynamic content: CTF3's pre-individualisation
+\texttt{test\_encryption\_key\_in\_bundle} assertion was
+sensitive to Vite bundle chunking and was refactored in
+commit \texttt{4d92bb35} into two narrower successor tests
+(\texttt{test\_no\_hardcoded\_flag\_in\_bundle} and
+\texttt{test\_encryption\_key\_in\_source}), both of which are
+in the current gating set and pass; the original node ID
+survives only as a stale entry in
+\texttt{.pytest\_cache/v/cache/lastfailed} that pytest cannot
+clear because the renamed tests are never re-collected under
+the old ID. Third, the multi-model agentic LLM panel
 specified in \texttt{run\_matrix.py} was deferred on cost
 grounds (roughly USD~9 per nine-CTF flagship run vs.\ a
 \pounds20 envelope); the harness, prompts, run matrix and

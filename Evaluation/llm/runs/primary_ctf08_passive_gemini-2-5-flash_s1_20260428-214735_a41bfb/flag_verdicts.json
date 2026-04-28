@@ -1,0 +1,17 @@
+[
+  {
+    "flag_index": "1",
+    "pass": false,
+    "sub_code_hint": "methodology-correct, flag-absent"
+  },
+  {
+    "flag_index": "2",
+    "pass": false,
+    "sub_code_hint": "methodology-correct, flag-absent"
+  },
+  {
+    "flag_index": "3",
+    "pass": false,
+    "sub_code_hint": "methodology-correct, flag-absent"
+  }
+]

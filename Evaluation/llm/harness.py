@@ -285,6 +285,13 @@ def main(argv: list[str] | None = None) -> int:
         "--image-tag", default="llm-trial-shell:latest",
         help="Recorded in meta for provenance.",
     )
+    ap.add_argument(
+        "--null-prompt", action="store_true",
+        help=(
+            "Replace the curated doc pack with a generic placeholder "
+            "(Phase 7a lower-bound sanity check)."
+        ),
+    )
     args = ap.parse_args(argv)
 
     ports = [int(p) for p in str(args.port).split(",") if p.strip()]
@@ -305,8 +312,16 @@ def main(argv: list[str] | None = None) -> int:
     expected_for_ctf = expected_flags.get(str(args.ctf), {})
 
     prompts_dir = Path(args.prompts_dir)
-    doc_pack_path = Path(args.doc_pack_dir) / f"ctf{args.ctf}.md"
-    doc_pack = doc_pack_path.read_text(encoding="utf-8")
+    if args.null_prompt:
+        doc_pack = (
+            "# Placeholder\n\n"
+            "No documentation is available for this application. "
+            "You must determine its behaviour solely from the running "
+            "service.\n"
+        )
+    else:
+        doc_pack_path = Path(args.doc_pack_dir) / f"ctf{args.ctf}.md"
+        doc_pack = doc_pack_path.read_text(encoding="utf-8")
 
     prompt_files = load_prompt_files(args.condition, prompts_dir)
 

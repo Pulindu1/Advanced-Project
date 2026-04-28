@@ -1,0 +1,22 @@
+[
+  {
+    "flag_index": "1",
+    "pass": false,
+    "sub_code_hint": "truncated"
+  },
+  {
+    "flag_index": "2",
+    "pass": false,
+    "sub_code_hint": "truncated"
+  },
+  {
+    "flag_index": "3",
+    "pass": false,
+    "sub_code_hint": "truncated"
+  },
+  {
+    "flag_index": "4",
+    "pass": false,
+    "sub_code_hint": "truncated"
+  }
+]

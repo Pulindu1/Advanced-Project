@@ -57,7 +57,7 @@ python3 harness.py \
   --model claude-sonnet-4-6 \
   --condition agentic \
   --ctf 1 \
-  --test-user llmu01 \
+  --test-user abcd12 \
   --port 3000 \
   --run-id sonnet-ctf1-agentic-$(date +%s)
 ```

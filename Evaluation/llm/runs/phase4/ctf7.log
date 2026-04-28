@@ -1,0 +1,89 @@
+### 2026-04-28T12:13:38Z CTF7 begin
+### down -v (pre)
+### up -d --build
+ Image ctf_7_notes_app-app Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 608B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 171B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:20-alpine
+#3 DONE 0.5s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 133B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.26kB 0.0s done
+#5 DONE 0.0s
+
+#6 [1/5] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#6 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.0s done
+#6 DONE 0.0s
+
+#7 [3/5] COPY package*.json ./
+#7 CACHED
+
+#8 [2/5] WORKDIR /app
+#8 CACHED
+
+#9 [4/5] RUN npm ci --production
+#9 CACHED
+
+#10 [5/5] COPY . .
+#10 DONE 0.0s
+
+#11 exporting to image
+#11 exporting layers 0.0s done
+#11 exporting manifest sha256:84ff6fe634cbb61ecaad487a738e0911da521cc6ba5fc8b760ddff86d08a8d29 done
+#11 exporting config sha256:323de8988f16cf7825ecacb32c9c864fdae9923a9f95dbd34397434b8f8d90f4 done
+#11 exporting attestation manifest sha256:915ed20f9ac4b53cda119378cf3817155813aec4cf62e1c19cca790093eb73c7 done
+#11 exporting manifest list sha256:0e90a9ee08257abc3fbcde382e87aa68c59f68e3e718be094eddef6262d8a16c
+#11 exporting manifest list sha256:0e90a9ee08257abc3fbcde382e87aa68c59f68e3e718be094eddef6262d8a16c done
+#11 naming to docker.io/library/ctf_7_notes_app-app:latest done
+#11 unpacking to docker.io/library/ctf_7_notes_app-app:latest 0.0s done
+#11 DONE 0.1s
+
+#12 resolving provenance for metadata file
+#12 DONE 0.0s
+ Image ctf_7_notes_app-app Built 
+ Network ctf_7_notes_app_default Creating 
+ Network ctf_7_notes_app_default Created 
+ Volume ctf_7_notes_app_flag-files Creating 
+ Volume ctf_7_notes_app_flag-files Created 
+ Container ctf7-notes-app Creating 
+ Container ctf7-notes-app Created 
+ Container ctf7-notes-app Starting 
+ Container ctf7-notes-app Started 
+### wait-for-http http://localhost:3001/  (timeout 60s)
+curl: (56) Recv failure: Connection reset by peer
+### run e2e: python3 -m pytest ctf7_exploit.py -v
+============================= test session starts ==============================
+platform darwin -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /Library/Frameworks/Python.framework/Versions/3.12/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/pulindufonseka/Documents/GitHub/Advanced-Project/CTFs/e2e
+plugins: anyio-4.12.0
+collecting ... collected 6 items
+
+ctf7_exploit.py::TestCTF7Deserialization::test_login_and_cookie_set PASSED [ 16%]
+ctf7_exploit.py::TestCTF7Deserialization::test_cookie_is_base64_json PASSED [ 33%]
+ctf7_exploit.py::TestCTF7Deserialization::test_debug_endpoint_reveals_engine PASSED [ 50%]
+ctf7_exploit.py::TestCTF7Deserialization::test_package_json_exposed PASSED [ 66%]
+ctf7_exploit.py::TestCTF7Deserialization::test_flag_red_herring PASSED   [ 83%]
+ctf7_exploit.py::TestCTF7Deserialization::test_full_exploit PASSED       [100%]
+
+============================== 6 passed in 0.06s ===============================
+### down -v (post)
+ Container ctf7-notes-app Stopping 
+ Container ctf7-notes-app Stopped 
+ Container ctf7-notes-app Removing 
+ Container ctf7-notes-app Removed 
+ Volume ctf_7_notes_app_flag-files Removing 
+ Network ctf_7_notes_app_default Removing 
+ Volume ctf_7_notes_app_flag-files Removed 
+ Network ctf_7_notes_app_default Removed 
+### 2026-04-28T12:13:44Z CTF7 end: PASS

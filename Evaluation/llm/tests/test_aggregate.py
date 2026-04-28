@@ -43,7 +43,7 @@ def synth_runs_dir(tmp_path: Path) -> Path:
         usage={
             "run_id": "primary_ctf01_agentic_sonnet_20260421_aaa",
             "model_id": "claude-sonnet-4-6",
-            "condition": "agentic", "ctf": 1, "test_user": "llmu01",
+            "condition": "agentic", "ctf": 1, "test_user": "abcd12",
             "tool_calls": 5, "wall_clock_sec": 10.2,
             "final_state": "submitted", "submitted_flag": "basicflag1{abc}",
             "submit_accepted": True,
@@ -59,7 +59,7 @@ def synth_runs_dir(tmp_path: Path) -> Path:
         usage={
             "run_id": "primary_ctf01_passive_sonnet_20260421_bbb",
             "model_id": "claude-sonnet-4-6",
-            "condition": "passive", "ctf": 1, "test_user": "llmu01",
+            "condition": "passive", "ctf": 1, "test_user": "abcd12",
             "tool_calls": 0, "wall_clock_sec": 5.0,
             "final_state": "gave_up", "submitted_flag": None,
             "submit_accepted": None,
@@ -77,7 +77,7 @@ def synth_runs_dir(tmp_path: Path) -> Path:
         usage={
             "run_id": "primary_ctf02_agentic_gpt5mini_20260421_ccc",
             "model_id": "gpt-5-mini",
-            "condition": "agentic", "ctf": 2, "test_user": "llmu02",
+            "condition": "agentic", "ctf": 2, "test_user": "abcd12",
             "tool_calls": 20, "wall_clock_sec": 30.0,
             "final_state": "truncated", "submitted_flag": None,
             "submit_accepted": None,

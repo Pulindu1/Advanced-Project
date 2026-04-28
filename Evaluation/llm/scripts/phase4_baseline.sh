@@ -3,24 +3,21 @@
 #
 # For each CTF in 1..9 (or just those passed in $@):
 #   1. docker compose down -v            (wipe stale DB state)
-#   2. regenerate flags.json / creds     (via chgen_*.js with trial salt)
-#   3. docker compose up -d --build      (fresh boot with new flag files)
-#   4. poll primary port for readiness
-#   5. CTF4 only: node scripts/add_users_db.js llmu04 (post-boot DB insert)
-#   6. python3 -m pytest ctfN_exploit.py
-#   7. docker compose down -v            (tear down)
+#   2. docker compose up -d --build      (fresh boot using in-repo users/flags)
+#   3. poll primary port for readiness
+#   4. python3 -m pytest ctfN_exploit.py
+#   5. docker compose down -v            (tear down)
 #
-# Reads GENERATOR_SALT from Evaluation/llm/trial.env.
+# Reads the in-repo demo users / flags as-is. The trial points at the
+# `abcd12` demo account (`test12` for CTF5) already shipped with each
+# CTF, so no chgen / trial-salt regeneration step is needed -- this is
+# the only invariant Phase 4 is verifying for the LLM trial.
+#
 # Writes per-CTF logs to Evaluation/llm/runs/phase4/<ctfN>.log.
 #
 # Usage:
 #   bash Evaluation/llm/scripts/phase4_baseline.sh          # all 9 CTFs
 #   bash Evaluation/llm/scripts/phase4_baseline.sh 5 9      # only CTF5 and CTF9
-#
-# NOTE: this script rewrites the in-repo flags.json / credentials.json for
-# each CTF with trial-salted values. They must NOT be committed -- `git
-# restore` each CTF's flag / credential files after the sweep if you are
-# about to commit anything else.
 
 set -uo pipefail
 
@@ -28,21 +25,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LLM_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$LLM_DIR/../.." && pwd)"
 CTFS_DIR="$REPO_ROOT/CTFs"
-CHGEN_DIR="$CTFS_DIR/challenge-generation"
 E2E_DIR="$CTFS_DIR/e2e"
 LOG_DIR="$LLM_DIR/runs/phase4"
-
-TRIAL_ENV="$LLM_DIR/trial.env"
-if [[ ! -f "$TRIAL_ENV" ]]; then
-  echo "Error: $TRIAL_ENV not found. Run Phase 3.1 first." >&2
-  exit 2
-fi
-# shellcheck disable=SC1090
-set -a; source "$TRIAL_ENV"; set +a
-if [[ -z "${GENERATOR_SALT:-}" ]]; then
-  echo "Error: GENERATOR_SALT not set after sourcing $TRIAL_ENV." >&2
-  exit 2
-fi
 
 if ! docker info >/dev/null 2>&1; then
   echo "Error: Docker daemon not responding. Start Docker Desktop and retry." >&2
@@ -51,46 +35,19 @@ fi
 
 mkdir -p "$LOG_DIR"
 
-# ctf -> dir,chgen_script,user,primary_port,ready_timeout,extra_action
-# extra_action is a space-separated token list executed *after* wait-for-ready.
-declare -A CTF_DIR=(
-  [1]="Basic_1_Nodejs"
-  [2]="CTF_2_pswd_manager"
-  [3]="CTF_3_HR-system"
-  [4]="CTF_4_corporate_helpdesk"
-  [5]="CTF_5_internal_blog"
-  [6]="CTF_6_veridian"
-  [7]="CTF_7_notes_app"
-  [8]="CTF_8_gazette"
-  [9]="CTF_9_dunholm"
-)
-declare -A CTF_CHGEN=(
-  [1]="chgen_basic1.js"
-  [2]="chgen_ctf2.js"
-  [3]="chgen_ctf3.js"
-  [4]=""            # CTF4 seeds post-boot; skip pre-regen
-  [5]="chgen_ctf5.js"
-  [6]="chgen_ctf6.js"
-  [7]="chgen_ctf7.js"
-  [8]="chgen_ctf8.js"
-  [9]="chgen_ctf9.js"
-)
-declare -A CTF_USER=(
-  [1]="llmu01" [2]="llmu02" [3]="llmu03" [4]="llmu04" [5]="llmu05"
-  [6]="llmu06" [7]="llmu07" [8]="llmu08" [9]="llmu09"
-)
-declare -A CTF_PORT=(
-  [1]="3000" [2]="4000" [3]="8004" [4]="4001" [5]="5175"
-  [6]="5180" [7]="3001" [8]="3002" [9]="3003"
-)
-declare -A CTF_READY=(
-  [1]="60" [2]="60" [3]="120" [4]="90" [5]="60"
-  [6]="120" [7]="60" [8]="60" [9]="120"
-)
-declare -A CTF_E2E=(
-  [1]="ctf1_exploit.py" [2]="ctf2_exploit.py" [3]="ctf3_exploit.py"
-  [4]="ctf4_exploit.py" [5]="ctf5_exploit.py" [6]="ctf6_exploit.py"
-  [7]="ctf7_exploit.py" [8]="ctf8_exploit.py" [9]="ctf9_exploit.py"
+# Per-CTF metadata. Keys are integer CTF numbers; bash 3.2 has no
+# associative arrays so each row is parsed from a flat string.
+#   <ctf>|<dir>|<primary_port>|<ready_timeout_s>|<e2e_file>
+CTF_ROWS=(
+  "1|Basic_1_Nodejs|3000|60|ctf1_exploit.py"
+  "2|CTF_2_pswd_manager|4000|60|ctf2_exploit.py"
+  "3|CTF_3_HR-system|8004|120|ctf3_exploit.py"
+  "4|CTF_4_corporate_helpdesk|4001|90|ctf4_exploit.py"
+  "5|CTF_5_internal_blog|5175|60|ctf5_exploit.py"
+  "6|CTF_6_veridian|5180|120|ctf6_exploit.py"
+  "7|CTF_7_notes_app|3001|60|ctf7_exploit.py"
+  "8|CTF_8_gazette|3002|60|ctf8_exploit.py"
+  "9|CTF_9_dunholm|3003|120|ctf9_exploit.py"
 )
 
 if [[ $# -gt 0 ]]; then
@@ -98,6 +55,14 @@ if [[ $# -gt 0 ]]; then
 else
   CTFS=(1 2 3 4 5 6 7 8 9)
 fi
+
+row_for() {
+  local n="$1" row
+  for row in "${CTF_ROWS[@]}"; do
+    if [[ "${row%%|*}" == "$n" ]]; then printf '%s' "$row"; return 0; fi
+  done
+  return 1
+}
 
 wait_for_http() {
   local url="$1" timeout="$2" deadline
@@ -114,19 +79,14 @@ wait_for_http() {
 PASSED=() ; FAILED=() ; SKIPPED=()
 
 for ctf in "${CTFS[@]}"; do
-  dir="${CTF_DIR[$ctf]:-}"
-  chgen="${CTF_CHGEN[$ctf]:-}"
-  user="${CTF_USER[$ctf]:-}"
-  port="${CTF_PORT[$ctf]:-}"
-  ready="${CTF_READY[$ctf]:-60}"
-  e2e="${CTF_E2E[$ctf]:-}"
-  log="$LOG_DIR/ctf${ctf}.log"
-  if [[ -z "$dir" || -z "$user" || -z "$port" || -z "$e2e" ]]; then
+  if ! row=$(row_for "$ctf"); then
     echo "[ctf$ctf] unknown CTF, skipping"; SKIPPED+=("ctf$ctf"); continue
   fi
+  IFS='|' read -r _num dir port ready e2e <<<"$row"
+  log="$LOG_DIR/ctf${ctf}.log"
 
   echo "=========================================="
-  echo "  CTF$ctf -- $dir  (user=$user, port=$port)"
+  echo "  CTF$ctf -- $dir  (port=$port, e2e=$e2e)"
   echo "  log: $log"
   echo "=========================================="
   : > "$log"
@@ -138,13 +98,6 @@ for ctf in "${CTFS[@]}"; do
     echo "### down -v (pre)"
     ( cd "$ctf_dir" && docker compose down -v ) || echo "### (pre-down errored; continuing)"
 
-    if [[ -n "$chgen" ]]; then
-      echo "### regenerate flags/credentials via $chgen $user"
-      ( cd "$CHGEN_DIR" && GENERATOR_SALT="$GENERATOR_SALT" node "$chgen" "$user" ) || { echo "### chgen FAILED"; exit 91; }
-    else
-      echo "### (no pre-boot chgen -- CTF$ctf seeds post-boot)"
-    fi
-
     echo "### up -d --build"
     ( cd "$ctf_dir" && docker compose up -d --build ) || { echo "### compose up FAILED"; exit 92; }
 
@@ -154,23 +107,6 @@ for ctf in "${CTFS[@]}"; do
       ( cd "$ctf_dir" && docker compose logs --tail=120 ) || true
       ( cd "$ctf_dir" && docker compose down -v ) || true
       exit 93
-    fi
-
-    if [[ "$ctf" == "4" ]]; then
-      echo "### CTF4 post-boot user seed: scripts/add_users_db.js $user"
-      # DB may take a few extra seconds to accept connections after the API port opens.
-      attempts=0
-      until ( cd "$ctf_dir" && GENERATOR_SALT="$GENERATOR_SALT" node scripts/add_users_db.js "$user" ); do
-        attempts=$(( attempts + 1 ))
-        if (( attempts >= 6 )); then
-          echo "### add_users_db.js FAILED after $attempts attempts"
-          ( cd "$ctf_dir" && docker compose logs --tail=120 ) || true
-          ( cd "$ctf_dir" && docker compose down -v ) || true
-          exit 94
-        fi
-        echo "### add_users_db attempt $attempts failed; retrying in 5s"
-        sleep 5
-      done
     fi
 
     echo "### run e2e: python3 -m pytest $e2e -v"
@@ -205,7 +141,5 @@ echo "  FAILED: ${#FAILED[@]}  ${FAILED[*]:-}"
 echo "  SKIPPED: ${#SKIPPED[@]}  ${SKIPPED[*]:-}"
 echo ""
 echo "Per-CTF logs under: $LOG_DIR"
-echo "Reminder: this run rewrote each CTF's flags.json / credentials.json"
-echo "with trial-salted values. Do not commit those files."
 
 if (( ${#FAILED[@]} > 0 )); then exit 1; fi

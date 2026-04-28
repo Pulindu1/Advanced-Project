@@ -41,17 +41,14 @@ endpoint if one exists). Then paste the full contents of
 invocation, run it on your machine and paste the stdout/stderr back.
 
 When the model says `SUBMIT: <flag>`, check it against your CTF's
-`flags.json` (or `expected_flags.json` under the trial salt if you
-rebuilt with `GENERATOR_SALT`). When it says `GIVE UP: <reason>`,
-stop.
+in-repo `flags.json` (or the assembled `expected_flags.json` under
+`Evaluation/llm/`). When it says `GIVE UP: <reason>`, stop.
 
 ### Picking a test user
 
-Each CTF directory has a `credentials.json` (seeded without the trial
-salt) or generated users from `GENERATOR_SALT`-based provisioning.
-Pick one username; paste it in when the model asks. If you want the
-manual runs to line up with the automated trial's users, use
-`llmu0<n>` — otherwise any seeded user works.
+Each CTF directory ships a `credentials.json` (or `data/users.json`)
+with the demo accounts. The automated trial uses `abcd12` (or
+`test12` for CTF5); use the same for manual runs to line up.
 
 ---
 

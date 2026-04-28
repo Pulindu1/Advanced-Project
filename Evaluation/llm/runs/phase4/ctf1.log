@@ -1,0 +1,86 @@
+### 2026-04-28T12:12:22Z CTF1 begin
+### down -v (pre)
+### up -d --build
+ Image basic_1_nodejs-app Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 604B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 172B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:20-alpine
+#3 ...
+
+#4 [auth] library/node:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:20-alpine
+#3 DONE 0.9s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 58B done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 2.52kB done
+#6 DONE 0.0s
+
+#7 [1/5] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#7 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.0s done
+#7 DONE 0.0s
+
+#8 [3/5] COPY package*.json ./
+#8 CACHED
+
+#9 [2/5] WORKDIR /app
+#9 CACHED
+
+#10 [4/5] RUN npm ci --omit=dev
+#10 CACHED
+
+#11 [5/5] COPY . .
+#11 DONE 0.0s
+
+#12 exporting to image
+#12 exporting layers 0.0s done
+#12 exporting manifest sha256:b5681cefc1e33644e4adbaea31bc89e2d5327af2ff31be593d3ce7aa72813372 done
+#12 exporting config sha256:68da5d7e7a15f5126321edeec2b6090552c1898789c80d09cfa945f4581f3eca done
+#12 exporting attestation manifest sha256:b6a68517f3ba522b941519cab57e017e043254364ae1e314f79368931ca1b043 done
+#12 exporting manifest list sha256:3e5c54af078a065fbae9121d3a252fa916b577b967baaa6cf37027a097a57d3a 0.0s done
+#12 naming to docker.io/library/basic_1_nodejs-app:latest done
+#12 unpacking to docker.io/library/basic_1_nodejs-app:latest 0.0s done
+#12 DONE 0.1s
+
+#13 resolving provenance for metadata file
+#13 DONE 0.0s
+ Image basic_1_nodejs-app Built 
+ Network basic_1_nodejs_default Creating 
+ Network basic_1_nodejs_default Created 
+ Container ctf1-basic-nodejs Creating 
+ Container ctf1-basic-nodejs Created 
+ Container ctf1-basic-nodejs Starting 
+ Container ctf1-basic-nodejs Started 
+### wait-for-http http://localhost:3000/  (timeout 60s)
+curl: (56) Recv failure: Connection reset by peer
+### run e2e: python3 -m pytest ctf1_exploit.py -v
+============================= test session starts ==============================
+platform darwin -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /Library/Frameworks/Python.framework/Versions/3.12/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/pulindufonseka/Documents/GitHub/Advanced-Project/CTFs/e2e
+plugins: anyio-4.12.0
+collecting ... collected 2 items
+
+ctf1_exploit.py::TestCTF1CookieTampering::test_normal_user_blocked_from_flag PASSED [ 50%]
+ctf1_exploit.py::TestCTF1CookieTampering::test_full_exploit PASSED       [100%]
+
+============================== 2 passed in 0.06s ===============================
+### down -v (post)
+ Container ctf1-basic-nodejs Stopping 
+ Container ctf1-basic-nodejs Stopped 
+ Container ctf1-basic-nodejs Removing 
+ Container ctf1-basic-nodejs Removed 
+ Network basic_1_nodejs_default Removing 
+ Network basic_1_nodejs_default Removed 
+### 2026-04-28T12:12:30Z CTF1 end: PASS
