@@ -359,6 +359,20 @@ def enrich_flag_rows(runs: list[RunRecord], flag_results_path: Path) -> list[dic
 # --------------------------------------------------------------------
 
 
+def load_coding_overrides(path: Path) -> dict[tuple[str, str], dict]:
+    """Load hand-coded sub-codes keyed by (run_id, flag_index)."""
+    out: dict[tuple[str, str], dict] = {}
+    with open(path, "r", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            key = (row["run_id"], str(row["flag_index"]))
+            out[key] = {
+                "sub_code": row.get("sub_code") or None,
+                "double_rated": (row.get("double_rated") or "").lower() == "true",
+                "secondary_sub_code": row.get("secondary_sub_code") or None,
+            }
+    return out
+
+
 def cmd_build(args: argparse.Namespace) -> int:
     runs_dir = Path(args.runs_dir)
     out_dir = Path(args.out_dir)
@@ -369,12 +383,16 @@ def cmd_build(args: argparse.Namespace) -> int:
         print(f"no runs found under {runs_dir}", file=sys.stderr)
         return 1
 
+    coding = None
+    if args.coding:
+        coding = load_coding_overrides(Path(args.coding))
+
     results_path = out_dir / "results.csv"
     flag_path = out_dir / "flag_results.csv"
     tables_path = out_dir / "tables.md"
 
     write_results_csv(runs, results_path)
-    write_flag_results_csv(runs, flag_path)
+    write_flag_results_csv(runs, flag_path, coding=coding)
 
     flag_rows = enrich_flag_rows(runs, flag_path)
     tables_path.write_text(primary_table_md(flag_rows))
@@ -383,6 +401,8 @@ def cmd_build(args: argparse.Namespace) -> int:
     print(f"wrote {flag_path}")
     print(f"wrote {tables_path}")
     print(f"runs: {len(runs)}")
+    if coding:
+        print(f"coding overrides: {len(coding)}")
     return 0
 
 
@@ -411,6 +431,12 @@ def main(argv: list[str] | None = None) -> int:
     p_build = sub.add_parser("build", help="Emit CSVs + tables.md")
     p_build.add_argument("--runs-dir", default=str(HERE / "runs"))
     p_build.add_argument("--out-dir", default=str(HERE / "reports"))
+    p_build.add_argument(
+        "--coding", default=None,
+        help="Optional path to coded.csv overlay (sub_code, double_rated, "
+             "secondary_sub_code). When set, overrides the machine "
+             "sub_code_hint per (run_id, flag_index).",
+    )
     p_build.set_defaults(func=cmd_build)
 
     p_kappa = sub.add_parser("kappa", help="Compute Cohen's kappa")

@@ -10,7 +10,12 @@ files changed (optional)
 
 
 
-### Finished llm automated tests - 27/04/26
+
+### Updated writeup - 29/04/26
+- added to the report the results of the testing.
+- removed some unnecessary files and cleaned up the repo a little
+
+### Finished llm automated tests - 28/04/26
 - ran all 3 llms and finished.
 
 ### Added peer tests - 27/04/26

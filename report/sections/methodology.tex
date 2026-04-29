@@ -676,29 +676,43 @@ reach it.
 \subsubsection{LLM and Human Evaluation Tracks}
 
 Two evaluation tracks supplement the automated regime.
-The LLM track is supported by a fully implemented agentic
-harness committed under \texttt{Evaluation/llm/} with a
+The LLM track is driven by an agentic harness committed
+under \texttt{Evaluation/llm/} (113 unit tests) with a
 fail-closed sandbox (whitelisted \texttt{localhost:<port>}
 HTTP, \texttt{Guard}-mediated filesystem, ephemeral Alpine
 shell), per-CTF doc packs, expected-flag maps, SHA-pinned
 prompt hashes, and a five-condition run matrix
 (\textit{cold-probe}, \textit{pilot}, \textit{primary},
-\textit{flagship}, \textit{null-prompt}). Execution of the
-multi-model multi-seed panel was deferred on cost grounds:
-a single nine-CTF flagship run is priced at approximately
-USD~9 per model, an order of magnitude over the
-dissertation's \pounds20 API envelope. The harness is
-runnable end-to-end (102 unit tests passing, no API calls
-required) so the trial can be replayed when budget allows;
-a budget-bounded run is identified as further work in
-Section~\ref{sec:conclusion}. A model would be recorded as
-having solved a challenge only if the transcript culminates
-in a command that, executed against the stack, yields the
-player's personalised flag---a condition the HMAC
-construction of equation~(\ref{eq:hmac-flag}) makes
-impossible to satisfy by text generation alone, so a model
-that fails a script-soluble challenge has failed on
-reasoning rather than environmental accessibility. A
+\textit{flagship}, \textit{null-prompt}). The trial was
+executed at single-seed primary scale across a four-model
+primary panel (\texttt{claude-sonnet-4-6},
+\texttt{gpt-5-mini}, \texttt{gemini-2.5-pro},
+\texttt{gemini-2.5-flash}) plus a five-model cold-probe
+extending to \texttt{claude-haiku-4-5}: 127 paid runs, 332
+flag-slot observations, USD\,5.25 spend within the
+\pounds20 hard cap. Two budget concessions are recorded as
+PLAN.md revisions and disclosed openly in
+Section~\ref{sec:eval-llm}: \texttt{claude-haiku-4-5} was
+dropped from the primary phase after Sonnet exhausted the
+Anthropic per-vendor credit, and the originally-specified
+\texttt{gpt-5} agentic spot-check was skipped to hold remaining
+credit back. A flagship-tier column at primary scale (Opus,
+GPT-5, Gemini Ultra) and multi-seed coverage are identified
+as further work in Section~\ref{sec:conclusion}. A model is
+recorded as having solved a challenge only if a candidate
+flag string in the transcript is byte-identical to the
+HMAC-derived value for the demo account
+(\texttt{expected\_flags.json}) and appears in either a
+\texttt{submit\_flag} call or an HTTP response body in the
+same run --- a condition the HMAC construction of
+equation~(\ref{eq:hmac-flag}) makes impossible to satisfy by
+text generation alone, so a model that fails a script-soluble
+challenge has failed on reasoning rather than environmental
+accessibility. The same byte-match success criterion gives
+the cold-probe phase its integrity weight: across 121
+no-stack runs the panel produced 0 byte-matches and 0
+hallucinated guesses, the empirical leg of the integrity
+claim discussed in Section~\ref{sec:eval-llm}. A
 small-scale human walkthrough with participants of varying
 skill captures the process evidence (time-to-flag, AI-tool
 reliance, breadcrumb effectiveness, free-text reflection)

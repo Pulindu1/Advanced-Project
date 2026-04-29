@@ -33,7 +33,8 @@ generalises well beyond the present suite.
 
 Second, \textit{flag-layer personalisation is a surprisingly strong
 integrity posture at a fraction of the cost of full environment
-randomisation}. The Chothia--Novakovic SecGen
+randomisation, and survives direct empirical falsification under
+agentic LLM attack}. The Chothia--Novakovic SecGen
 framework~\cite{chothia2023} correctly identifies per-student
 randomisation as the strong answer to academic integrity, but the
 full cost of SecGen-style VM parameterisation is disproportionate
@@ -41,9 +42,14 @@ for a web-specific graded module. Restricting personalisation to
 the flag layer (with username embedded in every flag and a
 per-deployment salt that invalidates write-ups across years) gives
 up the methodology-sharing defence in exchange for a marked
-reduction in operational overhead. For web-exploitation coursework,
-where methodology sharing generally still requires competence to
-act on, this is a pragmatic trade.
+reduction in operational overhead. The 5-model cold-probe
+returned 0/121 byte-matches with no model fabricating even a
+regex-shape guess across the 325-row failure denominator,
+direct evidence that the HMAC-tail construction distinguishes
+capability from regurgitation under the conditions tested. For
+web-exploitation coursework, where methodology sharing
+generally still requires competence to act on, this is a
+pragmatic trade.
 
 Third, \textit{scaffolding design is the main determinant of
 pedagogical accessibility on the harder challenges}. The
@@ -60,71 +66,54 @@ solves it''.
 
 \subsection{Contributions}
 
-The specific contributions of this dissertation are:
-\begin{itemize}
-    \item a nine-challenge web-exploitation suite covering
-          eight of the ten 2021 OWASP categories, with three
-          distinct injection sub-types and stacks rarely
-          represented in educational CTFs
-          (Flask/Jinja2, Rust/Actix-web, Go/Gin, Spring Boot,
-          and a queue-driven admin-bot React stack);
-    \item a deterministic HMAC-SHA256 flag personalisation
-          scheme with per-deployment and per-flag-slot salt
-          parameterisation, embedded-username attribution, and
-          formal integrity properties at the flag layer;
-    \item a container-native distribution model that keeps
-          student data strictly out of the image layer, making
-          the same image safely reusable across cohorts;
-    \item an \textit{exploit-as-a-test} end-to-end harness that
-          acts as the ground-truth oracle for challenge
-          solvability;
-    \item a dual evaluation methodology combining automated
-          exploit replay with a structured LLM solvability trial
-          and a qualitative human walkthrough; and
-    \item documented design rationale, unintended-vulnerability
-          audits, and development history for each challenge,
-          captured as first-class artefacts in the repository.
-\end{itemize}
+The full contributions list, with executed-trial numbers and
+artefact pointers, is given in
+Section~\ref{sec:eval-contributions}; in summary, the project
+delivers a nine-CTF, eight-OWASP, nine-stack web-exploitation
+suite with deterministic-HMAC flag personalisation, a
+container-native distribution model, a three-layer
+exploit-as-a-test harness wired through a nine-job CI matrix,
+and a triangulated evaluation (automated regression, executed
+multi-model agentic LLM trial, structured human walkthrough),
+released as a single replayable repository.
 
 \subsection{Further work}
 
-Five strands of further work are worth pursuing.
+Six strands of further work are worth pursuing.
 
 \textit{Larger-scale human study with cohort-level
-participation.} The four-participant walkthrough reported in
-Section~\ref{sec:eval-human} is diagnostic rather than
-confirmatory; recruitment difficulty was the principal
-constraint. A properly powered study run against a full
-COMP2211 cohort, using a normalised-gain
-statistic~\cite{hake1998} and supplemented with a NASA-TLX
+participation.} The four-participant walkthrough is
+diagnostic; recruitment was the principal constraint. A
+properly powered study against a full COMP2211 cohort, using a
+normalised-gain statistic~\cite{hake1998} with a NASA-TLX
 workload battery~\cite{HartStaveland1988} (deferred from the
-fielded survey), would provide the measurement that
+fielded survey), would supply the measurement
 Meinsma et al.~\cite{Meinsma2022} and
-Vykopal et al.~\cite{Vykopal} argue the field is missing.
-Modest cash or gift-card incentives are likely necessary to
-move recruitment from opt-in convenience samples to
-representative coverage; participation as an optional
-not-for-credit activity should be considered. Because the
-suite ships with its own objective solvability baseline, such a
-study can separate ``challenge was solvable'' from ``student
-solved it'' more cleanly than prior platforms have permitted.
+Vykopal et al.~\cite{Vykopal} argue is missing. Modest
+incentives or an optional not-for-credit framing would help
+move recruitment from convenience samples toward
+representative coverage. Because the suite ships its own
+objective solvability baseline, such a study can separate
+``challenge was solvable'' from ``student solved it'' more
+cleanly than prior platforms permit.
 
-\textit{Multi-model multi-seed agentic LLM evaluation.} The
-agentic harness committed at \texttt{Evaluation/llm/} is
-ready to drive a multi-condition trial
-(\textit{cold-probe}, \textit{pilot}, \textit{primary},
-\textit{flagship}, \textit{null-prompt}); execution was
-deferred on cost grounds (approximately USD~9 per nine-CTF
-flagship run, an order of magnitude over the dissertation's
-\pounds20 envelope). The natural next step is a budget-bounded
-run (e.g.\ a \pounds40--\pounds80 envelope across two or three
-seeds on a single flagship model) so that the integrity claim
-is supported by direct empirical falsification rather than by
-construction alone. The space of agentic harnesses continues to
-expand~\cite{ji2025} and an adversarial-evolution style
-trial---where each iteration of the suite attempts to resist
-the best-known harness---would give the integrity argument a
-moving-target form that matches the real-world threat.
+\textit{Larger-budget multi-seed multi-model LLM rerun.} The
+executed trial ran $n=1$ per cell at USD\,5.25 with a 15-turn
+agentic cap that absorbed 75 of 90 agentic flag-slot failures.
+Four extensions follow: multi-seed coverage on the existing
+panel ($\sim 3\times$ the present spend) to convert the
+single-seed table into a within-cell variance estimate; a
+flagship-tier column (Opus, GPT-5, Gemini Ultra) at primary
+scale on a \pounds40--\pounds80 envelope to bound capability
+from above; a longer turn cap (30--50 turns) to remove the
+truncation artefact, motivated by the manual GPT-5.3
+calibration pass under \texttt{Evaluation/llm/manual/} solving
+eight of nine CTFs unbounded in 5--30 turns; and a
+retrieval-augmented or memory-equipped condition
+(\texttt{CTFAgent}-style~\cite{ji2025}). An
+adversarial-evolution variant, in which each suite iteration
+resists the best-known harness, would give the integrity
+argument a moving-target form matching the real-world threat.
 
 \textit{Statistical evaluation of learning gain.} A controlled
 pre-/post-test comparison against the COMP2211 status-quo
@@ -133,22 +122,34 @@ fixed-VM baseline would convert the present
 between-groups measurement, addressing the absence of a
 control arm noted in Section~\ref{sec:eval-limits}.
 
-\textit{Broader OWASP coverage and a 2025 refresh.} Two 2021
-OWASP categories (A04 Insecure Design, A06 Vulnerable and
-Outdated Components) remain outside the current suite's
-coverage, the former because it is difficult to flag-ify and
-the latter because component-rotation challenges age out of
-scope quickly. The 2025 OWASP Top~10 introduces additional
-classes including Software Supply Chain Failures, which would
-extend the suite into a build-pipeline threat model not
-currently covered. Refreshing the suite against the 2025 list
-is an obvious follow-on.
+\textit{Broader OWASP coverage and a 2025 refresh.} A04
+Insecure Design and A06 Vulnerable and Outdated Components
+remain outside the current coverage --- the former is
+difficult to flag-ify, the latter ages out of scope quickly.
+Refreshing against the 2025 OWASP Top~10, which adds Software
+Supply Chain Failures, is an obvious follow-on.
 
 \textit{Environment-level randomisation for a subset of
 challenges.} Extending the personalisation layer toward
 SecGen-style~\cite{chothia2023} environment randomisation for a
 subset of challenges would close the methodology-sharing gap
 without replacing the whole flag-layer scheme.
+
+\textit{An automated learning-aware marking script.} Flag
+possession is necessary but not sufficient evidence of
+learning, since a student paired with a capable agentic LLM
+can in principle recover a byte-correct flag without
+internalising the methodology. A natural next deliverable is a
+markscheme that supplements the flag check with short per-CTF
+reasoning prompts --- e.g.\ ``what \texttt{STORY.md}
+breadcrumb led you to the WAF source?'', ``which property of
+the JWT verifier admits the algorithm-confusion attack?'' ---
+mechanically scored by a keyword rubric or by an LLM judge
+prompted with the per-CTF \texttt{SOLUTIONS.md} ground truth.
+This would weight discovery and narrative comprehension
+alongside exploitation; the per-CTF \texttt{STORY.md} files
+and \textit{Post-Design Audit} records already in the
+repository supply the ground truth.
 
 \subsection{Closing remark}
 

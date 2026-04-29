@@ -125,9 +125,10 @@ suites in each stack's native framework, an end-to-end
 exploit-as-a-test harness asserting every flag against a running
 container, and a nine-job CI matrix that gates every push and pull
 request. Evaluate the suite under two complementary regimes: a
-multi-model agentic LLM solvability harness committed for
-deferred execution under the dissertation's API budget, and a
-structured human walkthrough capturing time-to-flag, AI-tool
+multi-model agentic LLM solvability trial executed at
+single-seed primary scale across a 5-model cold-probe and a
+4-model primary panel under a hard \pounds20 API envelope, and
+a structured human walkthrough capturing time-to-flag, AI-tool
 reliance, enjoyment and learning Likerts, and breadcrumb-effectiveness free text. \\ \hline
 \end{tabular}
 \end{table}
@@ -155,76 +156,39 @@ the intended chain.
 \paragraph{\textbf{Advanced}} Per-challenge unit and integration
 tests, the end-to-end exploit harness, and the nine-job CI matrix
 all run green across the corpus on every push to \texttt{main}.
-The LLM solvability harness is committed under
-\texttt{Evaluation/llm/} with a fail-closed sandbox, per-CTF
-doc packs, expected-flag map, and a five-condition run matrix,
-ready for deferred execution under a budget-bounded run; the
-byte-match success criterion ensures any methodologically
-correct but hallucinated flag would be recorded as a categorical
-failure. The human walkthrough is delivered to a Durham CS
+The LLM solvability trial is executed end-to-end against the
+committed agentic harness at \texttt{Evaluation/llm/}: 127 paid
+runs across a 5-model cold-probe and a 4-model primary panel
+yield 332 flag-slot observations for USD\,5.25 within the
+\pounds20 hard cap, and the byte-match success criterion is
+empirically validated by 0/121 cold-probe byte-matches and 0
+hallucinated-flag rows across all 325 failure observations,
+making any methodologically correct but hallucinated submission
+a categorical failure in practice as well as by construction.
+The human walkthrough is delivered to a Durham CS
 sample under a pre-committed protocol, with outcome,
 time-to-flag, AI-tool use, confidence shift, and enjoyment and
 learning Likerts collected for analysis.
 
 \subsection{Achievements}
 
-The principal outcomes of the project are as follows.
-
-\textbf{A nine-challenge suite.} Nine CTFs were designed,
-implemented, and deployed, spanning insecure session handling
-(CTF1), weak JWT secret disclosure via proof-of-work (CTF2),
-multi-stage SQL injection and AES-CBC decryption in an HR system
-(CTF3), DOM-based XSS escalated through an automated admin bot
-(CTF4), server-side template injection with WAF bypass in a Flask
-CMS (CTF5), server-side request forgery traversing simulated cloud
-metadata and internal Redis (CTF6), insecure deserialisation via
-\texttt{node-serialize@0.0.4} (CTF7), an editorial system chaining
-IDOR, client-side admin-guard bypass, and OS command injection on a
-diagnostic endpoint (CTF8), and a six-stage Spring Boot enterprise
-chain combining actuator exposure, traversal, JWT algorithm
-confusion, blind Boolean SQLi, hybrid RSA-512 + AES-GCM crypto, and
-a logfile-based password leak (CTF9). The suite covers eight of the
-ten 2021 OWASP categories and implements three distinct injection
-sub-types. No two challenges share the same primary technology stack.
-
-\textbf{A shared personalisation layer.} A reusable generation
-framework produces per-user credentials and flags for each challenge
-from a single cohort roster. Flags are derived deterministically via
-HMAC-SHA256 over a per-deployment, per-challenge, per-flag-slot salt,
-embed the recipient's username into the flag string, and cannot be
-reconstructed by an LLM that does not hold the secret salt. The
-resulting flag space changes between deployments, invalidating any
-prior write-ups without modifying the challenge code.
-
-\textbf{Portable, reproducible containerisation.} Every challenge is
-packaged as a Docker Compose stack with no student data or flag
-content baked into the images. Flags and credentials are mounted as
-read-only volumes at startup, so a new cohort can be onboarded by
-re-running the generator and restarting the stacks, with no
-modification of challenge source code.
-
-\textbf{Objective ground-truth testing across three layers.}
-Every challenge ships first-party unit and integration tests in
-its native framework (Jest with Supertest, PHPUnit, pytest, cargo
-test, Go testing, JUnit~5), driven by a single cross-stack runner
-at \texttt{CTFs/run-all-tests.sh}. A Python end-to-end exploit
-script per challenge then drives the full intended attack chain
-against a running stack and asserts the presence of the student's
-personalised flag in the application's response. The same per-CTF
-commands run in nine parallel CI jobs
-(\texttt{.github/workflows/tests.yml}) on every push and pull
-request, gating ``contracts green across the corpus.'' These
-layers serve both as regression tests during development and as
-an objective baseline for the evaluation of automated solvers.
-
-\textbf{Dual evaluation.} The suite is evaluated through a
-triangulation of sources: the automated exploit scripts provide
-solvability ground truth, an LLM-assisted solvability trial assesses
-resistance to automated solving, and a structured human walkthrough
-elicits qualitative feedback from participants across a range of
-skill levels. Section~\ref{sec:results} presents the results of each
-track and discusses the implications for the pedagogical and
-integrity claims made in the design.
+The project delivers a nine-challenge web-exploitation suite covering
+eight of the ten 2021 OWASP categories across nine distinct
+technology stacks (per-challenge mapping in
+Table~\ref{tab:suite-summary}); a shared HMAC-SHA256 personalisation
+layer that embeds the recipient's username in every flag and rotates
+the flag space between deployments via a per-deployment salt; a
+container-native distribution model that reduces cohort onboarding
+to a salt rotation with no challenge-source modification; a
+three-layer test apparatus (per-challenge unit and integration
+suites, a Python end-to-end exploit harness, and a nine-job CI
+matrix) that gives marker and machine the same definition of
+solvability; and a triangulated evaluation combining automated
+regression, an executed multi-model agentic LLM solvability trial,
+and a structured human walkthrough.
+Section~\ref{sec:eval-contributions} sets out the full
+contributions list with executed-trial numbers and artefact
+pointers.
 
 The remainder of the paper is organised as follows.
 Section~\ref{sec:relatedwork} surveys the CTF pedagogy, multi-stage
