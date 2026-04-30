@@ -6,10 +6,10 @@ vulnerabilities can be authentically modelled and pedagogically
 structured within Capture-the-Flag environments to enhance
 learning outcomes in cybersecurity education. The answer advanced
 here is a nine-challenge suite spanning eight of the ten
-2021 OWASP categories---including under-represented classes
+2021 OWASP categories (including under-represented classes
 such as server-side template injection, server-side request
 forgery against simulated cloud metadata, and insecure
-deserialisation---with a deterministic-HMAC personalisation
+deserialisation), with a deterministic-HMAC personalisation
 layer that makes flag sharing attributable and makes
 LLM-generated flags structurally invalid, packaged as
 self-contained Docker Compose stacks whose intended exploit
@@ -34,11 +34,13 @@ generalises well beyond the present suite.
 Second, \textit{flag-layer personalisation is a surprisingly strong
 integrity posture at a fraction of the cost of full environment
 randomisation, and survives direct empirical falsification under
-agentic LLM attack}. The Chothia--Novakovic SecGen
-framework~\cite{chothia2023} correctly identifies per-student
-randomisation as the strong answer to academic integrity, but the
-full cost of SecGen-style VM parameterisation is disproportionate
-for a web-specific graded module. Restricting personalisation to
+agentic LLM attack}. The Schreuders et al.\ SecGen
+framework~\cite{secgen2017}, following earlier 3GSE-style
+fixed-image work by Chothia and Novakovic~\cite{chothia2015},
+correctly identifies per-student randomisation as the strong
+answer to academic integrity, but the full cost of SecGen-style
+VM parameterisation is disproportionate for a web-specific
+graded module. Restricting personalisation to
 the flag layer (with username embedded in every flag and a
 per-deployment salt that invalidates write-ups across years) gives
 up the methodology-sharing defence in exchange for a marked
@@ -57,7 +59,7 @@ human walkthrough's free-text responses repeatedly named
 breadcrumbing artefacts (Rachel's security memo on CTF9, the
 in-page HTML comments and \texttt{/static/CHANGELOG.md} on
 CTF5, the JWT cookie inspection on CTF3) as ``the artefact
-that moved me forward''---and equally, the lower learning
+that moved me forward'', and equally the lower learning
 ratings on the AI-assisted middle band tracked back to
 breadcrumbs participants felt were not specific enough. This
 reframes the design question: not ``how hard is the
@@ -98,19 +100,25 @@ objective solvability baseline, such a study can separate
 cleanly than prior platforms permit.
 
 \textit{Larger-budget multi-seed multi-model LLM rerun.} The
-executed trial ran $n=1$ per cell at USD\,5.25 with a 15-turn
-agentic cap that absorbed 75 of 90 agentic flag-slot failures.
-Four extensions follow: multi-seed coverage on the existing
-panel ($\sim 3\times$ the present spend) to convert the
-single-seed table into a within-cell variance estimate; a
-flagship-tier column (Opus, GPT-5, Gemini Ultra) at primary
-scale on a \pounds40--\pounds80 envelope to bound capability
-from above; a longer turn cap (30--50 turns) to remove the
-truncation artefact, motivated by the manual GPT-5.3
+executed trial ran $n=1$ per cell at USD\,5.25 within the
+\pounds20 hard cap fixed at the project's outset; that envelope
+was the binding constraint on coverage, not the harness. With
+an adequate budget, four extensions follow: multi-seed coverage
+on the existing panel ($\sim 3\times$ the present spend) to
+convert the single-seed table into a within-cell variance
+estimate; a flagship-tier column (Opus, GPT-5, Gemini Ultra) at
+primary scale on a \pounds40--\pounds80 envelope to bound
+capability from above; a longer turn cap (30--50 turns) to
+remove the truncation artefact, motivated by the manual GPT-5.3
 calibration pass under \texttt{Evaluation/llm/manual/} solving
 eight of nine CTFs unbounded in 5--30 turns; and a
 retrieval-augmented or memory-equipped condition
-(\texttt{CTFAgent}-style~\cite{ji2025}). An
+(\texttt{CTFAgent}-style~\cite{ji2025}). The groundwork for all
+four is already in place: the \texttt{Evaluation/llm/} agentic
+harness is parameterised over model identifier, turn cap, seed,
+and provider adapter, so adding a new model is a configuration
+edit rather than a code change, and rerunning at a higher cap
+or across multiple seeds requires only a budget increase. An
 adversarial-evolution variant, in which each suite iteration
 resists the best-known harness, would give the integrity
 argument a moving-target form matching the real-world threat.
@@ -124,14 +132,16 @@ control arm noted in Section~\ref{sec:eval-limits}.
 
 \textit{Broader OWASP coverage and a 2025 refresh.} A04
 Insecure Design and A06 Vulnerable and Outdated Components
-remain outside the current coverage --- the former is
+remain outside the current coverage: the former is
 difficult to flag-ify, the latter ages out of scope quickly.
-Refreshing against the 2025 OWASP Top~10, which adds Software
-Supply Chain Failures, is an obvious follow-on.
+Refreshing against the 2025 OWASP Top~10 (Release
+Candidate), which adds Software Supply Chain Failures and
+Mishandling of Exceptional Conditions, is an obvious
+follow-on.
 
 \textit{Environment-level randomisation for a subset of
 challenges.} Extending the personalisation layer toward
-SecGen-style~\cite{chothia2023} environment randomisation for a
+SecGen-style~\cite{secgen2017} environment randomisation for a
 subset of challenges would close the methodology-sharing gap
 without replacing the whole flag-layer scheme.
 
@@ -141,10 +151,10 @@ learning, since a student paired with a capable agentic LLM
 can in principle recover a byte-correct flag without
 internalising the methodology. A natural next deliverable is a
 markscheme that supplements the flag check with short per-CTF
-reasoning prompts --- e.g.\ ``what \texttt{STORY.md}
-breadcrumb led you to the WAF source?'', ``which property of
-the JWT verifier admits the algorithm-confusion attack?'' ---
-mechanically scored by a keyword rubric or by an LLM judge
+reasoning prompts (e.g.\ ``what \texttt{STORY.md} breadcrumb
+led you to the WAF source?'', ``which property of the JWT
+verifier admits the algorithm-confusion attack?''), scored
+mechanically by a keyword rubric or by an LLM judge
 prompted with the per-CTF \texttt{SOLUTIONS.md} ground truth.
 This would weight discovery and narrative comprehension
 alongside exploitation; the per-CTF \texttt{STORY.md} files
@@ -155,8 +165,8 @@ repository supply the ground truth.
 
 The contribution of this project is ultimately a concrete
 demonstration that the three commonly-separated goals of CTF
-design---vulnerability realism, pedagogical accessibility, and
-academic integrity---can be pursued jointly in a single web-specific
+design (vulnerability realism, pedagogical accessibility, and
+academic integrity) can be pursued jointly in a single web-specific
 coursework context, without either compromising any of them or
 paying the full cost of per-student environment randomisation. The
 suite produced here is, to the author's knowledge, the first

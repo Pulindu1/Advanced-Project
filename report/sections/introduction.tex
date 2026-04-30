@@ -23,7 +23,7 @@ and integrity weaknesses that this project addresses directly.
 
 First, the vulnerability surface is fixed across the cohort, so an
 exploit methodology that works for one student transfers to every
-other student verbatim --- the per-user flags personalise the
+other student verbatim; the per-user flags personalise the
 \emph{string} that proves a solve, but they do not personalise the
 \emph{path} that produces it, so a single write-up still solves the
 cohort. Second, the personalisation that does exist is randomised
@@ -63,7 +63,7 @@ platforms largely omit~\cite{Sasiwanit}. The second is
 \textit{integrity}: to construct a shared personalisation layer that
 makes flag sharing attributable and makes LLM-generated flags
 structurally invalid, without resorting to the full infrastructural
-cost of per-student environment randomisation~\cite{chothia2023}.
+cost of per-student environment randomisation~\cite{secgen2017}.
 The third is \textit{engineering rigour}: to package each challenge
 as a portable, self-contained artefact whose intended exploit path
 is verified by automated end-to-end tests rather than by instructor
@@ -83,12 +83,13 @@ scope} rather than per-CTF challenge difficulty; the
 challenge-difficulty axis (Easy/Medium/Hard) is treated as an
 orthogonal property of individual CTFs and is set out in
 Table~\ref{tab:suite-summary}. Collectively, the deliverables
-address a gap identified in the literature: existing educational
-CTF platforms typically offer narrow vulnerability coverage limited
-to classical flaws such as SQL injection and
-XSS~\cite{Sasiwanit}, lack per-user flag personalisation beyond
-simple randomisation, and do not account for the ease with which
-LLMs can solve uniform, well-documented challenges~\cite{ji2025}.
+address a gap identified in the
+literature~\cite{Svabensky2021,Vykopal,Sasiwanit}: existing
+educational CTF platforms typically concentrate on classical
+flaws such as SQL injection and XSS, lack per-user flag
+personalisation beyond simple randomisation, and do not
+account for the ease with which LLMs can solve uniform,
+well-documented challenges~\cite{ji2025}.
 This project targets all three shortcomings within a single
 web-specific, graded coursework context.
 

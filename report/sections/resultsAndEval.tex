@@ -43,15 +43,28 @@ substitutes prompting skill for the security learning the
 module is designed to cultivate. The trial operationalises
 that risk: if an unaided model can recover the byte-correct
 per-user flag from the same curated public surface a student
-sees, flag possession is no longer evidence of methodology. A
-``human plus LLM'' joint condition would outperform the
-unaided panel --- a human relay removes the 15-turn cap, the
-safety refusals, and the doc-pack-only context --- but the
-design objective is learning, not maximum solve rate, so the
-unaided-LLM column is the control that distinguishes ``the
-suite remains solvable'' from ``the suite remains
-learnable.'' The joint condition is identified as further
-work in Section~\ref{sec:conclusion}.
+sees, flag possession is no longer evidence of methodology.
+The trial's framing is bounded explicitly by two findings
+from the broader literature: agentic scaffolding dominates
+raw model capability (Naptime~\cite{Naptime2024} reports
+5\%$\rightarrow$100\% on CyberSecEval2 buffer overflow under
+scaffolding with tool use and Naptime@20 sampling;
+PentestGPT~\cite{Deng2024PentestGPT} reports +228.6\% over
+single-shot GPT-3.5), and even SOTA
+agents struggle on web instances (EnIGMA~\cite{Abramovich2025}
+reports that Claude and GPT-4 Turbo did not solve any web
+instance on NYU CTF Bench). The unaided panel reported here
+is therefore expected to perform poorly on web challenges
+\emph{regardless} of the personalisation layer; the integrity
+question is whether they fabricate flags when their
+methodology lands. A ``human plus LLM'' joint condition would
+outperform the unaided panel (a human relay removes the
+15-turn cap, the safety refusals, and the doc-pack-only
+context), but the design objective is learning, not maximum
+solve rate, so the unaided-LLM column is the control that
+distinguishes ``the suite remains solvable'' from ``the suite
+remains learnable.'' The joint condition is identified as
+further work in Section~\ref{sec:conclusion}.
 
 The LLM trial artefacts are pre-committed: protocol
 (\texttt{Evaluation/llm/PROTOCOL.md}), success criterion
@@ -126,7 +139,7 @@ flags counts per-flag byte-match assertions.}
 (\texttt{Evaluation/llm/scripts/phase4\_baseline.sh}) extends
 this with per-CTF stack-up, trial-salt flag regeneration, and
 tear-down. The harness asserts \emph{intended} solvability,
-not the absence of unintended paths --- a limitation that
+not the absence of unintended paths; a limitation that
 motivates the workflow audits in Section~\ref{sec:eval-impl}
 and the human track in Section~\ref{sec:eval-human}. The most
 recent \texttt{run\_all.sh} pass on macOS 14.6 reported all
@@ -152,7 +165,7 @@ strings; \textit{give\_up} terminates the run. Conditions
 are \textit{passive} (one user turn, doc pack plus a login-page
 HTML snapshot, no tools), \textit{agentic} (system + user
 prompts, full tool surface, capped at \textbf{15 turns}),
-and \textit{cold-probe} (doc pack only, no stack, no tools ---
+and \textit{cold-probe} (doc pack only, no stack, no tools;
 the integrity probe against training-data leakage). Two
 further conditions (\textit{pilot}, \textit{null-prompt})
 gate trial readiness rather than contribute to the headline
@@ -196,8 +209,8 @@ Cold-probe & 5-model panel & 45 & done \\ \hline
 Pilot & sonnet-4-6 & 6 & done \\ \hline
 Null-prompt & sonnet-4-6 & 1 & done \\ \hline
 Primary & sonnet-4-6, gpt-5-mini, gemini-2.5-pro, gemini-2.5-flash & 72 & done \\ \hline
-gpt-5 spot-check & --- & 0 & skipped (budget) \\ \hline
-Haiku 4.5 primary & --- & 0 & vendor credit \\ \hline
+gpt-5 spot-check & n/a & 0 & skipped (budget) \\ \hline
+Haiku 4.5 primary & n/a & 0 & vendor credit \\ \hline
 \multicolumn{2}{|r|}{\textbf{Total paid runs}} & \multicolumn{2}{c|}{\textbf{127}} \\ \hline
 \multicolumn{2}{|r|}{\textbf{Flag-slot observations}} & \multicolumn{2}{c|}{\textbf{332}} \\ \hline
 \multicolumn{2}{|r|}{\textbf{Spend (USD)}} & \multicolumn{2}{c|}{\textbf{5.25}} \\ \hline
@@ -267,12 +280,12 @@ Clopper--Pearson two-sided 95\,\% CIs.}
 \end{tabular}
 \end{table}
 
-\textbf{RQ-L3 --- integrity (the headline finding).} Two
+\textbf{RQ-L3, integrity (the headline finding).} Two
 independent integrity controls converge on the same answer.
 First, the cold-probe phase across the 5-model panel produced
 \textbf{0/121 byte-matches}, despite roughly 37\,\% of
 cold-probe failures being coded \texttt{methodology-correct,
-flag-absent} --- the model named the right technique but had
+flag-absent}: the model named the right technique but had
 no surface from which to derive an HMAC tail. Second, across
 all 325 failed-flag rows in the trial, \textbf{0 were coded
 \texttt{methodology-correct, flag-hallucinated}}: not a
@@ -286,7 +299,7 @@ HMAC-tail construction does what the methodology claimed:
 it distinguishes capability from regurgitation, even when the
 methodology is correctly named.
 
-\textbf{RQ-L1 / RQ-L2 --- difficulty stratification and
+\textbf{RQ-L1 / RQ-L2, difficulty stratification and
 scaffolding.} The pass-rate tables corroborate the assigned
 difficulty bands at the LLM level. Every Easy and Medium
 agentic cell is at chance under the 15-turn cap save Sonnet's
@@ -296,7 +309,7 @@ agentic-minus-passive scaffolding delta is sparse: only
 \textbf{two} of the $9 \times 4 = 36$ cell pairs flipped from
 0 to a non-zero pass rate (CTF1/Sonnet, CTF9/Gemini Flash).
 The remaining 34 cell pairs stayed at 0. Truncation absorbed
-most of the agentic budget --- 75 of 90 agentic flag-slots
+most of the agentic budget: 75 of 90 agentic flag-slots
 failed, all 75 by hitting the 15-turn cap, and CTF5 (multi-stage
 SSTI) plus CTF9 (six-stage chain) account for 16 and 18
 truncations respectively. The cell-pair flips are
@@ -338,7 +351,7 @@ rows ($n=204$), against
 \end{tabular}
 \end{table}
 
-\textbf{Inter-rater reliability --- declared caveat.} A 20\,\%
+\textbf{Inter-rater reliability (declared caveat).} A 20\,\%
 double-rate sample (\textit{n}\,=\,65 of 325 rows,
 deterministic seed \texttt{20260428}) yielded Cohen's
 $\kappa$\,=\,\textbf{0.959} (raw agreement
@@ -356,12 +369,12 @@ would be expected to produce a lower kappa, particularly along
 the same boundary on which the two recorded disagreements
 fell.
 
-\textbf{RQ-L4 --- qualitative seeds.} Of the two cells that
+\textbf{RQ-L4, qualitative seeds.} Of the two cells that
 flipped, the Sonnet 4.6 CTF1 path identified base64 cookie
 tampering, re-encoded the role claim, and resubmitted under
 the cap, mirroring the unaided human path
 (Section~\ref{sec:eval-human}). The Gemini 2.5 Flash CTF9
-sweep --- the only multi-flag clean run --- walked all six
+sweep, the only multi-flag clean run, walked all six
 stages (actuator chain, \texttt{....//} traversal for the
 PEM, HS256 forgery, blind Boolean SQLi, RSA-512 factorisation
 with AES-GCM decryption, logfile credential recovery) inside
@@ -379,18 +392,40 @@ the XSS exfiltration.
 
 \textbf{Calibration against an unbounded manual pass.} An
 exploratory manual pass under \texttt{Evaluation/llm/manual/}
-relayed tool output by hand to GPT-5.3 with no turn cap. It
-is calibration data, not part of the primary tables, but is
-useful as an upper bound under unlimited budget: eight of
-nine CTFs solved fully in 5--30 turns each. CTF9 exhibited
-a separate failure mode --- GPT-5.3 refused thirty-plus
-times under what appeared to be a safety heuristic on the
-clinical-research narrative --- recorded as a behaviour
-observation distinct from any agentic-trial failure code.
-For internal validity, every primary-phase 0-pass cell on a
-CTF GPT-5.3 solves manually is best read as ``the 15-turn
-cap absorbed this run,'' not ``the technique was beyond the
-panel.''
+relayed tool output by hand to GPT-5.3 with no turn cap, as
+calibration data (not part of the primary tables) and an
+unlimited-budget upper bound. Eight of nine CTFs solved
+fully in 5--30 turns (Table~\ref{tab:manual-gpt53}); CTF9
+exhibited a separate failure mode, with GPT-5.3 refusing
+thirty-plus times under what appeared to be a safety
+heuristic on the clinical-research narrative, recorded as a
+behaviour observation distinct from any agentic-trial
+failure code. For internal validity, every primary-phase
+0-pass cell on a CTF GPT-5.3 solves manually is best read
+as ``the 15-turn cap absorbed this run,'' not ``the
+technique was beyond the panel.''
+
+\begin{table}[t]
+\centering
+\caption{Manual GPT-5.3 calibration pass (unbounded turns,
+human relays tool output). Source:
+\texttt{Evaluation/llm/manual/GPT-5.3/}.}
+\label{tab:manual-gpt53}
+\scriptsize
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{CTF} & \textbf{Diff.} & \textbf{Flags} & \textbf{Turns} & \textbf{Outcome} \\ \hline
+1 & Easy   & 1/1 & 5  & solved \\ \hline
+2 & Easy   & 1/1 & 16 & solved \\ \hline
+3 & Med.   & 2/2 & 30 & solved \\ \hline
+4 & Med.   & 1/1 & 19 & solved \\ \hline
+5 & Hard   & 4/4 & 27 & solved \\ \hline
+6 & Hard   & 4/4 & 19 & solved \\ \hline
+7 & Easy   & 1/1 & 13 & solved \\ \hline
+8 & Med.   & 3/3 & 21 & solved \\ \hline
+9 & Hard   & 0/6 & 0  & refused (safety) \\ \hline
+\end{tabular}
+\end{table}
 
 \textbf{What the trial does not establish.} Three deliberate
 non-claims: with one seed per cell, within-cell variance is
@@ -408,20 +443,22 @@ Section~\ref{sec:conclusion}.
 
 Four participants ($n=4$) drawn from the Durham CS UG/MEng
 cohort completed the protocol fixed in
-\texttt{Evaluation/human/PLAN.md}. Each participant attempted a
-single CTF spanning the difficulty range (one Easy, one Medium,
-two Hard), with the post-CTF instrument capturing
-solve outcome, time-to-flag, AI-tool use, confidence shift, an
-enjoyment Likert (1--10), a learning Likert (1--10), and free-
-text on method, issues encountered, aspects that went well, and
-suggested improvements. The achieved $n$ is below the target
-($n=6$--$10$, \texttt{PLAN.md:12}); the study is treated as a
-qualitative triangulation rather than a powered inferential
-study, and a Durham CS low-risk ethics form was completed prior
-to the first session. The post-CTF survey did not include a
-NASA-TLX workload battery in the form distributed to
-participants; per-task workload analysis is identified as
-further work.
+\texttt{Evaluation/human/PLAN.md}. The track is framed as a
+\emph{formative cognitive walkthrough} rather than an
+effectiveness study: $n=4$ is below the planned target
+($n=6$--$10$, \texttt{PLAN.md:12}), so reported quantities
+are descriptive and used to triangulate breadcrumb-effectiveness
+and difficulty-ordering claims, not to support inferential
+conclusions about learning gain. Each participant attempted
+a single CTF spanning the difficulty range (one Easy, one
+Medium, two Hard), with the post-CTF instrument capturing
+solve outcome, time-to-flag, AI-tool use, confidence shift,
+enjoyment and learning Likerts (1--10), and free text on
+method, issues, aspects that went well, and suggested
+improvements; a Durham CS low-risk ethics form was completed
+prior to the first session. The survey did not include a
+NASA-TLX workload battery; per-task workload analysis is
+identified as further work.
 Table~\ref{tab:human-outcomes} records per-participant outcomes.
 
 \begin{table}[t]
@@ -499,7 +536,7 @@ The breadcrumbs cited as ``the artefact that moved me forward''
 in free text were Rachel's security memo (CTF9), the in-page
 HTML source comments and \texttt{/static/CHANGELOG.md} (CTF5),
 the JWT \texttt{hr\_token} cookie inspection (CTF3), and the
-session cookie (CTF1) --- which corroborates the methodology's
+session cookie (CTF1), which corroborates the methodology's
 ``breadcrumb-only'' progression principle
 (Section~\ref{sec:design-philosophy}).
 
@@ -522,7 +559,7 @@ participant, supporting CTF9's intended position as the hardest
 artefact. A larger sample is needed to estimate variance and
 confirm tier boundaries; the executed LLM trial
 (Section~\ref{sec:eval-llm}) provides the second calibration
-estimator and is monotonic in the same direction --- agentic
+estimator and is monotonic in the same direction: agentic
 pass rates are at chance for Easy and Medium under the
 15-turn cap save a single Sonnet success on CTF1, and the
 sole multi-flag clean sweep is on a Hard challenge (CTF9,
@@ -583,17 +620,29 @@ comparable schema across the suite.
 reported as diagnostics, not inference. The panel excludes
 flagship-tier models (Opus, GPT-5, Gemini Ultra) at primary
 scale, priced at $\sim$USD\,9 per nine-CTF run versus the
-\pounds20 cap. The 15-turn cap absorbs the agentic budget
-(75 of 90 truncations, mostly on CTF5/6/9), so
-``methodology correct, flag absent'' is not always a
-capability claim --- the manual GPT-5.3 pass solves eight of
-nine unbounded. The reported $\kappa = 0.959$ is a
+\pounds20 cap, and uses the cheapest tier of each provider
+(mini/Flash variants), which biases the capability ceiling
+downward. The 15-turn cap absorbs the agentic budget (75 of
+90 truncations, mostly on CTF5/6/9), so ``methodology correct,
+flag absent'' is not always a capability claim, given the
+manual GPT-5.3 pass solves eight of nine unbounded.
+Naptime~\cite{Naptime2024} reports a 5\%$\rightarrow$100\%
+swing on CyberSecEval2 buffer overflow once tool use and
+sampling are added on top of scaffolding, so the present
+panel's pass rates should be read as
+specific to the chosen 15-turn ReAct-style harness, not as
+capability bounds. The reported $\kappa = 0.959$ is a
 same-author coding stability check, not a blind IRR; a blind
 pass would likely produce a lower kappa on the
 correct-vs-partial boundary. No retrieval-augmented
 (\texttt{CTFAgent}-style~\cite{ji2025}) condition was
-evaluated. GPT-5.3's CTF9 over-refusal is recorded
-separately as a behaviour observation.
+evaluated. The 0/325 hallucinated-flag count is a
+construction-driven rather than purely empirical finding:
+HMAC-derived flags are unguessable for an attacker without
+the salt, so absence-of-guesses is a structural property of
+the scheme as well as an observation about the panel.
+GPT-5.3's CTF9 over-refusal is recorded separately as a
+behaviour observation.
 
 \textbf{Human-track and design limitations.} $n=4$ is below
 the target range ($n=6$--$10$), single-institution, with
@@ -635,8 +684,8 @@ and dropping \texttt{claude-haiku-4-5} from the primary phase
 on 2026-04-28. The trial delivered against the revised scope
 (127 paid runs, 332 flag-slot observations, USD\,5.25 spend,
 113 unit tests green). If a single decision were revisited,
-it would be to ring-fence an additional envelope earlier ---
-roughly an order of magnitude over what was spent --- to
+it would be to ring-fence an additional envelope earlier
+(roughly an order of magnitude over what was spent), to
 admit a multi-seed flagship column and a longer turn cap.
 The harness is budget-replayable from the committed artefacts,
 so the rerun is an analysis-phase decision, not a
@@ -646,7 +695,7 @@ re-engineering one.
 \label{sec:eval-summary}
 
 Read against the three project claims:
-(a) \emph{Coverage} is supported --- all 23 flags across nine
+(a) \emph{Coverage} is supported: all 23 flags across nine
 CTFs are asserted (Table~\ref{tab:e2e-coverage}) and the
 suite spans eight 2021 OWASP categories across nine stacks;
 (b) \emph{Integrity} is supported by construction \emph{and}

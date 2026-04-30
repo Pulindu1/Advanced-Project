@@ -112,18 +112,18 @@ Board of Examiners in the Department of Computer Sciences, Durham University
 \begin{abstract}
 \textbf{Context:} Capture-the-Flag (CTF) challenges are a
 well-established vehicle for experiential cybersecurity
-education, yet published educational platforms concentrate on
-a narrow set of classical vulnerabilities, distribute identical
-challenge instances vulnerable to flag sharing and
+education. Existing educational platforms, however, concentrate
+on a narrow set of classical vulnerabilities, distribute
+identical challenge instances vulnerable to flag sharing and
 LLM-assisted solving, and rarely exercise the modern framework
-stacks that graduating students will encounter in industry.
+stacks that graduating students will encounter in industry. \\
 \textbf{Aims:} This dissertation designs, implements, and
 evaluates a nine-challenge web-exploitation CTF suite that
 addresses all three deficiencies within a single graded
 coursework context, asking how modern web vulnerabilities can
 be authentically modelled and pedagogically structured to
 preserve learning while remaining robust to flag sharing and
-to AI-assisted shortcutting.
+to AI-assisted shortcutting. \\
 \textbf{Methods:} Each challenge is built on a distinct modern
 technology stack (Node.js/Express, React/Vite, PHP/Laravel,
 Python/Flask, Rust/Actix-web, Go/Gin, Spring Boot) and targets
@@ -143,7 +143,7 @@ a Python end-to-end exploit harness asserting every flag
 against a running container, and a nine-job CI matrix gating
 every push and pull request. Evaluation triangulates automated
 regression, an executed multi-model agentic LLM solvability
-trial, and a structured human participant walkthrough.
+trial, and a structured human participant walkthrough. \\
 \textbf{Results:} The suite delivers 23 flags across nine
 challenges spanning eight OWASP 2021 categories and nine
 distinct technology stacks, with all 56 named end-to-end
@@ -151,11 +151,13 @@ flag-and-contract assertions passing locally and across the
 nine-job CI matrix. The LLM trial executed 127 paid runs across
 a 5-model cold-probe and a 4-model primary panel for USD\,5.25,
 producing 0/121 cold-probe byte-matches and 0 hallucinated-flag
-rows across all 325 failure observations; only seven byte-match
-passes were recorded across 332 observations. The human
+rows across all 325 failure observations (the empirical leg of an
+integrity argument the HMAC construction also makes structurally
+hard to evade); only seven byte-match passes were recorded across
+332 observations. The human
 walkthrough ($n=4$) reported uniformly high enjoyment (8--10/10)
 and an outcome ordering monotonic with the assigned difficulty
-bands.
+bands. \\
 \textbf{Conclusions:} A web-only graded module can pursue
 realism, integrity, and pedagogical accessibility jointly without
 paying the full cost of per-student environment randomisation:

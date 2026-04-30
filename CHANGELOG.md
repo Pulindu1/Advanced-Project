@@ -10,6 +10,8 @@ files changed (optional)
 
 
 
+### Fixed references - 30/04/26
+- few issues with some references in the report. Fixed it.
 
 ### Updated writeup - 29/04/26
 - added to the report the results of the testing.
