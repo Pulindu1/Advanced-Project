@@ -199,7 +199,11 @@ revision history (panel expansion 2026-04-12, single-seed cut
 \centering
 \caption{Executed LLM run matrix. \textit{Cells} counts
 (model, CTF, condition, seed) tuples. The Haiku-primary and
-gpt-5 spot-check rows are zero-cell deliberate omissions.}
+gpt-5 spot-check rows are zero-cell deliberate omissions.
+Phase cells sum to 124; the 3-run delta to 127 is three
+vendor-error resubmits that re-incremented the run counter
+without adding a fresh cell (one cold-probe, two primary
+passive).}
 \label{tab:llm-matrix}
 \small
 \begin{tabular}{|p{2.0cm}|p{2.7cm}|c|c|}
@@ -252,8 +256,8 @@ and pilot rows; the other three columns are primary-phase only.}
 5 & 0/8 [.00,.37] & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] \\ \hline
 6 & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] \\ \hline
 7 & 0/2 [.00,.84] & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
-8 & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/6 [.00,.46] \\ \hline
-9 & 0/12 [.00,.26] & 0/6 [.00,.46] & 0/6 [.00,.46] & 0/6 [.00,.46] \\ \hline
+8 & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/3 [.00,.46] \\ \hline
+9 & 0/6 [.00,.26] & 0/6 [.00,.46] & 0/6 [.00,.46] & 0/6 [.00,.46] \\ \hline
 \end{tabular}
 \end{table}
 
@@ -291,8 +295,10 @@ all 325 failed-flag rows in the trial, \textbf{0 were coded
 \texttt{methodology-correct, flag-hallucinated}}: not a
 single model fabricated even a regex-shape guess that
 byte-matched a real flag. The harness recorded only one
-\texttt{submit\_flag} call across all 127 paid runs (the
-Gemini 2.5 Flash CTF9 success); models in agentic runs
+\texttt{submit\_flag} call across all 127 paid runs, at the
+end of the Gemini 2.5 Flash CTF9 sweep; the six byte-matches
+on that run were scored from HTTP response bodies during
+exploration. Models in agentic runs
 preferentially \texttt{give\_up} (96 runs) or truncate
 (30 runs) rather than commit to an unverified string. The
 HMAC-tail construction does what the methodology claimed:

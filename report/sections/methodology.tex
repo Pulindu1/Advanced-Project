@@ -372,7 +372,8 @@ the bot, holding admin session, visits the link and
 triggers the sink that exfiltrates the per-user flag from
 \texttt{/api/admin/flag} back to a player-controlled capture
 endpoint. The pattern mirrors the real-world ``XSS-as-CSRF via
-an automated admin'' attack~\cite{DOMXSSWalker2023} and forces
+an automated admin'' attack documented in the wider DOM XSS
+literature~\cite{DOMXSSWalker2023} and forces
 the player to navigate URL-encoding subtleties (the payload
 must use \texttt{.concat()} rather than \texttt{+}, since
 \texttt{+} decodes to a space inside a query string) that a
@@ -396,8 +397,8 @@ diagnostics endpoint whose blocklist rejects \texttt{;},
 \texttt{|}, \texttt{\&}, \texttt{\textbackslash n} and
 \texttt{\textbackslash r} but leaves command substitution
 \texttt{\$(\ldots)} untouched, an instance of the NCSC
-guidance that allowlists are the only robust defence against
-injection classes~\cite{NCSCInjection}.
+guidance that allowlist validation is a more robust defence
+than blocklists for injection classes~\cite{NCSCInjection}.
 
 \subsubsection{Hard challenges}
 
