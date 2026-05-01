@@ -10,6 +10,12 @@ files changed (optional)
 
 
 
+
+
+
+### Updated Dcocumentation - 01/05/26
+- Updated the documentation in the repo, including the Lisence. Also referenced charles' challengegen since its not mine.
+
 ### Fixed references - 30/04/26
 - few issues with some references in the report. Fixed it.
 

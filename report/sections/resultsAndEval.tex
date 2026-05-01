@@ -315,19 +315,19 @@ agentic-minus-passive scaffolding delta is sparse: only
 \textbf{two} of the $9 \times 4 = 36$ cell pairs flipped from
 0 to a non-zero pass rate (CTF1/Sonnet, CTF9/Gemini Flash).
 The remaining 34 cell pairs stayed at 0. Truncation absorbed
-most of the agentic budget: 75 of 90 agentic flag-slots
-failed, all 75 by hitting the 15-turn cap, and CTF5 (multi-stage
-SSTI) plus CTF9 (six-stage chain) account for 16 and 18
-truncations respectively. The cell-pair flips are
+most of the agentic budget: of 103 agentic flag-slots, 96
+failed and 7 passed, with 75 of those 96 failures hitting the
+15-turn cap; CTF5 (multi-stage SSTI) plus CTF9 (six-stage
+chain) account for 16 and 18 truncations respectively. The cell-pair flips are
 idiosyncratic rather than systematic; under the diagnostic
 $n=1$ framing this is the expected pattern, but the practical
 implication for a budget-bounded re-run is that the 15-turn
 cap is the dominant tunable, not the model identity.
 
 \textbf{Failure-mode profile.} Table~\ref{tab:llm-subcodes}
-gives the sub-code distribution for the primary phase
-($n = 204$ failed-flag rows) under the rubric in
-\texttt{Evaluation/llm/RUBRIC.md}. The two-thirds majority
+gives the sub-code distribution across all paid phases
+(primary, pilot, and null; $n = 204$ failed-flag rows) under
+the rubric in \texttt{Evaluation/llm/RUBRIC.md}. The two-thirds majority
 splits between truncation (37\,\%) and methodology-correct
 runs that ran out the chain without producing a flag (30\,\%);
 methodology-wrong runs are 21\,\%, and partial-but-misnamed
@@ -340,8 +340,8 @@ is not.
 
 \begin{table}[t]
 \centering
-\caption{Sub-code distribution, primary-phase failed-flag
-rows ($n=204$), against
+\caption{Sub-code distribution, all-phase failed-flag rows
+(primary + pilot + null; $n=204$), against
 \texttt{Evaluation/llm/RUBRIC.md}.}
 \label{tab:llm-subcodes}
 \small
@@ -403,8 +403,9 @@ calibration data (not part of the primary tables) and an
 unlimited-budget upper bound. Eight of nine CTFs solved
 fully in 5--30 turns (Table~\ref{tab:manual-gpt53}); CTF9
 exhibited a separate failure mode, with GPT-5.3 refusing
-thirty-plus times under what appeared to be a safety
-heuristic on the clinical-research narrative, recorded as a
+on every attempt up to a 30-attempt manual cap under what
+appeared to be a safety heuristic on the clinical-research
+narrative, recorded as a
 behaviour observation distinct from any agentic-trial
 failure code. For internal validity, every primary-phase
 0-pass cell on a CTF GPT-5.3 solves manually is best read
@@ -429,7 +430,7 @@ human relays tool output). Source:
 6 & Hard   & 4/4 & 19 & solved \\ \hline
 7 & Easy   & 1/1 & 13 & solved \\ \hline
 8 & Med.   & 3/3 & 21 & solved \\ \hline
-9 & Hard   & 0/6 & 0  & refused (safety) \\ \hline
+9 & Hard   & 0/6 & 30 (cap) & refused (safety) \\ \hline
 \end{tabular}
 \end{table}
 

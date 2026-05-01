@@ -8,14 +8,14 @@ Automated scripts that walk through every CTF's full exploit chain and confirm e
 |--------|-----|-------|-------|-------------------|
 | `ctf1_exploit.py` | Basic_1_Nodejs | 1 | 2 | Base64 cookie tampering -> admin privilege escalation |
 | `ctf2_exploit.py` | CTF_2_pswd_manager | 1 | 2 | PoW solve -> JWT secret disclosure -> JWT forgery -> vault IDOR |
-| `ctf3_exploit.py` | CTF_3_HR-system | 3 | 9 | Path traversal + SQLi + debug API leak + AES-256-CBC decrypt |
+| `ctf3_exploit.py` | CTF_3_HR-system | 2 | 10 | Path traversal + SQLi + debug API leak + AES-256-CBC decrypt |
 | `ctf4_exploit.py` | CTF_4_corporate_helpdesk | 1 | 3 | DOM XSS -> admin bot exfiltration -> flag capture |
 | `ctf5_exploit.py` | CTF_5_internal_blog | 4 | 8 | Info disclosure -> SSTI -> WAF bypass -> RCE |
-| `ctf6_exploit.py` | CTF_6_veridian | 4 | 10 | SSRF -> cloud metadata -> dict:// Redis pivot -> session replay |
+| `ctf6_exploit.py` | CTF_6_veridian | 4 | 11 | SSRF -> cloud metadata -> Redis pivot (dict:// + gopher://) -> session replay |
 | `ctf7_exploit.py` | CTF_7_notes_app | 1 | 6 | node-serialize@0.0.4 IIFE deserialisation (CVE-2017-5941) |
 | `ctf8_exploit.py` | CTF_8_gazette | 3 | 4 | IDOR + missing server-side auth + `$(...)` command injection |
 | `ctf9_exploit.py` | CTF_9_dunholm | 6 | 12 | Actuator info leak + `....//` traversal + RS256->HS256 forgery + blind SQLi + AES-GCM vault decrypt + log-leak & staff login |
-| **Total** | | **24 flags** | **56 tests** | |
+| **Total** | | **23 flags** | **58 tests** | |
 
 ## Prerequisites
 

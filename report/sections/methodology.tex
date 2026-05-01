@@ -204,11 +204,11 @@ the database rather than derived from a salted username.
 \end{equation}
 where $N$ is the token length in hexadecimal characters
 (16 for Easy-band single-flag challenges and 20 elsewhere,
-corresponding to 64- and 80-bit entropy respectively). For
-example, with prefix \texttt{durham}, salt
+corresponding to 64- and 80-bit entropy respectively). As an illustrative example,
+with prefix \texttt{durham}, salt
 \texttt{basic1-default-salt}, and username \texttt{abcd12},
-the generator produces
-\texttt{durham\{3a1f9c2b4e7d8a0f\_abcd12\}}. HMAC-SHA256 was
+the generator produces the flag
+\texttt{durham\{9c417649bb29fd94\_abcd12\}}. HMAC-SHA256 was
 selected for three properties. \textit{Determinism}: $(s, u)$
 always yields the same token, so flags can be regenerated
 from the student roster alone without persistent state.
@@ -354,7 +354,7 @@ ciphertext; the decryption key
 \texttt{CTF\_2026\_SECRET\_KEY\_XJ9K2L} is hard-coded in a
 comment in \texttt{frontend/src/utils/legacyAuth.ts} and
 ships in the bundled JS, recoverable via DevTools sources;
-and a parallel endpoint \texttt{/api/debug/user-config}
+and a parallel endpoint \texttt{/api/debug/config}
 annotated \texttt{// TODO: REMOVE BEFORE PRODUCTION} returns
 the same encrypted blob without authorisation, providing an
 alternative IDOR-style retrieval path. The chain teaches
@@ -430,10 +430,10 @@ therefore rewrites \texttt{169.254.169.254} to the Compose
 service hostname \texttt{metadata} before dispatching the
 request, so the player's mental model matches the real
 cloud environment while the container network delivers the
-traffic. The same handler supports \texttt{dict://} and
-\texttt{gopher://}, enabling the Redis pivot documented by
-PortSwigger~\cite{BurpSSRFRedis} and generalising the lesson
-beyond the single IMDS surface.
+traffic. The handler also supports \texttt{dict://} for
+single-command pivoting against the Compose-internal Redis
+instance~\cite{BurpSSRFRedis}, generalising the lesson beyond
+the single IMDS surface.
 
 \textbf{CTF9, a six-stage enterprise vulnerability chain.}
 The TrialVault platform is the largest challenge in the
@@ -740,7 +740,7 @@ v2~\cite{DockerDocs}. Core stacks and versions are as
 shipped in the repository: Spring Boot 3.2.5 with Java 17
 and JUnit~5 (CTF9); Go 1.21 with Gin 1.10 (CTF8); Rust
 1.75+ with actix-web 4 (CTF6); Flask 3.1 with pytest 8.3
-(CTF5); Laravel 11 on PHP 8.2 (CTF3); Node.js 20 with
+(CTF5); Laravel 11 on PHP 8.4 (CTF3); Node.js 20 with
 Express 4.21--5.2, Jest 30.2 and Supertest 7.1 (CTF1, CTF2,
 CTF4, CTF7); Playwright 1.40 with BullMQ 5.1 drives the
 admin bot in CTF4~\cite{Playwright}. Stack-agnostic

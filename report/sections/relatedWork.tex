@@ -206,8 +206,8 @@ exactly this scenario, introducing a deliberately-IMDSv1-compatible
 metadata mock and a second pivot into an unauthenticated Redis
 service via the \texttt{dict://} scheme (suitable for
 single-command Redis interaction; \texttt{gopher://} is the
-canonical pivot for full RCE payloads and is also exposed by
-the handler), recreating the defence-in-depth failures that
+canonical pivot for full RCE payloads but is out of scope
+here), recreating the defence-in-depth failures that
 enabled the real incident.
 
 Insecure deserialisation is a third under-represented class. It
