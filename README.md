@@ -7,7 +7,6 @@ MEng dissertation, Durham University. The repo contains four things that fit tog
 3. **An LLM evaluation harness** (`Evaluation/llm/`) — completed trial; 5-model panel × 9 CTFs × {passive, agentic} with sandboxed tool use.
 4. **A human study** (`Evaluation/human/`) — post-CTF participation forms and collected responses.
 
-The LaTeX dissertation lives in `report/`. The single-file drafting source for the Evaluation chapter is `Evaluation/Writeup.md`.
 
 ## Repository layout
 
@@ -29,13 +28,10 @@ Advanced-Project/
 │   └── SOURCES.md              per-CTF design citations
 ├── Evaluation/
 │   ├── README.md               three-track index
-│   ├── Writeup.md              consolidated drafting source for the Evaluation chapter
 │   ├── llm/                    LLM trial harness, prompts, runs, reports, coding outputs
 │   └── human/                  post-CTF participation form + collected responses
-├── challenge-generation/       chgen library (chgen.js, examples/, deploy/)
-├── report/                     LaTeX dissertation (main.tex, sections/, references/, figures/)
+├── challenge-generation/       chgen library (chgen.js, examples/, deploy/) (unused)
 ├── CHANGELOG.md                dated narrative of project milestones
-├── CTF_REPO_ANALYSIS.md        cross-CTF design + threat-model audit
 └── .github/workflows/tests.yml CI: 9 parallel jobs, one per CTF
 ```
 
@@ -124,7 +120,7 @@ gh run list --workflow tests.yml
 
 `Evaluation/llm/` is the LLM solvability trial. Per-run, per-phase, with append-only JSONL transcripts, a fail-closed sandbox (`Guard`: filesystem allow-list + `localhost`-only HTTP), an Alpine scratch container for the `shell` tool, and a 15-turn cap per agentic run.
 
-Trial executed: **127 paid runs / 332 flag-slot observations / USD 5.25 spend** across cold-probe (45), pilot (6), null-prompt (1), primary (72) — `claude-sonnet-4-6`, `claude-haiku-4-5` (cold-probe only), `gpt-5-mini`, `gemini-2.5-pro`, `gemini-2.5-flash`. Cold probe produced **0 byte-matches** across 121 rows; coded sub-codes show **0 hallucinated flags** out of 325 failed flags (Cohen's κ = 0.959 on the 20 % double-rated sample, with the same-author IRR caveat declared in `Evaluation/Writeup.md` §5.2).
+Trial executed: **127 paid runs / 332 flag-slot observations / USD 5.25 spend** across cold-probe (45), pilot (6), null-prompt (1), primary (72) — `claude-sonnet-4-6`, `claude-haiku-4-5` (cold-probe only), `gpt-5-mini`, `gemini-2.5-pro`, `gemini-2.5-flash`. Cold probe produced **0 byte-matches** across 121 rows; coded sub-codes show **0 hallucinated flags** out of 325 failed flags (Cohen's κ = 0.959 on the 20 % double-rated sample, with the same-author IRR caveat declared in the dissertation's Evaluation chapter).
 
 Headline commands:
 
@@ -140,22 +136,25 @@ python3 aggregate.py build                      # runs/* -> reports/{results,fla
 python3 aggregate.py kappa --coding coding/coded.csv
 ```
 
-Outputs of record: `Evaluation/llm/runs/`, `Evaluation/llm/reports/{results,flag_results}.csv`, `Evaluation/llm/reports/tables.md`, `Evaluation/llm/coding/{coded.csv,summaries.jsonl}`. Full design + methodology + results consolidated in `Evaluation/Writeup.md`. Operational notes in `Evaluation/llm/README.md`.
+Outputs of record: `Evaluation/llm/runs/`, `Evaluation/llm/reports/{results,flag_results}.csv`, `Evaluation/llm/reports/tables.md`, `Evaluation/llm/coding/{coded.csv,summaries.jsonl}`. Operational notes in `Evaluation/llm/README.md`. Run-directory schema in `Evaluation/llm/RUNS_SCHEMA.md`. Full design, methodology, and results write-up are in the submitted dissertation.
 
 ## Human study (Track 2)
 
-`Evaluation/human/` holds the participant-facing form (`post-ctf-participationform.md`) and the four collected responses under `responses/`. The data feeds the joint LLM-vs-human comparison in `Evaluation/Writeup.md` §11.
+`Evaluation/human/` holds the participant-facing form (`post-ctf-participationform.md`) and the four collected responses under `responses/`. The data feeds the joint LLM-vs-human comparison in the dissertation's Evaluation chapter.
 
 ## Challenge generation
 
 Two halves:
 
-- `challenge-generation/` (root) — the **chgen library** (`chgen.js`) plus shared `examples/` and a `deploy/` Alpine deployment helper. See `challenge-generation/README.md`.
+- `challenge-generation/` (root) — the **chgen library** (`chgen.js`) plus shared `examples/` and a `deploy/` Alpine deployment helper. See `challenge-generation/README.md`. This is not the authors of this dissertation. It originates from the
+ctf4ed project (https://github.com/ctf4ed/chgen), authored by
+Roberto Metere (Newcastle University, 2019) and Charles Morisset
+(2021-2024). The original
+LICENSE and README files are retained at `challenge-generation/LICENSE`
+and `challenge-generation/README.md` respectively. The file headers on
+`challenge-generation/chgen.js` and `challenge-generation/deploy/alpine_deploy.js`
+preserve the original authors' copyright notices. Although we don't explictly use this folder, we based our own CTFs/challenge-generation/ off of it.
 - `CTFs/challenge-generation/` — per-CTF generator scripts (`chgen_ctf<n>.js`) calling into shared modules under `CTFs/challenge-generation/generators/` (one `<ctf>_generator.js` per challenge), plus `generate_credentials.js`. These hydrate each CTF's `template/` against a `server_config.json` describing players, producing per-player flag values, credentials, and (where relevant) per-player encrypted artefacts.
-
-## Dissertation report
-
-`report/main.tex` is the LaTeX root; sections are split under `report/sections/` (`introduction.tex`, `relatedWork.tex`, `methodology.tex`, `resultsAndEval.tex`, `conclusion.tex`). Bibliography in `report/references/`, generated figures in `report/figures/`. The literature survey draft lives under `report/Literature Survey/`.
 
 ## Conventions
 
@@ -164,8 +163,7 @@ Two halves:
 - **Documentation.** Per-CTF intended-solution write-ups live in `<CTF>/SOLUTIONS.md` (CTF4 uses `SOLUTION.md`). Cross-cutting design citations live in `CTFs/SOURCES.md`.
 - **Branch hygiene.** `main` is the default branch. CI (`tests.yml`) gates pushes and PRs.
 
-## Stale top-level files
+## AI assistance
 
-- `LLM_EVALUATION_PLAN.md` is an early draft of what became `Evaluation/llm/PLAN.md` (since folded into `Evaluation/Writeup.md`). Retained in-tree for history; not load-bearing.
-- `CTF_REPO_ANALYSIS.md` is the cross-CTF audit notes used to drive the corpus design; consulted, not generated from.
-- `reportreview.md` is the supervisor / self-review notes on the dissertation drafts.
+Claude Sonnet (Anthropic) was used during development as a coding assistant, primarily for debugging, scaffolding boilerplate (Docker configs, test harness plumbing, CI workflows), and editorial passes on documentation. All design decisions, exploit chains, evaluation methodology, generator logic, flag derivation, scoring, and analysis are the author's own work.
+

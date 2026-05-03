@@ -8,19 +8,13 @@ Three evaluation tracks for the CTF suite.
 | 2. Human participants | Responses collected | `human/` |
 | 3. LLM solvability trial | Complete (127 paid runs, 332 flag observations, USD 5.25 spend) | `llm/` |
 
-## Write-up source
-
-[**Writeup.md**](Writeup.md) — single-file consolidation of design,
-methodology, results, tables, kappa, integrity finding, qualitative
-seeds, threats, and reproducibility steps. Drafting source for the
-dissertation Evaluation chapter.
+The full design, methodology, and results write-up is in the submitted dissertation.
 
 ## Layout
 
 ```
 Evaluation/
 ├── README.md              this file
-├── Writeup.md             dissertation drafting source
 ├── llm/
 │   ├── README.md          how to drive the harness
 │   ├── harness.py         per-run entry point
@@ -45,10 +39,9 @@ Evaluation/
 ## Cross-track
 
 - Track 1 e2e baselines provide the upper-bound capability check for
-  Track 3 (Phase 4 in `Writeup.md` §6.1; 9/9 PASS).
-- Track 2 outcomes feed Track 3's joint LLM-vs-human 2 × 2 per CTF
-  (`Writeup.md` §11).
+  Track 3 (9/9 PASS).
+- Track 2 outcomes feed Track 3's joint LLM-vs-human 2 × 2 per CTF.
 
 ## Reproducibility
 
-See `Writeup.md` §15 for the end-to-end command sequence.
+See `llm/README.md` and `llm/RUNS_SCHEMA.md` for the harness commands and on-disk schema; the dissertation's Evaluation chapter has the full end-to-end procedure.
