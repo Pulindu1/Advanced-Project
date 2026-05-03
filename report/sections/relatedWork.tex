@@ -322,6 +322,25 @@ web-exploitation 0\%-class results in the present trial as
 consistent with frontier-LLM behaviour rather than a unique
 artefact of this suite.
 
+Cross-paper comparison of LLM pass rates on CTFs is not
+warranted. Turn budgets alone vary by an order of magnitude
+(NYU CTF Bench's default 10 rounds~\cite{Shao2024},
+Cybench's 15-turn unguided cap~\cite{Zhang2024Cybench},
+CTFAgent's 30 rounds~\cite{ji2025}); sampling ranges from
+pass@1 to Naptime@20~\cite{Naptime2024}; and tool surfaces
+span shell-only to gdb-equipped multi-tool~\cite{Abramovich2025}
+to two-stage write-up RAG~\cite{ji2025}. Each axis is
+independently load-bearing: scaffolding alone lifts
+CyberSecEval2 buffer-overflow scores up to twentyfold under
+fixed model identity~\cite{Naptime2024}, and EnIGMA's own
+ablation~\cite{Abramovich2025} shows interactive tools
+\emph{decrease} web-category solves while raising every
+other category, isolating web as the least standardised
+evaluation surface in the literature. The 15-turn ReAct
+harness adopted in Section~\ref{sec:vvt} is therefore a
+deliberate, conservative operating point against which
+agentic capability is reported, not a neutral measurement.
+
 
 \subsection{Summary of Findings}
 Five gaps motivate the design that follows. Empirical evidence
