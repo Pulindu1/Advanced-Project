@@ -108,12 +108,10 @@ on the existing panel to
 convert the single-seed table into a within-cell variance
 estimate; a flagship-tier column (Opus, GPT-5, Gemini Ultra) at
 primary scale on a \pounds40--\pounds80 envelope to bound
-capability from above; a longer turn cap (30--100 turns) to
-remove the truncation artefact, motivated by the unbounded
-manual calibration passes under
-\texttt{Evaluation/llm/manual/} (GPT-5.3 solving eight of
-nine CTFs, Sonnet 4.6 six fully and two partially, both
-within 5--30 turns); and a
+capability from above; a longer turn cap (30--100 turns) to remove the truncation
+artefact, motivated by the 30-turn manual calibration passes
+under \texttt{Evaluation/llm/manual/} (GPT-5.3 solving 8/9
+CTFs, Sonnet 4.6 6/9 fully and 2/9 partially); and a
 retrieval-augmented or memory-equipped condition
 (\texttt{CTFAgent}-style~\cite{ji2025}). The groundwork for all
 four is already in place: the \texttt{Evaluation/llm/} agentic
@@ -173,7 +171,7 @@ coursework context, without either compromising any of them or
 paying the full cost of per-student environment randomisation. The
 suite produced here is, to the author's knowledge, the first
 web-exploitation CTF corpus to combine
-deterministic personalisation, container-native distribution,
+deterministic-HMAC personalisation, container-native distribution,
 and ground-truth exploit-script testing in an evaluated form, and
 it is offered as a reusable baseline for future work in
 cybersecurity education.

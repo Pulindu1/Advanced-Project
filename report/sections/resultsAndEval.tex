@@ -402,35 +402,31 @@ turns before the multi-step pivot. CTF4 stalled on
 diagnosing the admin-bot polling delay rather than completing
 the XSS exfiltration.
 
-\textbf{Calibration against unbounded manual passes.} Two
-exploratory manual passes under \texttt{Evaluation/llm/manual/}
-relayed tool output by hand to GPT-5.3
-(\texttt{manual/GPT-5.3/}) and Claude Sonnet 4.6
-(\texttt{manual/Sonnet-4.6/}) under a 30 turn cap, as calibration
-data (not part of the primary tables).. Both passes corroborate that the 15-turn
-agentic cap, not capability, dominated the primary panel:
-GPT-5.3 solved eight of nine CTFs fully in 5--30 turns
-(17/23 flags), and Sonnet 4.6 solved six fully and two
-partially in 5--30 turns (16/23 flags), and failed on CTF4
-after failing to establish an XSS exfiltration channel within
-the manual cap, and engaged CTF9 (recovering one of six
-flags) where GPT-5.3 refused outright on every attempt under
-what appeared to be a safety heuristic on the
-clinical-research narrative
-(Table~\ref{tab:manual-calibration}). The CTF9 GPT-5.3
-refusal is recorded as a behaviour observation distinct from
-any agentic-trial failure code; the same model solved every
-other CTF in the suite. For internal validity, every
-primary-phase 0-pass cell on a CTF that either manual model
-solves is best read as ``the 15-turn cap absorbed this
-run,'' not ``the technique was beyond the panel.''
+\textbf{Calibration against manual passes.} Two exploratory
+manual passes under \texttt{Evaluation/llm/manual/} relayed
+tool output by hand to GPT-5.3 (\texttt{manual/GPT-5.3/}) and
+Claude Sonnet 4.6 (\texttt{manual/Sonnet-4.6/}) under a
+30-turn manual cap, as calibration data (not part of the
+primary tables). Both corroborate that the 15-turn agentic
+cap, not capability, dominated the primary panel: GPT-5.3
+solved eight of nine CTFs fully in 5--30 turns (17/23 flags);
+Sonnet 4.6 solved six fully and two partially (16/23 flags),
+failed on CTF4 after failing to establish an XSS exfiltration
+channel within the cap, and engaged CTF9 (one of six flags)
+where GPT-5.3 refused outright under what appeared to be a
+safety heuristic on the clinical-research narrative
+(Table~\ref{tab:manual-calibration}). The CTF9 refusal is a
+behaviour observation distinct from any agentic-trial failure
+code; the same model solved every other CTF. Every
+primary-phase 0-pass cell on a CTF either manual model solves
+is best read as ``the 15-turn cap absorbed this run,'' not
+``the technique was beyond the panel.''
 
 \begin{table}[t]
 \centering
 \caption{Manual calibration passes for GPT-5.3 and Claude
-Sonnet 4.6 (unbounded harness turns, human relays tool
-output, informal 30-attempt manual cap). Sources:
-\texttt{Evaluation/llm/manual/GPT-5.3/} and
+Sonnet 4.6 (30-turn manual cap, human relays tool output).
+Sources: \texttt{Evaluation/llm/manual/GPT-5.3/} and
 \texttt{Evaluation/llm/manual/Sonnet-4.6/}.}
 \label{tab:manual-calibration}
 \scriptsize
@@ -474,7 +470,7 @@ cohort completed the protocol fixed in
 \texttt{Evaluation/human/PLAN.md}. The track is framed as a
 \emph{formative cognitive walkthrough} rather than an
 effectiveness study: $n=4$ is far below the planned target
-($n=6$--$10$, so reported quantities
+($n=6$--$10$), so reported quantities
 are descriptive and used to triangulate breadcrumb-effectiveness
 and difficulty-ordering claims, not to support inferential
 conclusions about learning gain. Each participant attempted
@@ -662,7 +658,7 @@ scale, priced at $\sim$USD\,9 per nine-CTF run versus the
 downward. The 15-turn cap absorbs the agentic budget (75 of
 103 agentic flag-slots truncated, concentrated on CTF5 and
 CTF9), so ``methodology correct, flag absent'' is not always
-a capability claim, given the unbounded manual passes solve
+a capability claim, given the 30-turn manual passes solve
 the bulk of the suite (GPT-5.3 8/9 CTFs, Sonnet 4.6 6/9
 fully and 8/9 with at least one flag).
 Naptime~\cite{Naptime2024} reports a 5\%$\rightarrow$100\%
@@ -750,8 +746,9 @@ the four-participant walkthrough
 (Table~\ref{tab:human-outcomes}): difficulty ordering is
 monotonic on time-to-flag and AI-tool reliance, enjoyment
 clusters 8--10/10, and the breadcrumbs cited as ``the
-artefact that moved me forward'' (Rachel's memo, in-page
-comments, the JWT \texttt{hr\_token} cookie) corroborate the
+artefact that moved me forward'' (the CTF9 security memo,
+CTF5 in-page HTML comments, the CTF3 JWT cookie inspection)
+corroborate the
 breadcrumb-only progression principle.
 
 \subsection{Contributions}
@@ -774,7 +771,7 @@ contributes the following artefacts and findings:
           scheme with per-deployment and per-flag-slot salt
           parameterisation, embedded-username attribution,
           and an executed integrity check whose headline
-          numbers are reported in section \ref{sec:eval-llm};
+          numbers are reported in Section~\ref{sec:eval-llm};
     \item a container-native distribution model that keeps
           student data strictly out of the image layer, so
           cohort onboarding is a salt rotation rather than a
