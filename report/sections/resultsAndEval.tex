@@ -101,7 +101,7 @@ on every push and pull request to \texttt{main}; this is
 the gate behind ``contracts green across the corpus'' in
 the engineering-rigour claim.
 \textbf{End-to-end exploit scripts} live under
-\texttt{CTFs/e2e/}; cumulative source is 1\,454 lines
+\texttt{CTFs/e2e/}; cumulative source is 1\,464 lines
 across nine scripts plus a 67-line shared
 \texttt{conftest.py} providing \texttt{wait\_for\_service}
 (\texttt{conftest.py:13}) and \texttt{load\_credentials}
@@ -109,10 +109,10 @@ across nine scripts plus a 67-line shared
 Table~\ref{tab:e2e-coverage} summarises coverage: all 23
 flags in the suite are asserted, with CTF8's third flag
 fixture exercised via a separate contract assertion rather
-than the e2e intended chain. Test discovery reports 60
+than the e2e intended chain. Test discovery reports 59
 collected node IDs
 (\texttt{e2e/.pytest\_cache/v/cache/nodeids}); the
-\texttt{README.md} headline of ``56 tests'' counts only the
+\texttt{README.md} headline of ``58 tests'' counts only the
 named flag-and-contract assertions.
 
 \begin{table}[t]
@@ -125,11 +125,11 @@ flags counts per-flag byte-match assertions.}
 \hline
 \textbf{CTF} & \textbf{LoC} & \textbf{Tests} & \textbf{Flags}
 & \textbf{CTF} & \textbf{LoC} & \textbf{Tests} & \textbf{Flags}\\ \hline
-1 & 84  & 2 & 1 & 6 & 166 & 10 & 4 \\ \hline
+1 & 84  & 2 & 1 & 6 & 166 & 11 & 4 \\ \hline
 2 & 133 & 2 & 1 & 7 & 145 & 6  & 1 \\ \hline
-3 & 211 & 9 & 2 & 8 & 110 & 4  & 3 \\ \hline
+3 & 211 & 11 & 2 & 8 & 110 & 4  & 3 \\ \hline
 4 & 142 & 3 & 1 & 9 & 338 & 12 & 6 \\ \hline
-5 & 125 & 8 & 4 & \textbf{Tot.} & \textbf{1454} & \textbf{56} & \textbf{23} \\ \hline
+5 & 135 & 8 & 4 & \textbf{Tot.} & \textbf{1464} & \textbf{59} & \textbf{23} \\ \hline
 \end{tabular}
 \end{table}
 
@@ -143,7 +143,7 @@ not the absence of unintended paths; a limitation that
 motivates the workflow audits in Section~\ref{sec:eval-impl}
 and the human track in Section~\ref{sec:eval-human}. The most
 recent \texttt{run\_all.sh} pass on macOS 14.6 reported all
-nine CTFs green (56/56 named assertions); the same per-CTF
+nine CTFs green (58/58 named assertions); the same per-CTF
 commands ran green in CI on the matching commit (all nine
 parallel jobs).
 
@@ -202,23 +202,24 @@ revision history (panel expansion 2026-04-12, single-seed cut
 gpt-5 spot-check rows are zero-cell deliberate omissions.
 Phase cells sum to 124; the 3-run delta to 127 is three
 vendor-error resubmits that re-incremented the run counter
-without adding a fresh cell (one cold-probe, two primary
-passive).}
+without adding a fresh cell.}
 \label{tab:llm-matrix}
-\small
-\begin{tabular}{|p{2.0cm}|p{2.7cm}|c|c|}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\columnwidth}{|p{1.35cm}|X|c|p{1.05cm}|}
 \hline
 \textbf{Phase} & \textbf{Models} & \textbf{Cells} & \textbf{Status} \\ \hline
 Cold-probe & 5-model panel & 45 & done \\ \hline
 Pilot & sonnet-4-6 & 6 & done \\ \hline
 Null-prompt & sonnet-4-6 & 1 & done \\ \hline
 Primary & sonnet-4-6, gpt-5-mini, gemini-2.5-pro, gemini-2.5-flash & 72 & done \\ \hline
-gpt-5 spot-check & n/a & 0 & skipped (budget) \\ \hline
-Haiku 4.5 primary & n/a & 0 & vendor credit \\ \hline
+gpt-5 spot-check & n/a & 0 & skipped \\ \hline
+Haiku 4.5 primary & n/a & 0 & skipped \\ \hline
 \multicolumn{2}{|r|}{\textbf{Total paid runs}} & \multicolumn{2}{c|}{\textbf{127}} \\ \hline
 \multicolumn{2}{|r|}{\textbf{Flag-slot observations}} & \multicolumn{2}{c|}{\textbf{332}} \\ \hline
 \multicolumn{2}{|r|}{\textbf{Spend (USD)}} & \multicolumn{2}{c|}{\textbf{5.25}} \\ \hline
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \textbf{Pass-rate tables.} Tables~\ref{tab:llm-passive}
@@ -241,23 +242,24 @@ CTF9 agentic 6/6).
 \centering
 \caption{Per-CTF byte-match passes / observations under the
 \textit{passive} condition (single user turn, doc pack +
-login-page HTML, no tools). Brackets give Clopper--Pearson
-two-sided 95\,\% CIs. Sonnet denominators include cold-probe
-and pilot rows; the other three columns are primary-phase only.}
+login-page HTML, no tools). Sonnet denominators on multi-flag
+CTFs additionally fold in the cold-probe and pilot rows, which
+were executed against the same passive surface. Brackets give
+Clopper--Pearson two-sided 95\,\% CIs.}
 \label{tab:llm-passive}
 \scriptsize
 \begin{tabular}{|c|c|c|c|c|}
 \hline
 \textbf{CTF} & \textbf{sonnet-4-6} & \textbf{flash-2.5} & \textbf{pro-2.5} & \textbf{gpt-5-mini} \\ \hline
-1 & 0/3 [.00,.71] & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
+1 & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
 2 & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
 3 & 0/2 [.00,.84] & 0/2 [.00,.84] & 0/2 [.00,.84] & 0/2 [.00,.84] \\ \hline
 4 & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
-5 & 0/8 [.00,.37] & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] \\ \hline
+5 & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] \\ \hline
 6 & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] \\ \hline
-7 & 0/2 [.00,.84] & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
-8 & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/3 [.00,.46] \\ \hline
-9 & 0/6 [.00,.26] & 0/6 [.00,.46] & 0/6 [.00,.46] & 0/6 [.00,.46] \\ \hline
+7 & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
+8 & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/6 [.00,.46] \\ \hline
+9 & 0/12 [.00,.26] & 0/6 [.00,.46] & 0/6 [.00,.46] & 0/6 [.00,.46] \\ \hline
 \end{tabular}
 \end{table}
 
@@ -272,7 +274,7 @@ Clopper--Pearson two-sided 95\,\% CIs.}
 \begin{tabular}{|c|c|c|c|c|}
 \hline
 \textbf{CTF} & \textbf{sonnet-4-6} & \textbf{flash-2.5} & \textbf{pro-2.5} & \textbf{gpt-5-mini} \\ \hline
-1 & 1/2 [.01,.99] & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
+1 & \textbf{1/2 [.01,.99]} & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
 2 & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
 3 & 0/2 [.00,.84] & 0/2 [.00,.84] & 0/2 [.00,.84] & 0/2 [.00,.84] \\ \hline
 4 & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
@@ -747,7 +749,7 @@ contributes the following artefacts and findings:
           cohort onboarding is a salt rotation rather than a
           rebuild;
     \item an \textit{exploit-as-a-test} end-to-end harness
-          (1\,454 LoC across nine CTFs, 56 named flag-and-contract
+          (1\,464 LoC across nine CTFs, 58 named flag-and-contract
           assertions) that acts as the ground-truth oracle
           for challenge solvability and is wired through a
           nine-job CI matrix;

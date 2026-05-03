@@ -130,14 +130,12 @@ Java/Spring Boot, PostgreSQL, Redis & 6 & Hard \\ \hline
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{figures/ctf_shared_infrastructure_architecture.png}
+    \includegraphics[width=0.9\columnwidth]{figures/ctf_shared_infrastructure_architecture.png}
     \caption{Three-layer shared infrastructure: a generation
     layer produces per-user flags and credentials; a
     containerisation layer packages each challenge as a Docker
     Compose stack; and a challenge application layer
-    implements the vulnerable behaviour. Figure prepared by
-    the author with the assistance of Anthropic Claude
-    (April~2026).}
+    implements the vulnerable behaviour. Figure prepared by the author using diagrams.net/draw.io (April 2026).}
     \label{fig:architecture}
 \end{figure}
 
@@ -202,9 +200,10 @@ the database rather than derived from a salted username.
 \mathit{flag} = \mathit{prefix}\texttt{\{}\mathit{token}\texttt{\_}u\texttt{\}}
 \label{eq:flag-format}
 \end{equation}
-where $N$ is the token length in hexadecimal characters
-(16 for Easy-band single-flag challenges and 20 elsewhere,
-corresponding to 64- and 80-bit entropy respectively). As an illustrative example,
+where $N$ is the token length in hexadecimal characters,
+set per challenge to either 16 or 20 (corresponding to 64-
+or 80-bit entropy) and recorded in each challenge's generator.
+As an illustrative example,
 with prefix \texttt{durham}, salt
 \texttt{basic1-default-salt}, and username \texttt{abcd12},
 the generator produces the flag
@@ -212,9 +211,9 @@ the generator produces the flag
 selected for three properties. \textit{Determinism}: $(s, u)$
 always yields the same token, so flags can be regenerated
 from the student roster alone without persistent state.
-\textit{Collision resistance}: the 64-bit truncated tag has a
-birthday-bound collision probability of approximately
-$2^{-50}$ for cohorts of
+\textit{Collision resistance}: even the shorter 64-bit
+truncated tag has a birthday-bound collision probability of
+approximately $2^{-50}$ for cohorts of
 100--200~\cite{HMACNIST}. \textit{Deployment isolation}:
 changing $s$ produces a disjoint flag space, so flags or
 write-ups from a previous cohort are invalid without any
@@ -345,8 +344,8 @@ equation~(\ref{eq:flag-format}).
 \textbf{CTF3, HR System: two flags, the second a
 three-primitive chain.} Flag 1 is reached directly by the
 authenticated \texttt{/api/flag} endpoint after a normal
-login. Flag 2 chains three weaknesses: a no-space SQL
-injection (\texttt{'OR~1=1--}) bypasses an
+login. Flag 2 chains three weaknesses: an SQL
+injection bypasses an
 \texttt{isBlocked()} regex filter that only matches keywords
 surrounded by whitespace, exposing a hidden bot employee
 record whose \texttt{notes} field carries an AES-CBC
@@ -444,8 +443,7 @@ retrieved in a single breadcrumb chain
 the exact material the next stage requires. Flag 1 is
 delivered by a custom \texttt{InfoContributor} bean that
 personalises the authenticated \texttt{/actuator/info}
-response; the surrounding \texttt{/actuator/env} response
-then leaks a \texttt{DR\_API\_KEY\_PART1} under a
+response; the surrounding \texttt{/actuator/env} response then leaks a \texttt{DR\_API\_KEY\_PART1} under a
 \texttt{app.config.dunholm-handoff-a} property name
 specifically chosen to evade a custom
 \texttt{SanitizingFunction} bean modelled on Spring Boot's
@@ -472,6 +470,28 @@ Auth0~\cite{Auth0JWTAttacks}. Flag 4 is blind Boolean SQL
 injection against a raw
 \texttt{ResearchService.search} that concatenates the query
 parameter into \texttt{ILIKE} (Listing~\ref{lst:research}).
+
+\begin{lstlisting}[
+  float=t,
+  language=Java,
+  numbers=left,
+  numbersep=4pt,
+  xleftmargin=1.5em,
+  framexleftmargin=1.5em,
+  basicstyle=\footnotesize\ttfamily,
+  breaklines=true,
+  columns=fullflexible,
+  caption={CTF9 \texttt{ResearchService.search}:
+  deliberately raw native-query concatenation targeted by
+  Flag 4.},
+  label={lst:research}
+]
+String sql = "SELECT COUNT(*) FROM trials "
+  + "WHERE title ILIKE '%" + query + "%'";
+Object raw = entityManager
+  .createNativeQuery(sql).getSingleResult();
+\end{lstlisting}
+
 Flag 5 combines a factoring problem (a 512-bit RSA modulus)
 with an AES-256-GCM decryption whose key is
 $\mathrm{SHA\text{-}256}(k_1 \Vert k_2)$, with $k_1, k_2$
@@ -486,21 +506,9 @@ the earlier algorithm-confusion exploit does not bypass
 this stage. The asymmetry teaches that not all
 administrative surfaces share one authentication mechanism.
 
-\begin{lstlisting}[float=t,language=Java,numbers=left,
-  basicstyle=\footnotesize\ttfamily,
-  caption={CTF9 \texttt{ResearchService.search}:
-  deliberately raw native-query concatenation targeted by
-  Flag 4.},label={lst:research}]
-String sql = "SELECT COUNT(*) FROM trials "
-  + "WHERE title ILIKE '%" + query + "%'";
-Object raw = entityManager
-  .createNativeQuery(sql).getSingleResult();
-\end{lstlisting}
-
 \begin{figure}[t]
     \centering
-    \fbox{\parbox[c][5.5cm][c]{0.92\columnwidth}{\centering\textit{[Placeholder: diagram of the CTF9 six-flag breadcrumb chain.\\[2pt]
-    Show six numbered boxes (Flag 1 $\to$ Flag 6) in a left-to-right sequence, each labelled with its technique (Actuator exposure; path traversal via \texttt{....//}; JWT RS256$\to$HS256 confusion; blind SQLi on \texttt{/api/research/search}; RSA-512 + AES-GCM hybrid decryption; \texttt{/actuator/logfile} + form-login). Arrows between boxes should be annotated with the artefact passed forward, e.g. ``\texttt{public.pem} bytes'', ``\texttt{DR\_API\_KEY\_PART1}'', ``\texttt{encryption\_key\_part2}'', ``\texttt{amir.patel} plaintext password''. Export as \texttt{figures/ctf9\_chain.pdf} (or \texttt{.png}) and replace this box with an \texttt{\textbackslash{}includegraphics} call.]}}}
+    \includegraphics[width=1\columnwidth]{figures/CTF9.png}
     \caption{CTF9 six-stage breadcrumb chain. Each flag surfaces the artefact required by the next; no flag requires knowledge not provided by a preceding flag or by the initial login-page reconnaissance.}
     \label{fig:ctf9-chain}
 \end{figure}
@@ -549,8 +557,8 @@ are bind-mounted read-only into \texttt{/app/seed/};
 PostgreSQL and Redis services declare no \texttt{ports:}
 directive and are reachable only on the internal
 \texttt{trialvault-net} bridge; the web service maps a
-single external port (\texttt{3003}) to the Spring Boot
-container's \texttt{8080}.
+single external port to the Spring Boot
+container's.
 
 \subsection{Verification, Validation, and Testing}
 \label{sec:vvt}
@@ -565,10 +573,7 @@ exploit still yields the flag. Every challenge ships all
 four verification layers used in this work: unit and
 contract tests, integration tests, an exploit-as-a-test
 end-to-end script, and a standardised post-design audit
-record. CTF6 is the single exception on integration: its
-in-process Actix tests sit alongside the binary code as
-inline \texttt{\#[test]} cases rather than in a separate
-\texttt{tests/} directory.
+record.
 
 \subsubsection{Exploit Scripts as Ground Truth}
 
@@ -590,7 +595,7 @@ random-port application context. In-process runners are
 used for CTF8 and CTF9 because the cost of spinning up Gin
 or Spring Boot inside the test runner is negligible, whereas
 an external HTTP harness over \texttt{docker compose up}
-would add seconds of latency per run without gain in realism.
+would add seconds of latency per run without much gain.
 
 \begin{algorithm}[t]
 \caption{Generic exploit-as-a-test harness}
@@ -720,8 +725,9 @@ text generation alone, so a model that fails a script-soluble
 challenge has failed on reasoning rather than environmental
 accessibility. The same byte-match success criterion gives
 the cold-probe phase its integrity weight: across 121
-no-stack runs the panel produced 0 byte-matches and 0
-hallucinated guesses, the empirical leg of the integrity
+no-stack flag-slot observations the panel produced 0
+byte-matches and 0 hallucinated guesses, the empirical leg
+of the integrity
 claim discussed in Section~\ref{sec:eval-llm}. A
 small-scale human walkthrough with participants of varying
 skill captures the process evidence (time-to-flag, AI-tool

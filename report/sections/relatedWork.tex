@@ -53,7 +53,7 @@ improper scoring, insufficient scaffolding, plagiarism, and limited
 analytics. The present project addresses the plagiarism pitfall
 directly through HMAC-personalised flags
 (Section~\ref{sec:flag-personalisation}) and the scaffolding
-pitfall through the per-CTF \texttt{STORY.md} breadcrumb
+pitfall through the CTF \texttt{STORY.md} engagement stratergy and breadcrumb
 chain (Section~\ref{sec:design-philosophy}); the scoring and
 analytics pitfalls remain delegated to the host module's
 existing infrastructure (CTFd-compatible byte-match flags,
@@ -94,9 +94,7 @@ The present project adopts a hybrid position: the suite as a whole
 uses between-challenge gating similar to Balaji et al., but within
 the Hard-difficulty challenges (CTF5, CTF6, CTF9) a within-domain
 progression is introduced, where multiple sequential flags teach
-discrete sub-skills (e.g.\ SSTI information disclosure, then
-Jinja2 filter bypass via hex encoding, then
-\texttt{\_\_globals\_\_} traversal to remote code execution). This lets a single scenario carry a complete
+discrete sub-skills. This lets a single scenario carry a complete
 micro-curriculum on a single vulnerability class, rather than
 asking the student to switch domains at every level.
 
