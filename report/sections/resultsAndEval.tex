@@ -242,10 +242,8 @@ CTF9 agentic 6/6).
 \centering
 \caption{Per-CTF byte-match passes / observations under the
 \textit{passive} condition (single user turn, doc pack +
-login-page HTML, no tools). Sonnet denominators on multi-flag
-CTFs additionally fold in the cold-probe and pilot rows, which
-were executed against the same passive surface. Brackets give
-Clopper--Pearson two-sided 95\,\% CIs.}
+login-page HTML, no tools). Brackets give Clopper--Pearson
+two-sided 95\,\% CIs.}
 \label{tab:llm-passive}
 \scriptsize
 \begin{tabular}{|c|c|c|c|c|}
@@ -258,8 +256,8 @@ Clopper--Pearson two-sided 95\,\% CIs.}
 5 & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] \\ \hline
 6 & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] & 0/4 [.00,.60] \\ \hline
 7 & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] & 0/1 [.00,.97] \\ \hline
-8 & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/6 [.00,.46] \\ \hline
-9 & 0/12 [.00,.26] & 0/6 [.00,.46] & 0/6 [.00,.46] & 0/6 [.00,.46] \\ \hline
+8 & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/3 [.00,.71] & 0/3 [.00,.71] \\ \hline
+9 & 0/6 [.00,.46] & 0/6 [.00,.46] & 0/6 [.00,.46] & 0/6 [.00,.46] \\ \hline
 \end{tabular}
 \end{table}
 
@@ -296,16 +294,22 @@ no surface from which to derive an HMAC tail. Second, across
 all 325 failed-flag rows in the trial, \textbf{0 were coded
 \texttt{methodology-correct, flag-hallucinated}}: not a
 single model fabricated even a regex-shape guess that
-byte-matched a real flag. The harness recorded only one
-\texttt{submit\_flag} call across all 127 paid runs, at the
-end of the Gemini 2.5 Flash CTF9 sweep; the six byte-matches
-on that run were scored from HTTP response bodies during
-exploration. Models in agentic runs
-preferentially \texttt{give\_up} (96 runs) or truncate
-(30 runs) rather than commit to an unverified string. The
+byte-matched a real flag. Across all 127 paid runs the
+dominant final states were \texttt{give\_up} (96 runs, mostly
+cold-probe and passive) and truncation at the 15-turn cap
+(30 agentic runs); only one \texttt{submit\_flag} call was
+issued, at the end of the Gemini 2.5 Flash CTF9 sweep, and
+the six byte-matches on that run were scored from HTTP
+response bodies during exploration. Models declined to commit
+to an unverified string rather than guess. The
 HMAC-tail construction does what the methodology claimed:
 it distinguishes capability from regurgitation, even when the
-methodology is correctly named.
+methodology is correctly named. The cold-probe signal is also
+not contaminated by the salt being already known to the
+models: the per-deployment salt used for the trial was
+generated after the public training-data cutoff of all five
+probed models, and the suite repository remained private for
+the duration of the evaluation.
 
 \textbf{RQ-L1 / RQ-L2, difficulty stratification and
 scaffolding.} The pass-rate tables corroborate the assigned
@@ -398,41 +402,56 @@ turns before the multi-step pivot. CTF4 stalled on
 diagnosing the admin-bot polling delay rather than completing
 the XSS exfiltration.
 
-\textbf{Calibration against an unbounded manual pass.} An
-exploratory manual pass under \texttt{Evaluation/llm/manual/}
-relayed tool output by hand to GPT-5.3 with no turn cap, as
-calibration data (not part of the primary tables) and an
-unlimited-budget upper bound. Eight of nine CTFs solved
-fully in 5--30 turns (Table~\ref{tab:manual-gpt53}); CTF9
-exhibited a separate failure mode, with GPT-5.3 refusing
-on every attempt up to a 30-attempt manual cap under what
-appeared to be a safety heuristic on the clinical-research
-narrative, recorded as a
-behaviour observation distinct from any agentic-trial
-failure code. For internal validity, every primary-phase
-0-pass cell on a CTF GPT-5.3 solves manually is best read
-as ``the 15-turn cap absorbed this run,'' not ``the
-technique was beyond the panel.''
+\textbf{Calibration against unbounded manual passes.} Two
+exploratory manual passes under \texttt{Evaluation/llm/manual/}
+relayed tool output by hand to GPT-5.3
+(\texttt{manual/GPT-5.3/}) and Claude Sonnet 4.6
+(\texttt{manual/Sonnet-4.6/}) under a 30 turn cap, as calibration
+data (not part of the primary tables).. Both passes corroborate that the 15-turn
+agentic cap, not capability, dominated the primary panel:
+GPT-5.3 solved eight of nine CTFs fully in 5--30 turns
+(17/23 flags), and Sonnet 4.6 solved six fully and two
+partially in 5--30 turns (16/23 flags), and failed on CTF4
+after failing to establish an XSS exfiltration channel within
+the manual cap, and engaged CTF9 (recovering one of six
+flags) where GPT-5.3 refused outright on every attempt under
+what appeared to be a safety heuristic on the
+clinical-research narrative
+(Table~\ref{tab:manual-calibration}). The CTF9 GPT-5.3
+refusal is recorded as a behaviour observation distinct from
+any agentic-trial failure code; the same model solved every
+other CTF in the suite. For internal validity, every
+primary-phase 0-pass cell on a CTF that either manual model
+solves is best read as ``the 15-turn cap absorbed this
+run,'' not ``the technique was beyond the panel.''
 
 \begin{table}[t]
 \centering
-\caption{Manual GPT-5.3 calibration pass (unbounded turns,
-human relays tool output). Source:
-\texttt{Evaluation/llm/manual/GPT-5.3/}.}
-\label{tab:manual-gpt53}
+\caption{Manual calibration passes for GPT-5.3 and Claude
+Sonnet 4.6 (unbounded harness turns, human relays tool
+output, informal 30-attempt manual cap). Sources:
+\texttt{Evaluation/llm/manual/GPT-5.3/} and
+\texttt{Evaluation/llm/manual/Sonnet-4.6/}.}
+\label{tab:manual-calibration}
 \scriptsize
-\begin{tabular}{|c|c|c|c|c|}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{|c|c|c|c|c|c|}
 \hline
-\textbf{CTF} & \textbf{Diff.} & \textbf{Flags} & \textbf{Turns} & \textbf{Outcome} \\ \hline
-1 & Easy   & 1/1 & 5  & solved \\ \hline
-2 & Easy   & 1/1 & 16 & solved \\ \hline
-3 & Med.   & 2/2 & 30 & solved \\ \hline
-4 & Med.   & 1/1 & 19 & solved \\ \hline
-5 & Hard   & 4/4 & 27 & solved \\ \hline
-6 & Hard   & 4/4 & 19 & solved \\ \hline
-7 & Easy   & 1/1 & 13 & solved \\ \hline
-8 & Med.   & 3/3 & 21 & solved \\ \hline
-9 & Hard   & 0/6 & 30 (cap) & refused (safety) \\ \hline
+\textbf{CTF} & \textbf{Diff.} &
+\multicolumn{2}{c|}{\textbf{GPT-5.3}} &
+\multicolumn{2}{c|}{\textbf{Sonnet 4.6}} \\ \cline{3-6}
+& & \textbf{Flags} & \textbf{Turns}
+& \textbf{Flags} & \textbf{Turns} \\ \hline
+1 & Easy & 1/1 & 5  & 1/1 & 5  \\ \hline
+2 & Easy & 1/1 & 16 & 1/1 & 14 \\ \hline
+3 & Med. & 2/2 & 30 & 2/2 & 30 \\ \hline
+4 & Med. & 1/1 & 19 & 0/1 & 30 (terminated) \\ \hline
+5 & Hard & 4/4 & 27 & 3/4 & 30 \\ \hline
+6 & Hard & 4/4 & 19 & 4/4 & 14 \\ \hline
+7 & Easy & 1/1 & 13 & 1/1 & 14 \\ \hline
+8 & Med. & 3/3 & 21 & 3/3 & 20 \\ \hline
+9 & Hard & 0/6 & 30 (refused) & 1/6 & 30 \\ \hline
+\textbf{Tot.} & & \textbf{17/23} & & \textbf{16/23} & \\ \hline
 \end{tabular}
 \end{table}
 
@@ -441,7 +460,7 @@ non-claims: with one seed per cell, within-cell variance is
 unestimated and CIs are reported as diagnostics, not
 inference; the panel excludes flagship-tier models (Opus,
 GPT-5, Gemini Ultra) at primary scale, priced at roughly
-USD\,9 per nine-CTF run versus the \pounds20 hard cap; and no
+USD\,9 per nine-CTF run; and no
 retrieval-augmented or memory-equipped agent class
 (\texttt{CTFAgent}-style~\cite{ji2025}) was evaluated. The
 natural successor study is identified as further work in
@@ -454,8 +473,8 @@ Four participants ($n=4$) drawn from the Durham CS UG/MEng
 cohort completed the protocol fixed in
 \texttt{Evaluation/human/PLAN.md}. The track is framed as a
 \emph{formative cognitive walkthrough} rather than an
-effectiveness study: $n=4$ is below the planned target
-($n=6$--$10$, \texttt{PLAN.md:12}), so reported quantities
+effectiveness study: $n=4$ is far below the planned target
+($n=6$--$10$, so reported quantities
 are descriptive and used to triangulate breadcrumb-effectiveness
 and difficulty-ordering claims, not to support inferential
 conclusions about learning gain. Each participant attempted
@@ -472,22 +491,31 @@ Table~\ref{tab:human-outcomes} records per-participant outcomes.
 
 \begin{table}[t]
 \centering
-\caption{Human walkthrough outcomes. Time is wall-clock to
-either submission of the final flag attempted or session end.
-``Aided'' indicates self-reported AI-tool use. Enjoy/Learn are
-Likert scores out of 10.}
+\caption{Human walkthrough outcomes. Participant identifies the
+anonymised participant; CTF identifies the attempted challenge number;
+Difficulty is the assigned challenge band; Outcome reports flags captured
+out of total flags available in that challenge; Time is wall-clock time to
+submission of the final flag attempted or to session end; Aided records
+self-reported AI-tool use; Enjoyment and Learning are participant Likert
+scores out of 10.}
 \label{tab:human-outcomes}
 \small
-\begin{tabular}{|c|c|c|c|c|c|c|c|}
-\hline
-\textbf{P} & \textbf{CTF} & \textbf{Diff.} &
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.08}
+\resizebox{0.95\columnwidth}{!}{%
+\begin{tabular}{cccccccc}
+\toprule
+\textbf{Participant} & \textbf{CTF} & \textbf{Difficulty} &
 \textbf{Outcome} & \textbf{Time} & \textbf{Aided} &
-\textbf{Enjoy} & \textbf{Learn} \\ \hline
-1 & 1 & Easy   & 1/1     & 20\,m   & no  & 9  & 10 \\ \hline
-2 & 3 & Med.   & 2/2     & 25\,m   & yes & 8  & 6  \\ \hline
-3 & 5 & Hard   & 3/4     & 40\,m   & yes & 9  & 7  \\ \hline
-4 & 9 & Hard   & 4/6     & 80\,m   & yes & 10 & 9  \\ \hline
-\end{tabular}
+\textbf{Enjoyment} & \textbf{Learning} \\
+\midrule
+1 & 1 & Easy   & 1/1 & 20\,m & no  & 9  & 10 \\
+2 & 3 & Medium & 2/2 & 25\,m & yes & 8  & 6  \\
+3 & 5 & Hard   & 3/4 & 40\,m & yes & 9  & 7  \\
+4 & 9 & Hard   & 4/6 & 80\,m & yes & 10 & 9  \\
+\bottomrule
+\end{tabular}%
+}
 \end{table}
 
 Three observations follow from the small sample.
@@ -539,10 +567,10 @@ required by the chain. The CTF9 vault file
 (\texttt{classified-trial-results-2024-q2.enc}) inaccessibility
 was traced to a base-path mismatch and corrected. Each fix
 is recorded against the relevant \textit{Post-Design Audit}
-appendix.
+appendix. We should note that the issues found in the human walk-through were promptly fixed \textbf{before} carrying out the LLM walk-through. 
 
 The breadcrumbs cited as ``the artefact that moved me forward''
-in free text were Rachel's security memo (CTF9), the in-page
+in free text were a security memo (CTF9), the in-page
 HTML source comments and \texttt{/static/CHANGELOG.md} (CTF5),
 the JWT \texttt{hr\_token} cookie inspection (CTF3), and the
 session cookie (CTF1), which corroborates the methodology's
@@ -596,7 +624,7 @@ Gemini 503 backoff (capped at three attempts); none
 re-occurred after patching, so no row is coded
 \texttt{harness-error}. The 15-turn agentic cap was retained
 for budget parity but became the dominant failure mode (75 of
-90 agentic flag-slots), with CTF5 and CTF9 absorbing the
+103 agentic flag-slots), with CTF5 and CTF9 absorbing the
 bulk; a longer cap is the single highest-leverage parameter
 for a rerun. Two budget concessions were taken and disclosed
 rather than retro-fitted: \texttt{claude-haiku-4-5} was
@@ -615,8 +643,8 @@ separate \texttt{UNINTENDED\_vulnerabilities.md}).
 intended-exploit assertion, strictly stronger than a
 natural-language solution guide. The HMAC flag layer turns
 integrity from a stated property into a falsifiable
-measurement, with direct empirical support (0/121 cold-probe
-byte-matches and 0/325 hallucinated-flag rows). Three tracks
+measurement, and the cold-probe panel falsifies it directly
+(headline numbers in §\ref{sec:eval-llm}). Three tracks
 triangulate on the same artefact: e2e exploit-as-a-test for
 ground truth, a 5-model agentic LLM harness with cold-probe
 for integrity, and a structured human walkthrough for process
@@ -632,9 +660,11 @@ scale, priced at $\sim$USD\,9 per nine-CTF run versus the
 \pounds20 cap, and uses the cheapest tier of each provider
 (mini/Flash variants), which biases the capability ceiling
 downward. The 15-turn cap absorbs the agentic budget (75 of
-90 truncations, mostly on CTF5/6/9), so ``methodology correct,
-flag absent'' is not always a capability claim, given the
-manual GPT-5.3 pass solves eight of nine unbounded.
+103 agentic flag-slots truncated, concentrated on CTF5 and
+CTF9), so ``methodology correct, flag absent'' is not always
+a capability claim, given the unbounded manual passes solve
+the bulk of the suite (GPT-5.3 8/9 CTFs, Sonnet 4.6 6/9
+fully and 8/9 with at least one flag).
 Naptime~\cite{Naptime2024} reports a 5\%$\rightarrow$100\%
 swing on CyberSecEval2 buffer overflow once tool use and
 sampling are added on top of scaffolding, so the present
@@ -645,12 +675,7 @@ same-author coding stability check, not a blind IRR; a blind
 pass would likely produce a lower kappa on the
 correct-vs-partial boundary. No retrieval-augmented
 (\texttt{CTFAgent}-style~\cite{ji2025}) condition was
-evaluated. The 0/325 hallucinated-flag count is a
-construction-driven rather than purely empirical finding:
-HMAC-derived flags are unguessable for an attacker without
-the salt, so absence-of-guesses is a structural property of
-the scheme as well as an observation about the panel.
-GPT-5.3's CTF9 over-refusal is recorded separately as a
+evaluated. GPT-5.3's CTF9 over-refusal is recorded separately as a
 behaviour observation.
 
 \textbf{Human-track and design limitations.} $n=4$ is below
@@ -685,20 +710,28 @@ evaluation harness before the LLM and human trials forced the
 executable success criterion to be agreed in code before it
 could be argued in prose. The principal organisational risk
 was over-scoping: nine challenges plus three evaluation
-tracks is a large surface, and the LLM panel was scoped to a
-\pounds20 envelope. Two cost-control levers were pulled and
-recorded as PLAN.md revisions rather than retro-fitted: cutting
-\texttt{PRIMARY\_SEEDS} from $(1,2)$ to $(1,)$ on 2026-04-27
-and dropping \texttt{claude-haiku-4-5} from the primary phase
-on 2026-04-28. The trial delivered against the revised scope
-(127 paid runs, 332 flag-slot observations, USD\,5.25 spend,
-113 unit tests green). If a single decision were revisited,
-it would be to ring-fence an additional envelope earlier
-(roughly an order of magnitude over what was spent), to
-admit a multi-seed flagship column and a longer turn cap.
-The harness is budget-replayable from the committed artefacts,
-so the rerun is an analysis-phase decision, not a
-re-engineering one.
+tracks created a large implementation and assessment surface,
+while the LLM panel was constrained by a fixed API-credit
+budget.
+
+Two cost-control decisions were made and recorded as plan
+revisions rather than retro-fitted after the fact: reducing
+\texttt{PRIMARY\_SEEDS} from two seeds to one, and dropping
+\texttt{claude-haiku-4-5} from the primary phase. The trial
+delivered against the revised scope: 127 paid runs, 332
+flag-slot observations, USD\,7.98 spend, and 113 unit tests
+passing. The spend exhausted the USD\,5 Anthropic credit and
+used approximately USD\,1.50 each from the Google and OpenAI
+credit allocations. If a single decision were revisited, it
+would be to reserve an additional budget envelope earlier,
+roughly an order of magnitude larger than the final spend.
+This would allow the LLM evaluation to run for more turns per
+attempt, support multi-seed repeats, and include a flagship-model
+column, giving the trial a stronger test of whether failures
+were due to challenge difficulty rather than budget-constrained
+run length. The harness is budget-replayable from the committed
+artefacts, so the rerun would be an analysis-phase decision
+rather than a re-engineering task.
 
 \subsection{Summary of findings}
 \label{sec:eval-summary}
@@ -709,8 +742,7 @@ CTFs are asserted (Table~\ref{tab:e2e-coverage}) and the
 suite spans eight 2021 OWASP categories across nine stacks;
 (b) \emph{Integrity} is supported by construction \emph{and}
 by empirical falsification: 0/121 cold-probe byte-matches
-across the 5-model panel, with 0 \texttt{flag-hallucinated}
-rows across all 325 failures despite $\sim$37\,\% of
+across the 5-model panel, despite $\sim$37\,\% of
 cold-probe failures correctly naming the required technique
 (Section~\ref{sec:eval-llm});
 (c) \emph{Pedagogical suitability} is partially supported by
@@ -730,7 +762,7 @@ ladder of Section~\ref{sec:research-question}, the project
 contributes the following artefacts and findings:
 \begin{itemize}
     \item a nine-challenge web-exploitation suite covering
-          eight of the ten 2021 OWASP categories with three
+          eight of the ten 2021 OWASP categories with four
           distinct injection sub-types and stacks rarely
           represented in educational CTFs (Flask/Jinja2,
           Rust/Actix-web, Go/Gin, Spring Boot, and a
@@ -741,9 +773,8 @@ contributes the following artefacts and findings:
     \item a deterministic HMAC-SHA256 flag personalisation
           scheme with per-deployment and per-flag-slot salt
           parameterisation, embedded-username attribution,
-          and an executed integrity check (0/121 cold-probe
-          byte-matches and 0 hallucinated-flag rows across
-          325 failure observations);
+          and an executed integrity check whose headline
+          numbers are reported in section \ref{sec:eval-llm};
     \item a container-native distribution model that keeps
           student data strictly out of the image layer, so
           cohort onboarding is a salt rotation rather than a

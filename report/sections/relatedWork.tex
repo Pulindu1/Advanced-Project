@@ -53,7 +53,7 @@ improper scoring, insufficient scaffolding, plagiarism, and limited
 analytics. The present project addresses the plagiarism pitfall
 directly through HMAC-personalised flags
 (Section~\ref{sec:flag-personalisation}) and the scaffolding
-pitfall through the CTF \texttt{STORY.md} engagement stratergy and breadcrumb
+pitfall through the CTF \texttt{STORY.md} engagement strategy and breadcrumb
 chain (Section~\ref{sec:design-philosophy}); the scoring and
 analytics pitfalls remain delegated to the host module's
 existing infrastructure (CTFd-compatible byte-match flags,
@@ -146,9 +146,10 @@ SSRF, and neither reports measured learning outcomes.
 
 The suite designed here covers eight of the ten 2021 OWASP
 categories (A01, A02, A03, A05, A07, A08, A09, A10), and
-represents three fundamentally different injection types within
+represents four fundamentally different injection types within
 A03 alone: SQL injection at the database layer, DOM-based XSS
-at the browser rendering layer, and server-side template
+at the browser rendering layer, OS command injection at the
+operating-system process boundary, and server-side template
 injection at the application's view layer. This breadth is wider than the four challenge types
 (Hidden Information, Brute Force, SQLi, XSS) implemented in
 the JMeter-tested system of Sasiwanit et al.~\cite{Sasiwanit};
