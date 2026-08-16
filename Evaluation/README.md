@@ -26,7 +26,7 @@ Evaluation/
 │   ├── prompts/           SHA-pinned passive / agentic / cold-probe templates
 │   ├── doc-pack/          curated per-CTF docs (+ CURATION_LOG.md)
 │   ├── manual/            exploratory human-in-the-loop pass (GPT-5.3, Sonnet-4.6)
-│   ├── runs/              per-run transcripts + sidecars (gitignored)
+│   ├── runs/              per-run transcripts + sidecars (checked in as trial output-of-record)
 │   ├── reports/           results.csv, flag_results.csv, tables.md
 │   ├── coding/            coded.csv, summaries.jsonl
 │   ├── expected_flags.json, flag_regexes.json, PROMPT_HASHES.txt

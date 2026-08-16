@@ -1,4 +1,5 @@
 node_modules/
+**/node_modules/
 report/guidelines/
 report/examples/
 
@@ -6,6 +7,19 @@ report/examples/
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# Rust / Go / Java build output
+target/
+**/target/
+dist/
+build/
+*.class
+
+# chgen ephemeral working dirs
+challenge-generation/tmp_*/
 
 # Environment files
 *.env

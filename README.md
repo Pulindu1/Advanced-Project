@@ -1,6 +1,23 @@
 # Advanced Computer Science Project — Pulindu Fonseka
 
-MEng dissertation, Durham University. The repo contains four things that fit together:
+MEng dissertation, Durham University (submitted May 2026).
+
+A 9-CTF web-exploitation corpus with per-player variants, a black-box
+exploit test suite, and a sandboxed LLM evaluation harness that ran a
+5-model × 9-CTF × {passive, agentic} solvability trial (127 paid runs,
+332 flag-slot observations) alongside a small human study.
+
+> **Security notice — read before running.**
+> The applications under `CTFs/` are **deliberately vulnerable** and
+> ship with weak credentials, weak crypto, and known injection /
+> deserialisation / SSRF / RCE / IDOR bugs. They are intended to be run
+> **only on an isolated developer machine** (loopback, or a disposable
+> VM). **Do not deploy any part of this repository to the public
+> internet or to any environment reachable from untrusted networks.**
+> The demo `.env` files, `credentials.json`, and seeded JWT secrets in
+> the repo are placeholders for reproducibility, not secrets to defend.
+
+The repo contains four things that fit together:
 
 1. **A 9-CTF web-exploitation corpus** (`CTFs/`) — every challenge dockerised, with unit, integration, and end-to-end exploit tests.
 2. **A challenge generator** — the `chgen` library (`challenge-generation/`) plus per-CTF generator scripts (`CTFs/challenge-generation/`) used to produce per-player variants of each CTF.
@@ -163,7 +180,4 @@ preserve the original authors' copyright notices. Although we don't explictly us
 - **Documentation.** Per-CTF intended-solution write-ups live in `<CTF>/SOLUTIONS.md` (CTF4 uses `SOLUTION.md`). Cross-cutting design citations live in `CTFs/SOURCES.md`.
 - **Branch hygiene.** `main` is the default branch. CI (`tests.yml`) gates pushes and PRs.
 
-## AI assistance
-
-Claude Sonnet (Anthropic) was used during development as a coding assistant, primarily for debugging, scaffolding boilerplate (Docker configs, test harness plumbing, CI workflows), and editorial passes on documentation. All design decisions, exploit chains, evaluation methodology, generator logic, flag derivation, scoring, and analysis are the author's own work.
 

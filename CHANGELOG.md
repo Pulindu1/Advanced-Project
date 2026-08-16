@@ -11,6 +11,16 @@ files changed (optional)
 
 
 
+### Public release prep - 16/08/26
+- Prepared the repo for public release on GitHub now that the dissertation has been submitted.
+- README: added a one-line project pitch and a prominent Security notice (deliberately-vulnerable apps, do not deploy publicly, demo .env / credentials are placeholders).
+- CTFs/SOURCES.md: removed the leftover "SORT THIS OUT LATER" header, tidied the intro, noted that per-challenge citations for CTFs 5-9 are consolidated in the dissertation's Design chapter, and completed the truncated Summary Statement.
+- Evaluation/README.md: corrected the runs/ line - the transcripts are checked in as the trial's output-of-record, not gitignored.
+- .gitignore: extended to catch node_modules/, target/ (Rust/Java), .pytest_cache/, .venv/, dist/, build/, and the chgen tmp_* scratch dirs so future commits don't recommit build artefacts.
+- Audited every tracked .env, human-study response, and source file for real secrets / PII / leaked API keys - none found; the weak values in .env are intentional CTF demo values.
+
+files changed: README.md, CTFs/SOURCES.md, Evaluation/README.md, .gitignore, CHANGELOG.md
+
 ### Finished. Edited documentation - 04/05/26
 - final changes to documentation
 - tidied last bits up.
